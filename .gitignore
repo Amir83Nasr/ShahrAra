@@ -1,0 +1,43 @@
+# ─── Python ──────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+*.egg
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.pytest_cache/
+.mypy_cache/
+
+# ─── Node / Frontend ─────────────────────────────────────────────────────────
+node_modules/
+frontend/dist/
+
+# ─── Database ────────────────────────────────────────────────────────────────
+*.db
+*.sqlite3
+*.sqlite
+
+# ─── Environment ─────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ─── IDE / OS ────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ─── Build / Logs ───────────────────────────────────────────────────────────
+*.log
+coverage/
+htmlcov/
+build/

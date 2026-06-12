@@ -1,0 +1,130 @@
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap');
+@import 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+@import 'tailwindcss';
+
+/* Iran Yekan X Font Face */
+@font-face {
+  font-family: 'Iran Yekan X';
+  src: url('/assets/fonts/iran-yekan-x/IRANYekanX-Regular.ttf')
+    format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Iran Yekan X';
+  src: url('/assets/fonts/iran-yekan-x/IRANYekanX-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Iran Yekan X';
+  src: url('/assets/fonts/iran-yekan-x/IRANYekanX-Black.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans:
+    'Iran Yekan X', 'Vazirmatn', system-ui, -apple-system, sans-serif;
+  --color-primary-light: #5eead4; /* teal-300 */
+  --color-primary: #14b8a6; /* teal-500 */
+  --color-primary-dark: #0f766e; /* teal-700 */
+}
+
+/* Base resets & rtl defaults */
+body {
+  font-family: var(--font-sans);
+  background-color: #f8fafc; /* smooth light slate-50 */
+  color: #0f172a; /* dark slate-900 */
+  direction: rtl;
+  text-align: right;
+  overflow-x: hidden;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+body.dark,
+html.dark body {
+  background-color: #0b0f19; /* premium very dark blue */
+  color: #f3f4f6; /* neutral-100 */
+}
+
+/* Custom interactive dotted grid background */
+.dark-dotted-grid {
+  background-size: 20px 20px;
+  background-image: radial-gradient(
+    rgba(15, 23, 42, 0.05) 1px,
+    transparent 1px
+  );
+}
+
+html.dark .dark-dotted-grid {
+  background-image: radial-gradient(
+    rgba(148, 163, 184, 0.07) 1px,
+    transparent 1px
+  );
+}
+
+/* Elegant card-glow border effect on hover (matching theodorusclarence.com) */
+.clarence-card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.clarence-card-hover:hover {
+  border-color: rgba(94, 234, 212, 0.4); /* teal-300 with opacity */
+  box-shadow: 0 0 20px rgba(20, 184, 166, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Custom minimal scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background: #0b0f19;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #1e293b;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #14b8a6;
+}
+
+/* Custom map marker style reset */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  border-radius: 0.75rem;
+  background-color: #ffffff;
+}
+
+html.dark .leaflet-container {
+  background-color: #0f172a;
+}
+
+/* Dark mode Leaflet overlay tiles (important for dark tech look) */
+.dark-leaflet-tiles {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
