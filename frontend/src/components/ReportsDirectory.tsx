@@ -3,23 +3,43 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RequestItem, RequestStatus, User } from '../types';
 import MapComponent from './MapComponent';
-import {
-  FavouriteIcon,
-  Location01Icon,
-  AlertCircleIcon,
-  MapsIcon,
-  Search01Icon,
-} from 'hugeicons-react';
+import { Heart, MapPin, AlertCircleIcon, Map, Search, ArrowUpDown, RefreshCcw } from 'lucide-react';
 import { toPersianDigits } from '../utils/numberUtils';
+import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  Card,
+  CardContent,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 interface ReportsDirectoryProps {
   items: RequestItem[];
   currentUser: User | null;
   onLike: (id: string) => Promise<void>;
   onOpenAuth: () => void;
+  onRefresh: () => void;
   theme?: 'light' | 'dark';
 }
 
@@ -28,6 +48,7 @@ export default function ReportsDirectory({
   currentUser,
   onLike,
   onOpenAuth,
+  onRefresh,
   theme = 'light',
 }: ReportsDirectoryProps) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,7 +56,8 @@ export default function ReportsDirectory({
   const [activeType, setActiveType] = useState<'all' | 'problem' | 'idea'>(
     'all',
   );
-  const [showMap, setShowMap] = useState<boolean>(true); // Split view or list view
+  const [showMap, setShowMap] = useState<boolean>(true);
+  const [sortBy, setSortBy] = useState<'newest' | 'most_liked'>('newest');
   const [selectedDetails, setSelectedDetails] = useState<RequestItem | null>(
     null,
   );
@@ -50,7 +72,6 @@ export default function ReportsDirectory({
     'سایر',
   ];
 
-  // Filters logic
   const filtered = items.filter((item) => {
     const matchesSearch =
       item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -64,254 +85,279 @@ export default function ReportsDirectory({
     return matchesSearch && matchesCategory && matchesType;
   });
 
+  const sorted = [...filtered].sort((a, b) =>
+    sortBy === 'most_liked' ? b.likes - a.likes : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+
   const handleLikeClick = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     if (!currentUser) {
       onOpenAuth();
       return;
     }
+    setSelectedDetails((prev) =>
+      prev && prev.id === id
+        ? {
+            ...prev,
+            likedByCurrentUser: !prev.likedByCurrentUser,
+            likes: prev.likedByCurrentUser
+              ? Math.max(0, prev.likes - 1)
+              : prev.likes + 1,
+          }
+        : prev,
+    );
     onLike(id);
-    // If the selected item is open, update its likes locally
-    if (selectedDetails && selectedDetails.id === id) {
-      const alreadyLiked = selectedDetails.likedBy?.includes(currentUser.phone);
-      const newLikedBy = alreadyLiked
-        ? selectedDetails.likedBy?.filter((p) => p !== currentUser.phone) || []
-        : [...(selectedDetails.likedBy || []), currentUser.phone];
-      const newLikes = alreadyLiked
-        ? Math.max(0, selectedDetails.likes - 1)
-        : selectedDetails.likes + 1;
-      setSelectedDetails({
-        ...selectedDetails,
-        likes: newLikes,
-        likedBy: newLikedBy,
-      });
-    }
   };
+
+  useEffect(() => {
+    if (selectedDetails) {
+      const updated = items.find((i) => i.id === selectedDetails.id);
+      if (updated) setSelectedDetails(updated);
+    }
+  }, [items]);
 
   const statusLabels: Record<RequestStatus, { label: string; color: string }> =
     {
       submitted: {
         label: 'جدید ثبت شده',
-        color: 'text-blue-400 bg-blue-950/40 border-blue-500/20',
+        color:
+          'text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800',
       },
       under_review: {
         label: 'تحت بررسی کارشناسی',
-        color: 'text-amber-400 bg-amber-950/40 border-amber-500/20',
+        color:
+          'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800',
       },
       in_progress: {
         label: 'اکیپ شهرداری مشغول کار',
-        color: 'text-orange-400 bg-orange-950/40 border-orange-500/20',
+        color:
+          'text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-950/50 border border-orange-200 dark:border-orange-800',
       },
       resolved: {
         label: 'برطرف شده نهایی',
-        color: 'text-emerald-400 bg-emerald-950/40 border-emerald-500/20',
+        color:
+          'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800',
       },
       archived: {
         label: 'بایگانی‌شده',
-        color: 'text-slate-400 bg-zinc-900 border-zinc-800',
+        color: 'text-muted-foreground bg-muted border-border',
       },
     };
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8" id="shahr_ara_directory">
-      {/* 1. Header description */}
-      <div className="mb-8 text-right border-r-2 border-cyan-400 pr-4">
-        <h2 className="text-2xl font-black text-white">
+      {/* Header */}
+      <div className="mb-8 border-r-2 border-primary pr-4 text-right">
+        <h2 className="text-foreground text-2xl font-black">
           لیست نیازها، گزارش‌ها و ایده‌های ثبت شده شهروندان
         </h2>
-        <p className="text-sm text-slate-400 mt-1.5 max-w-2xl">
+        <p className="text-muted-foreground mt-1.5 max-w-2xl text-sm">
           در این بخش می‌توانید تمامی گزارش‌های ارسال شده شهری به همراه وضعیت
           پیشرفت و پاسخ نهایی مسئولان مربوطه شهرداری را رصد کنید و بابت تسریع
           کار لایک دهید.
         </p>
       </div>
 
-      {/* 2. Directory control board (Theodorus Clarence design matching) */}
-      <div className="bg-[#0f172a] border border-zinc-800 rounded-xl p-5 mb-8 shadow-lg flex flex-col md:flex-row justify-between items-center gap-4">
-        {/* Search */}
+      {/* Filters */}
+      <div className="border-border bg-card mb-8 flex flex-col items-center justify-between gap-4 rounded-xl border p-5 shadow-lg md:flex-row">
         <div className="relative w-full md:w-80">
-          <Search01Icon className="absolute right-3 top-3 w-4.5 h-4.5 text-slate-400" />
-          <input
+          <Search className="text-muted-foreground absolute top-3 right-3 h-4.5 w-4.5" />
+          <Input
             type="text"
             placeholder="جستجوی نیاز، ایده، محله..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-10 py-2 text-sm bg-zinc-950 border border-zinc-800 rounded-lg text-white focus:outline-none focus:border-cyan-500 transition-colors font-sans"
+            className="bg-background pr-10"
           />
         </div>
 
-        {/* Multi toggles */}
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          {/* Problem vs Idea selection */}
-          <div className="flex bg-zinc-950 rounded-lg p-1 border border-zinc-800/80">
-            <button
-              onClick={() => setActiveType('all')}
-              className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${activeType === 'all' ? 'bg-zinc-800 text-cyan-300' : 'text-slate-400 hover:text-white'}`}
-            >
-              همه کارهای شهری
-            </button>
-            <button
-              onClick={() => setActiveType('problem')}
-              className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${activeType === 'problem' ? 'bg-red-950/40 text-red-400' : 'text-slate-400 hover:text-white'}`}
-            >
-              فقط خرابی‌ها
-            </button>
-            <button
-              onClick={() => setActiveType('idea')}
-              className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${activeType === 'idea' ? 'bg-emerald-9c0/40 text-emerald-400' : 'text-slate-400 hover:text-white'}`}
-            >
-              فقط ایده‌ها
-            </button>
-          </div>
-
-          {/* Toggle Map vs Grid Split */}
-          <button
-            onClick={() => setShowMap(!showMap)}
-            className={`px-4 py-2 text-xs font-bold rounded-lg border flex items-center gap-1.5 transition-all duration-200 ${
-              showMap
-                ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
-                : 'bg-zinc-950 border-zinc-800 text-slate-400 hover:border-zinc-700'
-            }`}
+          <div className="flex w-full flex-wrap items-center justify-start gap-3 md:w-auto">
+          <Select
+            value={sortBy}
+            onValueChange={(v) => setSortBy(v as 'newest' | 'most_liked')}
           >
-            <MapsIcon className="w-3.5 h-3.5" />
-            <span>
-              {showMap
-                ? 'غیرفعال‌سازی نمایش نقشه'
-                : 'فعال‌سازی نمایش نقشه شهری'}
-            </span>
-          </button>
+            <SelectTrigger size="sm" className="w-36">
+              <ArrowUpDown className="ml-1.5 h-3.5 w-3.5" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="end">
+              <SelectItem value="newest">جدیدترین</SelectItem>
+              <SelectItem value="most_liked">بیشترین لایک</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={activeType}
+            onValueChange={(v) => setActiveType(v as 'all' | 'problem' | 'idea')}
+          >
+            <SelectTrigger size="sm" className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="end">
+              <SelectItem value="all">همه کارها</SelectItem>
+              <SelectItem value="problem">خرابی‌ها</SelectItem>
+              <SelectItem value="idea">ایده‌ها</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant={showMap ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setShowMap(!showMap)}
+            className="gap-1.5 rounded-lg whitespace-nowrap"
+          >
+            <Map className="h-3.5 w-3.5" />
+            <span>{showMap ? 'مخفی‌سازی نقشه' : 'نمایش نقشه'}</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onRefresh}
+            className="gap-1.5"
+          >
+            <RefreshCcw className="h-3.5 w-3.5" />
+            <span>بروزرسانی</span>
+          </Button>
         </div>
       </div>
 
-      {/* 3. Category horizontal rails bar */}
-      <div className="flex gap-2 overflow-x-auto pb-4 mb-8 -mx-4 px-4 scrollbar-thin">
-        <button
+      {/* Category filter */}
+      <div className="-mx-4 mb-8 flex scrollbar-thin gap-2 overflow-x-auto px-4 pb-4">
+        <Button
+          variant={activeCategory === 'all' ? 'default' : 'outline'}
+          size="sm"
           onClick={() => setActiveCategory('all')}
-          className={`px-4 py-2 text-xs font-bold rounded-full border shrink-0 transition-all ${
-            activeCategory === 'all'
-              ? 'bg-cyan-500 text-zinc-950 hover:bg-cyan-400 border-transparent'
-              : 'bg-[#0f172a] border-zinc-888 text-slate-300 hover:border-zinc-700'
-          }`}
+          className="shrink-0 rounded-full"
         >
           همه دسته‌ها
-        </button>
+        </Button>
         {CATEGORIES.map((cat, idx) => (
-          <button
+          <Button
             key={idx}
+            variant={activeCategory === cat ? 'default' : 'outline'}
+            size="sm"
             onClick={() => setActiveCategory(cat)}
-            className={`px-4 py-2 text-xs font-bold rounded-full border shrink-0 transition-all ${
-              activeCategory === cat
-                ? 'bg-cyan-500 text-zinc-950 hover:bg-cyan-400 border-transparent'
-                : 'bg-[#0f172a] border-zinc-800 text-slate-300 hover:border-zinc-700'
-            }`}
+            className="shrink-0 rounded-full"
           >
             {cat}
-          </button>
+          </Button>
         ))}
       </div>
 
-      {/* 4. Display Directory Main Arena */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Arena: Map and list split container */}
+      {/* Display Directory Main Arena */}
+      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
         <div
-          className={`${showMap ? 'lg:col-span-7' : 'lg:col-span-12'} space-y-5 h-full`}
+          className={`${showMap ? 'lg:col-span-7' : 'lg:col-span-12'}`}
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {filtered.length > 0 ? (
-              filtered.map((item) => {
-                const datePersian = new Date(item.createdAt).toLocaleDateString(
-                  'fa-IR',
-                );
+          <div className="max-h-[600px] overflow-y-auto p-0.5">
+          <div
+            className={cn(
+              'grid grid-cols-1 gap-5',
+              showMap
+                ? 'sm:grid-cols-2'
+                : 'sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
+            )}
+          >
+            {sorted.length > 0 ? (
+              sorted.map((item) => {
                 const isProblem = item.type === 'problem';
                 const hasLikedStatus = currentUser
-                  ? item.likedBy?.includes(currentUser.phone)
+                  ? item.likedByCurrentUser
                   : false;
 
                 return (
-                  <div
+                  <Card
                     key={item.id}
+                    className={cn(
+                      'cursor-pointer overflow-hidden transition-all duration-300',
+                      'hover:border-primary/30 hover:shadow-xl',
+                      'border-border bg-card',
+                    )}
                     onClick={() => setSelectedDetails(item)}
-                    className="clarence-card-hover bg-[#0f172a] border border-zinc-800 rounded-xl p-4 cursor-pointer relative overflow-hidden flex flex-col justify-between min-h-[220px]"
                   >
-                    <div>
+                    <CardContent className="flex flex-col gap-2.5 px-5">
                       {/* Badge / Header row */}
-                      <div className="flex justify-between items-start gap-2 mb-3">
-                        <span
-                          className={`px-2 py-0.5 text-[10px] font-bold rounded-md border ${
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <Badge
+                          variant={isProblem ? 'destructive' : 'default'}
+                          className={cn(
+                            'font-semibold',
                             isProblem
-                              ? 'bg-red-950/20 border-red-500/20 text-red-400'
-                              : 'bg-emerald-950/20 border-emerald-500/20 text-emerald-400'
-                          }`}
+                              ? 'border border-red-200 bg-red-100 text-red-700 dark:border-red-800 dark:bg-red-950/50 dark:text-red-300'
+                              : 'border border-emerald-200 bg-emerald-100 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300',
+                          )}
                         >
                           {isProblem ? 'گزارش مشکل' : 'ایده شهری'}
-                        </span>
+                        </Badge>
 
-                        <span
-                          className={`px-2 py-0.5 text-[9px] font-bold rounded border ${statusLabels[item.status]?.color}`}
+                        <Badge
+                          className={cn(
+                            'text-xs font-semibold',
+                            statusLabels[item.status]?.color,
+                          )}
                         >
                           {statusLabels[item.status]?.label}
-                        </span>
+                        </Badge>
                       </div>
 
                       {/* Content */}
-                      <h3 className="text-sm font-extrabold text-white line-clamp-1 mb-2 hover:text-cyan-300 transition-colors">
+                      <CardTitle className="text-foreground hover:text-primary line-clamp-1 cursor-pointer text-sm font-extrabold transition-colors">
                         {item.title}
-                      </h3>
-                      <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed mb-4">
+                      </CardTitle>
+                      <CardDescription className="text-muted-foreground line-clamp-3 text-xs leading-relaxed">
                         {item.description}
-                      </p>
-                    </div>
+                      </CardDescription>
 
-                    {/* Footer buttons / states */}
-                    <div className="flex items-center justify-between border-t border-zinc-800/60 pt-3 text-[10px] text-slate-400 font-mono">
-                      <span className="flex items-center gap-1 font-sans">
-                        <Location01Icon className="w-3.5 h-3.5 text-slate-500 animate-pulse" />
-                        {toPersianDigits(item.region)}
-                      </span>
-
-                      {/* Vote/Like trigger */}
-                      <button
-                        onClick={(e) => handleLikeClick(e, item.id)}
-                        className={`flex items-center gap-1 px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
-                          hasLikedStatus
-                            ? 'bg-red-50 dark:bg-red-950/40 text-red-550 dark:text-red-400 border border-red-200 dark:border-red-500/30 font-bold'
-                            : 'bg-slate-55 dark:bg-zinc-950/80 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 text-slate-500 dark:text-slate-400 hover:text-red-500'
-                        }`}
-                        title={
-                          currentUser ? 'ثبت لایک' : 'برای لایک ثبت‌نام کنید'
-                        }
-                      >
-                        <FavouriteIcon
-                          className={`w-3.5 h-3.5 ${hasLikedStatus ? 'fill-current text-red-500' : ''}`}
-                        />
-                        <span className="font-bold">
-                          {toPersianDigits(item.likes)} لایک
+                      {/* Footer */}
+                      <div className="text-muted-foreground flex items-center justify-between text-[10px]">
+                        <span className="flex items-center gap-1 font-sans">
+                          <MapPin className="text-muted-foreground h-3.5 w-3.5" />
+                          {toPersianDigits(item.region)}
                         </span>
-                      </button>
-                    </div>
-                  </div>
+
+                        <Button
+                          variant={hasLikedStatus ? 'destructive' : 'outline'}
+                          size="sm"
+                          onClick={(e) => handleLikeClick(e, item.id)}
+                          className="gap-1"
+                          title={
+                            currentUser ? 'ثبت لایک' : 'برای لایک ثبت‌نام کنید'
+                          }
+                        >
+                          <Heart
+                            className={cn(
+                              'h-3.5 w-3.5',
+                              hasLikedStatus && 'fill-current',
+                            )}
+                          />
+                          <span className="font-bold">
+                            {toPersianDigits(item.likes)} لایک
+                          </span>
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 );
               })
             ) : (
-              <div className="col-span-full bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-zinc-800 rounded-xl p-12 text-center text-slate-500 dark:text-slate-400 transition-all">
-                <AlertCircleIcon className="w-10 h-10 text-slate-400 dark:text-slate-600 mx-auto mb-3" />
-                <p className="text-sm font-black text-slate-800 dark:text-white">
-                  هیچ گزارش یا ایده‌ای در این دسته‌بندی یافت نشد.
+              <div className="border-border bg-card text-muted-foreground col-span-full rounded-xl border p-12 text-center">
+                <AlertCircleIcon className="text-muted-foreground mx-auto mb-3 h-10 w-10" />
+                <p className="text-foreground text-sm font-black">
+                  هیچ گزارش یا ایده‌ای یافت نشد.
                 </p>
-                <p className="text-xs text-slate-500 mt-1 font-bold">
+                <p className="text-muted-foreground mt-1 text-xs font-bold">
                   اولین شهروندی باشید که گزارش جدیدی ارسال می‌کند!
                 </p>
               </div>
             )}
           </div>
         </div>
+        </div>
 
-        {/* Right Arena: Map overlay list (5 columns on large desktop) */}
+        {/* Map */}
         {showMap && (
-          <div className="lg:col-span-5 h-[500px] sticky top-24 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-md dark:shadow-lg bg-white dark:bg-[#0f172a]">
+          <div className="border-border bg-card sticky top-24 h-[500px] overflow-hidden rounded-xl border shadow-lg lg:col-span-5">
             <MapComponent
               pickerMode={false}
-              items={filtered}
+              items={sorted}
               onSelectItem={(item) => setSelectedDetails(item)}
               theme={theme}
             />
@@ -319,122 +365,119 @@ export default function ReportsDirectory({
         )}
       </div>
 
-      {/* 5. Custom Details Popup Modal */}
-      {selectedDetails && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="w-full max-w-xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-2xl relative animate-fade-in text-right">
-            {/* Header top section */}
-            <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-[#0b0f19]">
-              <div>
-                <span
-                  className={`px-2 py-0.5 text-[9px] font-black rounded-md border ${
-                    selectedDetails.type === 'problem'
-                      ? 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400'
-                      : 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
-                  }`}
-                >
-                  {selectedDetails.type === 'problem'
-                    ? 'گزارش مشکل'
-                    : 'ایده شهری'}
-                </span>
-                <span className="text-[10px] text-slate-600 dark:text-slate-400 font-mono font-bold tracking-wider bg-slate-100 dark:bg-zinc-950 px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-801 ms-2">
-                  {selectedDetails.category}
-                </span>
-              </div>
-              <button
-                onClick={() => setSelectedDetails(null)}
-                className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors font-bold text-xs cursor-pointer"
-                id="close_details_btn"
+      {/* Details Dialog */}
+      <Dialog
+        open={!!selectedDetails}
+        onOpenChange={(open) => !open && setSelectedDetails(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Badge
+                variant={
+                  selectedDetails?.type === 'problem'
+                    ? 'destructive'
+                    : 'default'
+                }
+                className={cn(
+                  selectedDetails?.type !== 'problem'
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : '',
+                )}
               >
-                بستن پنجره ×
-              </button>
-            </div>
+                {selectedDetails?.type === 'problem'
+                  ? 'گزارش مشکل'
+                  : 'ایده شهری'}
+              </Badge>
+              <Badge variant="outline" className="font-mono">
+                {selectedDetails?.category}
+              </Badge>
+            </DialogTitle>
+          </DialogHeader>
 
-            {/* Inner scroll container */}
-            <div className="p-6 space-y-6 max-h-[500px] overflow-y-auto">
-              <div>
-                <h3 className="text-lg font-black text-slate-800 dark:text-white leading-snug">
-                  {selectedDetails.title}
-                </h3>
-                <span className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-1.5 block font-bold">
-                  منطقه: {toPersianDigits(selectedDetails.region)} | ثبت‌کننده:{' '}
-                  {selectedDetails.userName}
-                </span>
-              </div>
-
-              {/* Main description paragraph */}
-              <p className="text-sm text-slate-705 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-zinc-950/60 p-4 border border-slate-105 dark:border-zinc-800/80 rounded-xl whitespace-pre-wrap font-semibold">
-                {selectedDetails.description}
-              </p>
-
-              {/* Admin response message */}
-              {selectedDetails.adminResponse ? (
-                <div className="bg-gradient-to-br from-teal-50/50 to-emerald-50/50 dark:from-indigo-950/20 dark:to-teal-950/20 border border-teal-200 dark:border-teal-500/30 rounded-xl p-4 relative">
-                  <div
-                    className="absolute top-3 left-3 bg-teal-500/10 text-teal-600 dark:text-teal-300 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase font-mono border border-teal-550/20"
-                    dir="ltr"
-                  >
-                    OFFICIAL ACTION
-                  </div>
-                  <span className="text-xs font-black text-teal-600 dark:text-teal-400 block mb-1">
-                    پاسخ رسمی شهرداری منطقه:
-                  </span>
-                  <p className="text-xs text-slate-705 dark:text-slate-300 leading-relaxed whitespace-pre-line font-medium">
-                    {selectedDetails.adminResponse}
-                  </p>
-                </div>
-              ) : (
-                <div className="bg-slate-50 dark:bg-zinc-950/30 border border-slate-105 dark:border-zinc-800 rounded-xl p-3.5 text-center text-xs text-slate-500 dark:text-slate-500 font-bold">
-                  این گزارش برای اعزام اکیپ آماده‌سازی در صف رسیدگی واحد روابط
-                  عمومی شهرداری منطقه است.
-                </div>
-              )}
-
-              {/* Map display */}
-              <div className="space-y-1.5">
-                <span className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1">
-                  <Location01Icon className="w-4 h-4 text-cyan-500 dark:text-cyan-400" />
-                  موقعیت فیزیکی روی نقشه شهر
-                </span>
-                <div className="h-[200px] rounded-xl overflow-hidden border border-slate-205 dark:border-zinc-800">
-                  <MapComponent
-                    pickerMode={false}
-                    items={[selectedDetails]}
-                    theme={theme}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Details Footer */}
-            <div className="flex justify-between items-center bg-slate-50 dark:bg-[#0b0f19] border-t border-slate-100 dark:border-zinc-800 p-4">
-              <span
-                className="text-[10px] text-slate-400 dark:text-slate-500 font-mono font-bold"
-                dir="ltr"
-              >
-                Report ID: {toPersianDigits(selectedDetails.id)}
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-foreground text-lg leading-snug font-black">
+                {selectedDetails?.title}
+              </h3>
+              <span className="text-muted-foreground mt-1.5 block font-mono text-xs font-bold">
+                منطقه: {toPersianDigits(selectedDetails?.region ?? '')} |
+                ثبت‌کننده: {selectedDetails?.userName}
               </span>
+            </div>
 
-              <button
-                onClick={(e) => handleLikeClick(e, selectedDetails.id)}
-                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  currentUser &&
-                  selectedDetails.likedBy?.includes(currentUser.phone)
-                    ? 'bg-red-500 text-white'
-                    : 'bg-slate-100 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 text-slate-600 dark:text-slate-300 hover:text-red-500'
-                }`}
-              >
-                <FavouriteIcon
-                  className={`w-3.5 h-3.5 ${currentUser && selectedDetails.likedBy?.includes(currentUser.phone) ? 'fill-current text-white' : ''}`}
-                />
-                <span>
-                  {toPersianDigits(selectedDetails.likes)} لایک و تأیید شهروندی
+            <p className="bg-muted text-foreground/70 rounded-xl border p-4 text-sm leading-relaxed font-semibold whitespace-pre-wrap">
+              {selectedDetails?.description}
+            </p>
+
+            {selectedDetails?.adminResponse ? (
+              <div className="relative rounded-xl border border-teal-500/30 bg-gradient-to-br from-teal-950/20 to-emerald-950/20 p-4">
+                <div className="absolute top-3 left-3 rounded border border-teal-500/20 bg-teal-500/10 px-1.5 py-0.5 font-mono text-[10px] font-bold text-teal-300 uppercase">
+                  پاسخ رسمی
+                </div>
+                <span className="mb-1 block text-xs font-black text-teal-400">
+                  پاسخ رسمی شهرداری منطقه:
                 </span>
-              </button>
+                <p className="text-foreground/70 text-xs leading-relaxed font-medium whitespace-pre-line">
+                  {selectedDetails.adminResponse}
+                </p>
+              </div>
+            ) : (
+              <div className="bg-muted text-muted-foreground/70 rounded-xl border p-3.5 text-center text-xs font-bold">
+                این گزارش برای اعزام اکیپ آماده‌سازی در صف رسیدگی واحد روابط
+                عمومی شهرداری منطقه است.
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <span className="text-foreground/70 flex items-center gap-1 text-xs font-bold">
+                <MapPin className="h-4 w-4 text-primary" />
+                موقعیت فیزیکی روی نقشه شهر
+              </span>
+              <div className="h-[200px] overflow-hidden rounded-xl border">
+                <MapComponent
+                  pickerMode={false}
+                  items={selectedDetails ? [selectedDetails] : []}
+                  theme={theme}
+                />
+              </div>
             </div>
           </div>
-        </div>
-      )}
+
+          <Separator />
+
+          <DialogFooter className="flex items-center justify-between sm:justify-between">
+            <span className="text-muted-foreground font-mono text-[10px] font-bold">
+              کد رهگیری: {toPersianDigits(selectedDetails?.id ?? '')}
+            </span>
+
+            <Button
+              variant={
+                currentUser && selectedDetails?.likedByCurrentUser
+                  ? 'destructive'
+                  : 'outline'
+              }
+              size="sm"
+              onClick={(e) =>
+                selectedDetails && handleLikeClick(e, selectedDetails.id)
+              }
+            >
+              <Heart
+                className={cn(
+                  'h-3.5 w-3.5',
+                  currentUser &&
+                    selectedDetails?.likedByCurrentUser &&
+                    'fill-current',
+                )}
+              />
+              <span>
+                {toPersianDigits(selectedDetails?.likes ?? 0)} لایک و تأیید
+                شهروندی
+              </span>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

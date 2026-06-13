@@ -1,40 +1,43 @@
-from typing import Optional
+from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.core.security import require_admin
 from app.db.session import get_db
-from app.models.models import Request
-from app.schemas.schemas import RequestCreate
+from app.models.models import Like, Request, User
+from app.schemas.schemas import (
+    CreateRequestResponse,
+    LikeRequest,
+    LikeResponse,
+    RequestCreate,
+    RequestResponse,
+    StatusUpdate,
+    StatusUpdateResponse,
+)
 
-router = APIRouter()
-
-
-def make_request_response(r: Request) -> dict:
-    return {
-        "id": r.id,
-        "title": r.title,
-        "description": r.description,
-        "type": r.type,
-        "category": r.category,
-        "coordinates": {"lat": float(r.lat), "lng": float(r.lng)},
-        "region": r.region,
-        "status": r.status,
-        "userPhone": r.user_phone,
-        "userName": r.user_name,
-        "createdAt": r.created_at.isoformat() if r.created_at else "",
-        "adminResponse": r.admin_response,
-        "likes": r.likes,
-    }
+router = APIRouter(tags=["requests"])
 
 
-@router.get("")
+@router.get(
+    "",
+    response_model=list[RequestResponse],
+    summary="List all requests",
+    description="Get all requests with optional search, type, category, status, and userPhone filters.",
+)
 def get_requests(
-    search: Optional[str] = None,
-    type: Optional[str] = None,
-    category: Optional[str] = None,
-    status: Optional[str] = None,
-    userPhone: Optional[str] = None,
+    search: str | None = Query(None, description="Search in title, description, and region"),
+    type: str | None = Query(None, description="Filter by type (problem / idea)"),
+    category: str | None = Query(None, description="Filter by category"),
+    status: str | None = Query(None, description="Filter by status"),
+    userPhone: str | None = Query(
+        None, alias="userPhone", description="Filter by user phone number"
+    ),
+    currentUserPhone: str | None = Query(
+        None,
+        alias="currentUserPhone",
+        description="Phone of current user to compute likedByCurrentUser",
+    ),
     db: Session = Depends(get_db),
 ):
     query = db.query(Request)
@@ -54,12 +57,30 @@ def get_requests(
     if userPhone:
         query = query.filter(Request.user_phone == userPhone)
 
-    return [make_request_response(r) for r in query.order_by(Request.created_at.desc()).all()]
+    results = query.order_by(Request.created_at.desc()).all()
+
+    if currentUserPhone:
+        liked_ids = set(
+            like.request_id
+            for like in db.query(Like).filter(Like.user_phone == currentUserPhone).all()
+        )
+        return [
+            RequestResponse.from_orm(r, liked_by_current_user=r.id in liked_ids) for r in results
+        ]
+
+    return [RequestResponse.from_orm(r) for r in results]
 
 
-@router.post("")
+@router.post(
+    "",
+    response_model=CreateRequestResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a new request",
+    description="Submit a new urban problem or improvement idea with location coordinates.",
+    responses={400: {"description": "Invalid input data"}},
+)
 def create_request(request_data: RequestCreate, db: Session = Depends(get_db)):
-    region = request_data.region or "منطقه مرکزی"
+    region = request_data.region or "Central District"
 
     new_request = Request(
         title=request_data.title,
@@ -77,41 +98,82 @@ def create_request(request_data: RequestCreate, db: Session = Depends(get_db)):
     db.add(new_request)
     db.commit()
     db.refresh(new_request)
-    return {"success": True, "request": make_request_response(new_request)}
+    return CreateRequestResponse(success=True, request=RequestResponse.from_orm(new_request))
 
 
-@router.put("/{request_id}/status")
-def update_status(request_id: str, status_update: dict, db: Session = Depends(get_db)):
+@router.put(
+    "/{request_id}/status",
+    response_model=StatusUpdateResponse,
+    summary="Update request status (admin only)",
+    description="Change the status of a request. Requires admin Bearer token. You can also add an admin response.",
+    responses={
+        403: {"description": "Admin access required"},
+        404: {"description": "Request not found"},
+    },
+)
+def update_status(
+    request_id: str,
+    status_update: StatusUpdate,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
     req = db.query(Request).filter(Request.id == request_id).first()
     if not req:
-        raise HTTPException(status_code=404, detail="درخواست مورد نظر یافت نشد.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Request not found.",
+        )
 
-    new_status = status_update.get("status")
-    admin_response = status_update.get("adminResponse")
-
-    if not new_status:
-        raise HTTPException(status_code=400, detail="وضعیت انتخاب نشده است.")
-
-    req.status = new_status
-    if admin_response is not None:
-        req.admin_response = admin_response
+    req.status = (
+        status_update.status.value
+        if hasattr(status_update.status, "value")
+        else status_update.status
+    )
+    if status_update.adminResponse is not None:
+        req.admin_response = status_update.adminResponse
 
     db.commit()
     db.refresh(req)
-    return {"success": True, "request": make_request_response(req)}
+    return StatusUpdateResponse(success=True, request=RequestResponse.from_orm(req))
 
 
-@router.post("/{request_id}/like")
-def toggle_like(request_id: str, like_data: dict, db: Session = Depends(get_db)):
+@router.post(
+    "/{request_id}/like",
+    response_model=LikeResponse,
+    summary="Toggle like on a request",
+    description="Like or unlike a request. Toggles per user based on their phone number.",
+    responses={404: {"description": "Request not found"}},
+)
+def toggle_like(request_id: str, like_data: LikeRequest, db: Session = Depends(get_db)):
     req = db.query(Request).filter(Request.id == request_id).first()
     if not req:
-        raise HTTPException(status_code=404, detail="درخواست یافت نشد.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Request not found.",
+        )
 
-    user_phone = like_data.get("userPhone")
-    if not user_phone:
-        raise HTTPException(status_code=400, detail="تلفن کاربر الزامی است.")
+    existing = (
+        db.query(Like)
+        .filter(
+            Like.user_phone == like_data.userPhone,
+            Like.request_id == request_id,
+        )
+        .first()
+    )
 
-    req.likes += 1
+    if existing:
+        db.delete(existing)
+        req.likes = max(0, req.likes - 1)
+    else:
+        db.add(Like(user_phone=like_data.userPhone, request_id=request_id))
+        req.likes += 1
+
     db.commit()
     db.refresh(req)
-    return {"success": True, "request": make_request_response(req)}
+
+    liked_by_current_user = existing is None
+
+    return LikeResponse(
+        success=True,
+        request=RequestResponse.from_orm(req, liked_by_current_user=liked_by_current_user),
+    )

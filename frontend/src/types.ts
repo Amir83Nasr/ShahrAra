@@ -37,7 +37,8 @@ export interface RequestItem {
   createdAt: string;
   adminResponse?: string;
   likes: number;
-  likedBy?: string[]; // user IDs or phones who liked
+  likedByCurrentUser?: boolean;
+  likedBy?: string[];
 }
 
 export interface Stats {

@@ -9,14 +9,25 @@ import Hero from './components/Hero';
 import RequestForm from './components/RequestForm';
 import ReportsDirectory from './components/ReportsDirectory';
 import AdminPanel from './components/AdminPanel';
-import StatsSection from './components/StatsSection';
 import AuthModal from './components/AuthModal';
 import { User, RequestItem, RequestStatus, Stats } from './types';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
 export default function App() {
   const [currentTab, setTab] = useState<string>('home');
   const [isAuthOpen, setIsAuthOpen] = useState<boolean>(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('shahr_ara_user');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
 
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('shahr_ara_theme');
@@ -40,7 +51,7 @@ export default function App() {
 
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Sync theme changes with HTML classes
+  // Sync theme changes with HTML classes — instant, no animation
   useEffect(() => {
     localStorage.setItem('shahr_ara_theme', theme);
     const root = document.documentElement;
@@ -53,27 +64,12 @@ export default function App() {
     }
   }, [theme]);
 
-  // 1. Initial State Load
-  useEffect(() => {
-    // Restore User session
-    const saved = localStorage.getItem('shahr_ara_user');
-    if (saved) {
-      try {
-        setCurrentUser(JSON.parse(saved));
-      } catch (e) {
-        console.error('Failed to parse saved user', e);
-      }
-    }
-
-    // Load initial data from Express API
-    fetchData();
-  }, []);
-
   const fetchData = async () => {
     setLoading(true);
     try {
+      const userParam = currentUser ? `?currentUserPhone=${currentUser.phone}` : '';
       const [requestsRes, statsRes] = await Promise.all([
-        fetch('/api/requests'),
+        fetch(`/api/requests${userParam}`),
         fetch('/api/stats'),
       ]);
 
@@ -89,6 +85,11 @@ export default function App() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser]);
 
   // 2. Interaction Handlers
   const handleLoginSuccess = (user: User) => {
@@ -117,11 +118,11 @@ export default function App() {
       });
 
       if (res.ok) {
-        // Optimistic local state update to prevent latency
         const updatedReq = await res.json();
         if (updatedReq.success) {
-          // Re-fetch to synchronize all counts smoothly
-          fetchData();
+          setRequests((prev) =>
+            prev.map((r) => (r.id === id ? updatedReq.request : r)),
+          );
         }
       }
     } catch (e) {
@@ -155,7 +156,7 @@ export default function App() {
 
   return (
     <div
-      className="min-h-screen bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-zinc-100 flex flex-col justify-between transition-colors duration-350"
+      className="flex min-h-screen flex-col justify-between bg-background text-foreground transition-colors duration-300"
       id="shahr_ara_app_root"
     >
       {/* Navbar segment */}
@@ -166,16 +167,16 @@ export default function App() {
         onLogout={handleLogout}
         onOpenAuth={() => setIsAuthOpen(true)}
         theme={theme}
-        toggleTheme={() =>
-          setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))
-        }
+        toggleTheme={(newTheme) => {
+          setTheme(newTheme);
+        }}
       />
 
       {/* Main arena */}
       <main className="flex-1 pb-16">
         {loading && (
-          <div className="flex flex-col items-center justify-center py-20 text-cyan-600 dark:text-cyan-400 gap-3">
-            <span className="w-10 h-10 border-4 border-cyan-600 dark:border-cyan-400 border-t-transparent rounded-full animate-spin"></span>
+          <div className="flex flex-col items-center justify-center gap-3 py-20 text-cyan-600 dark:text-cyan-400">
+            <span className="h-10 w-10 animate-spin rounded-full border-4 border-cyan-600 border-t-transparent dark:border-cyan-400"></span>
             <span className="text-sm font-semibold">
               در حال بارگذاری اطلاعات شهرآرا...
             </span>
@@ -185,27 +186,13 @@ export default function App() {
         {!loading && (
           <>
             {currentTab === 'home' && (
-              <div className="space-y-12 animate-fade-in">
+              <div className="animate-fade-in space-y-12">
                 <Hero
                   setTab={setTab}
                   currentUser={currentUser}
                   onOpenAuth={() => setIsAuthOpen(true)}
                   stats={stats}
-                  theme={theme}
                 />
-
-                {/* Visual Stats Section */}
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 border-t border-slate-200 dark:border-zinc-800/60 pt-12">
-                  <div className="mb-6 text-right">
-                    <span className="text-[10px] font-bold text-cyan-600 dark:text-cyan-400 font-mono block">
-                      ANALYTICS PANEL
-                    </span>
-                    <h3 className="text-xl font-extrabold text-slate-800 dark:text-white">
-                      آمار پایش مشارکت شهروندی تهران
-                    </h3>
-                  </div>
-                  <StatsSection stats={stats} />
-                </div>
               </div>
             )}
 
@@ -215,6 +202,7 @@ export default function App() {
                 currentUser={currentUser}
                 onLike={handleLike}
                 onOpenAuth={() => setIsAuthOpen(true)}
+                onRefresh={fetchData}
                 theme={theme}
               />
             )}
@@ -243,70 +231,52 @@ export default function App() {
         )}
       </main>
 
-      {/* Footer (Theodorus Clarence style - minimal, crisp) */}
-      <footer className="border-t border-slate-200 dark:border-zinc-800/60 bg-white dark:bg-[#070b13] py-8 text-slate-500 text-xs transition-colors">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+      {/* Footer */}
+      <footer className="bg-background text-muted-foreground border-t py-8 text-xs">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6 lg:px-8">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-cyan-600 dark:text-cyan-200">
+            <span className="font-bold text-foreground">
               شهرآرا
             </span>
-            <span className="text-slate-300 dark:text-slate-600">|</span>
-            <span className="text-slate-650 dark:text-slate-400">
+            <span className="text-muted-foreground/70">
               سامانه الکترونیکی ثبت و ارتقای مطالبات و ایده‌های مردمی
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
-            <a
-              href="#shahr_ara_app_root"
-              className="hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
-              onClick={(e) => {
-                e.preventDefault();
-                setTab('home');
-              }}
-            >
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={() => setTab('home')}>
               صفحه اصلی
-            </a>
-            <span className="text-slate-300 dark:text-slate-700">•</span>
-            <a
-              href="#shahr_ara_app_root"
-              className="hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
-              onClick={(e) => {
-                e.preventDefault();
-                setTab('reports');
-              }}
-            >
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setTab('reports')}>
               گزارش‌ها
-            </a>
-            <span className="text-slate-300 dark:text-slate-700">•</span>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => {
                 if (currentUser?.isAdmin) setTab('admin');
                 else setIsAuthOpen(true);
               }}
-              className="hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
             >
               پنل مدیریت شهری
-            </button>
+            </Button>
           </div>
 
           <div
-            className="text-[10px] text-slate-400 dark:text-slate-600 font-mono"
-            dir="ltr"
+            className="text-muted-foreground/50 text-[10px]"
           >
-            &copy; {new Date().getFullYear()} ShahrAra Municipal Engine. All
-            rights reserved.
+            &copy; {new Date().getFullYear()} شهرآرا — سامانه هوشمند مشارکت مردمی. کلیه حقوق محفوظ است.
           </div>
         </div>
       </footer>
 
       {/* Auth Control Center */}
-      {isAuthOpen && (
-        <AuthModal
-          onClose={() => setIsAuthOpen(false)}
-          onLoginSuccess={handleLoginSuccess}
-        />
-      )}
+      <AuthModal
+        open={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
+
     </div>
   );
 }

@@ -6,7 +6,7 @@
 import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { RequestItem } from '../types';
-import { Location01Icon } from 'hugeicons-react';
+import { MapPin } from 'lucide-react';
 import { toPersianDigits } from '../utils/numberUtils';
 
 interface MapComponentProps {
@@ -32,7 +32,7 @@ const createMarkerIcon = (type: 'problem' | 'idea' | 'picker') => {
           <path d="M18 0C8.06 0 0 8.06 0 18C0 29.5 16.2 41.1 16.9 41.5C17.6 42.1 18.4 42.1 19.1 41.5C19.8 41.1 36 29.5 36 18C36 8.06 27.94 0 18 0Z" fill="${color}" stroke="#ffffff" stroke-width="2"/>
           <circle cx="18" cy="18" r="6.5" fill="#ffffff" />
         </svg>
-        <span class="absolute top-[10px] w-2.5 h-2.5 rounded-full ${type === 'problem' ? 'bg-red-500' : type === 'idea' ? 'bg-emerald-500' : 'bg-cyan-600'}"></span>
+        <span class="absolute top-2.5 w-2.5 h-2.5 rounded-full ${type === 'problem' ? 'bg-red-500' : type === 'idea' ? 'bg-emerald-500' : 'bg-cyan-600'}"></span>
       </div>
     `,
     iconSize: [36, 42],
@@ -42,23 +42,19 @@ const createMarkerIcon = (type: 'problem' | 'idea' | 'picker') => {
   });
 };
 
-// Simple heuristic to compute Municipal regions in Tehran
-const determineTehranRegion = (lat: number, lng: number): string => {
-  if (lat > 35.78) return 'منطقه ۱ (شمال تهران)';
-  if (lat > 35.75 && lng < 51.38) return 'منطقه ۲ (شمال غربی)';
-  if (lat > 35.75 && lng >= 51.38) return 'منطقه ۳ (شمال شرقی)';
-  if (lng < 51.34) return 'منطقه ۵ (غرب تهران)';
-  if (lat < 35.7) return 'منطقه ۱۶ (جنوب تهران)';
-  if (lng > 51.44) return 'منطقه ۴ (شرق تهران)';
+// Simple heuristic to compute municipal districts in Qom
+const determineRegion = (lat: number, lng: number): string => {
+  if (lat > 34.68) return 'منطقه ۱ (شمال قم)';
+  if (lat < 34.58) return 'منطقه ۵ (جنوب قم)';
+  if (lng < 50.83) return 'منطقه ۴ (غرب قم)';
+  if (lng > 50.95) return 'منطقه ۳ (شرق قم)';
 
-  // Random matching for other sectors
+  // Random matching for central districts
   const regions = [
-    'منطقه ۶ (مرکزی)',
-    'منطقه ۷',
-    'منطقه ۸',
-    'منطقه ۱۰',
-    'منطقه ۱۱ (مرکزی)',
-    'منطقه ۱۲ (بازار)',
+    'منطقه ۲ (مرکز قم)',
+    'منطقه ۲ (مرکز قم)',
+    'منطقه ۴ (غرب قم)',
+    'منطقه ۱ (شمال قم)',
   ];
   const index = Math.floor((lat + lng) * 100) % regions.length;
   return regions[index];
@@ -77,8 +73,8 @@ export default function MapComponent({
   const pickerMarkerRef = useRef<L.Marker | null>(null);
   const itemMarkersRef = useRef<L.Marker[]>([]);
 
-  // Tehran coordinates as starting default
-  const defaultCenter: [number, number] = [35.7219, 51.4055];
+  // Qom coordinates as starting default
+  const defaultCenter: [number, number] = [34.6410, 50.8800];
 
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -128,7 +124,7 @@ export default function MapComponent({
         pickerMarkerRef.current.on('dragend', () => {
           if (!pickerMarkerRef.current) return;
           const position = pickerMarkerRef.current.getLatLng();
-          const computedRegion = determineTehranRegion(
+          const computedRegion = determineRegion(
             position.lat,
             position.lng,
           );
@@ -142,7 +138,7 @@ export default function MapComponent({
       // Click to pin location
       map.on('click', (e: L.LeafletMouseEvent) => {
         const { lat, lng } = e.latlng;
-        const computedRegion = determineTehranRegion(lat, lng);
+        const computedRegion = determineRegion(lat, lng);
 
         if (pickerMarkerRef.current) {
           pickerMarkerRef.current.setLatLng(e.latlng);
@@ -156,7 +152,7 @@ export default function MapComponent({
           pickerMarkerRef.current.on('dragend', () => {
             if (!pickerMarkerRef.current) return;
             const position = pickerMarkerRef.current.getLatLng();
-            const regObj = determineTehranRegion(position.lat, position.lng);
+            const regObj = determineRegion(position.lat, position.lng);
             onCoordinatesChange?.(
               { lat: position.lat, lng: position.lng },
               regObj,
@@ -198,8 +194,8 @@ export default function MapComponent({
         item.type === 'problem' ? 'گزارش مشکل' : 'ایده شهری';
       const typeColor =
         item.type === 'problem'
-          ? 'text-red-500 font-bold'
-          : 'text-emerald-500 font-bold';
+          ? 'text-[var(--type-problem)] font-bold'
+          : 'text-[var(--type-idea)] font-bold';
       const statusLocales: Record<string, string> = {
         submitted: 'ثبت شده',
         under_review: 'در حال بررسی',
@@ -209,15 +205,15 @@ export default function MapComponent({
       };
 
       const popupHtml = `
-        <div class="text-right font-sans p-1 min-w-[210px] text-slate-800" dir="rtl">
-          <div class="flex items-center justify-between border-b border-slate-200 pb-1.5 mb-2">
+        <div class="text-right font-sans p-1 min-w-[210px]" dir="rtl" style="color: var(--foreground)">
+          <div class="flex items-center justify-between pb-1.5 mb-2" style="border-bottom: 1px solid var(--border)">
             <span class="text-[10px] font-black uppercase tracking-wider ${typeColor}">${PersianTypeName}</span>
-            <span class="text-[10px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-bold">${statusLocales[item.status] || item.status}</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded font-bold" style="background: var(--muted); color: var(--muted-foreground)">${statusLocales[item.status] || item.status}</span>
           </div>
-          <h4 class="text-xs font-extrabold text-slate-900 mb-1 leading-snug">${item.title}</h4>
-          <p class="text-[11px] text-slate-600 mb-2.5 line-clamp-2 leading-relaxed">${item.description}</p>
-          <div class="text-[10px] text-slate-500 font-mono mb-2" dir="rtl">${toPersianDigits(item.region)}</div>
-          <button id="marker-btn-${item.id}" class="w-full text-center bg-cyan-600 text-white font-black py-1 px-2 rounded-md hover:bg-cyan-500 transition-colors text-[10px]">
+          <h4 class="text-xs font-extrabold mb-1 leading-snug" style="color: var(--foreground)">${item.title}</h4>
+          <p class="text-[11px] mb-2.5 line-clamp-2 leading-relaxed" style="color: var(--muted-foreground)">${item.description}</p>
+          <div class="text-[10px] font-mono mb-2" dir="rtl" style="color: var(--muted-foreground)">${toPersianDigits(item.region)}</div>
+          <button id="marker-btn-${item.id}" class="w-full text-center font-black py-1 px-2 rounded-md transition-colors text-[10px]" style="background: var(--primary); color: var(--primary-foreground)">
             مشاهده جزئیات درخواست
           </button>
         </div>
@@ -265,15 +261,15 @@ export default function MapComponent({
   }, [selectedCoordinates]);
 
   return (
-    <div className="w-full h-full relative" id="shahr_ara_map_component">
+    <div className="relative h-full w-full" id="shahr_ara_map_component">
       <div
         ref={mapContainerRef}
-        className="w-full h-full min-h-[300px] border border-slate-200 dark:border-zinc-800/80 rounded-xl transition-colors duration-200"
+        className="h-full min-h-[300px] w-full rounded-xl border border-border transition-colors duration-200"
       />
 
       {pickerMode && (
-        <div className="absolute bottom-3 left-3 z-[1000] bg-white/95 dark:bg-[#0b0f19]/95 border border-slate-200 dark:border-zinc-800 px-3 py-2 rounded-lg text-[10px] text-cyan-750 dark:text-cyan-300 flex items-center gap-1.5 backdrop-blur shadow-lg pointer-events-none transition-colors">
-          <Location01Icon className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 animate-pulse" />
+        <div className="pointer-events-none absolute bottom-3 left-3 z-[1000] flex items-center gap-1.5 rounded-lg border border-border bg-background/95 px-3 py-2 text-[10px] shadow-lg backdrop-blur transition-colors dark:text-cyan-300">
+          <MapPin className="h-3.5 w-3.5 animate-pulse text-cyan-600 dark:text-cyan-400" />
           <span className="font-bold">
             برای جابجایی نشانگر، روی نقشه کلیک کنید یا پین را بکشید.
           </span>

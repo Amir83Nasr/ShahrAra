@@ -7,19 +7,37 @@ import React, { useState, useEffect } from 'react';
 import { RequestItem, RequestStatus, RequestType } from '../types';
 import MapComponent from './MapComponent';
 import {
-  Shield01Icon,
-  Search01Icon,
-  FilterIcon,
-  Comment01Icon,
-  Calendar01Icon,
-  Location01Icon,
-  UserIcon,
-  CheckmarkCircle01Icon,
-  ArrowLeft01Icon,
-  Refresh01Icon,
-  Layers01Icon,
-} from 'hugeicons-react';
+  Shield,
+  Search,
+  Filter,
+  MessageSquare,
+  Calendar,
+  MapPin,
+  User,
+  CheckCircle,
+  X,
+  RefreshCcw,
+  Layers,
+} from 'lucide-react';
 import { toPersianDigits } from '../utils/numberUtils';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 
 interface AdminPanelProps {
   requests: RequestItem[];
@@ -65,7 +83,9 @@ export default function AdminPanel({
   // Sync selected item inputs when selected item changes
   useEffect(() => {
     if (selectedItem) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAdminResponse(selectedItem.adminResponse || '');
+
       setStatusVal(selectedItem.status);
     }
   }, [selectedItem]);
@@ -121,144 +141,166 @@ export default function AdminPanel({
     { bg: string; text: string; label: string }
   > = {
     submitted: {
-      bg: 'bg-blue-950/40 border-blue-500/30 text-blue-400',
-      text: 'text-blue-400',
+      bg: 'bg-status-under-review/20 border-status-under-review/30 text-status-under-review',
+      text: 'text-status-under-review',
       label: 'ثبت شده معلق',
     },
     under_review: {
-      bg: 'bg-amber-950/40 border-amber-500/30 text-amber-300',
-      text: 'text-amber-300',
+      bg: 'bg-status-in-progress/20 border-status-in-progress/30 text-status-in-progress',
+      text: 'text-status-in-progress',
       label: 'در حال بررسی فنی',
     },
     in_progress: {
-      bg: 'bg-orange-950/40 border-orange-500/30 text-orange-400',
-      text: 'text-orange-400',
+      bg: 'bg-status-in-progress/20 border-status-in-progress/30 text-status-in-progress',
+      text: 'text-status-in-progress',
       label: 'در حال اجرای فنی',
     },
     resolved: {
-      bg: 'bg-emerald-950/40 border-emerald-500/30 text-emerald-400',
-      text: 'text-emerald-400',
+      bg: 'bg-status-resolved/20 border-status-resolved/30 text-status-resolved',
+      text: 'text-status-resolved',
       label: 'برطرف شده و نهایی',
     },
     archived: {
-      bg: 'bg-zinc-800 border-zinc-700 text-slate-400',
-      text: 'text-slate-400',
+      bg: 'bg-muted border-border text-muted-foreground',
+      text: 'text-muted-foreground',
       label: 'بایگانی‌شده',
     },
   };
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8" id="shahr_ara_admin_panel">
-      {/* 1. Header Admin banner */}
-      <div className="bg-[#0f172a] border border-zinc-800 rounded-2xl p-6 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 dark-dotted-grid relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/5 blur-3xl rounded-full" />
+      <div className="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center justify-center text-amber-400">
-            <Shield01Icon className="w-6 h-6" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 text-primary">
+            <Shield className="h-6 w-6" />
           </div>
           <div>
-            <span className="text-[10px] font-bold text-amber-400 font-mono tracking-wider">
-              ADMINISTRATION BOARD
+            <span className="font-mono text-[10px] font-bold tracking-wider text-primary">
+              پنل مدیریت شهری
             </span>
-            <h2 className="text-2xl font-black text-white mt-0.5">
+            <h2 className="text-foreground mt-0.5 text-2xl font-black">
               پنل پاسخگویی و مدیریت شهرداری شهرآرا
             </h2>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="mt-1 text-xs text-muted-foreground">
               شما وارد حساب کاربری مدیر سامانه شده‌اید. پاسخ به شهروندان و
               تغییرات زیر نظر سیستم یکپارچه مستند می‌شود.
             </p>
           </div>
         </div>
 
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           onClick={onRefresh}
-          className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-300 hover:text-white bg-zinc-950 border border-zinc-800 rounded-lg hover:border-zinc-700 transition-colors"
+          className="gap-1.5"
         >
-          <Refresh01Icon className="w-3.5 h-3.5" />
+          <RefreshCcw className="h-3.5 w-3.5" />
           بروزرسانی لیست کارهای مردمی
-        </button>
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
         {/* Left Column: List with Filters (7 columns on large desktop) */}
-        <div className="lg:col-span-7 flex flex-col gap-6">
+        <div className="flex flex-col gap-6 lg:col-span-7">
           {/* Active Filters / Search */}
-          <div className="bg-[#0f172a] border border-zinc-800 rounded-xl p-5 shadow-lg flex flex-col gap-4">
+          <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5 shadow-lg">
             {/* Search row */}
             <div className="relative">
-              <Search01Icon className="absolute right-3.5 top-3 w-4 h-4 text-slate-400" />
-              <input
+              <Search className="text-muted-foreground absolute top-3 right-3.5 h-4 w-4" />
+              <Input
                 type="text"
                 placeholder="جستجوی درخواست‌ها (عنوان، توضیحات، نام شهروند ارائه‌دهنده...)"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-10 py-2.5 text-sm bg-zinc-950 border border-zinc-800 rounded-lg text-white focus:outline-none focus:border-cyan-500 transition-colors font-sans"
+                className="bg-background pr-10"
               />
             </div>
 
             {/* Quick Filters Group */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {/* Type selector */}
-              <div className="flex flex-col gap-1 text-right">
-                <span className="text-[10px] text-slate-400 font-bold mb-1 flex items-center gap-1">
-                  <FilterIcon className="w-3 h-3 text-cyan-400" />
+              <div className="flex flex-col gap-1.5 text-right">
+                <span className="text-muted-foreground flex items-center gap-1 text-[10px] font-bold">
+                  <Filter className="text-primary h-3 w-3" />
                   نوع مشارکت
                 </span>
-                <select
+                <Select
                   value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value as any)}
-                  className="px-3 py-2 text-xs bg-zinc-950 border border-zinc-800 rounded-lg text-white font-medium font-sans"
+                  onValueChange={(v) =>
+                    setSelectedType(v as 'all' | 'problem' | 'idea')
+                  }
                 >
-                  <option value="all">همه دسته‌ها (مشکل و ایده)</option>
-                  <option value="problem">فقط گزارش مشکلات شهری</option>
-                  <option value="idea">فقط ایده‌های نوآورانه</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      همه دسته‌ها (مشکل و ایده)
+                    </SelectItem>
+                    <SelectItem value="problem">
+                      فقط گزارش مشکلات شهری
+                    </SelectItem>
+                    <SelectItem value="idea">فقط ایده‌های نوآورانه</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Category selector */}
-              <div className="flex flex-col gap-1 text-right">
-                <span className="text-[10px] text-slate-400 font-bold mb-1 flex items-center gap-1">
-                  <Layers01Icon className="w-3 h-3 text-cyan-400" />
+              <div className="flex flex-col gap-1.5 text-right">
+                <span className="text-muted-foreground flex items-center gap-1 text-[10px] font-bold">
+                  <Layers className="text-primary h-3 w-3" />
                   موضوع خدمت
                 </span>
-                <select
+                <Select
                   value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="px-3 py-2 text-xs bg-zinc-950 border border-zinc-800 rounded-lg text-white font-medium font-sans"
+                  onValueChange={setSelectedCategory}
                 >
-                  <option value="all">همه موضوعات خدمتی</option>
-                  {CATEGORIES.map((c, i) => (
-                    <option key={i} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">همه موضوعات خدمتی</SelectItem>
+                    {CATEGORIES.map((c, i) => (
+                      <SelectItem key={i} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Status selector */}
-              <div className="flex flex-col gap-1 text-right">
-                <span className="text-[10px] text-slate-400 font-bold mb-1 flex items-center gap-1">
-                  <CheckmarkCircle01Icon className="w-3 h-3 text-cyan-400" />
+              <div className="flex flex-col gap-1.5 text-right">
+                <span className="text-muted-foreground flex items-center gap-1 text-[10px] font-bold">
+                  <CheckCircle className="text-primary h-3 w-3" />
                   وضعیت فرآیند
                 </span>
-                <select
+                <Select
                   value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value as any)}
-                  className="px-3 py-2 text-xs bg-zinc-950 border border-zinc-800 rounded-lg text-white font-medium font-sans"
+                  onValueChange={(v) => setSelectedStatus(v as RequestStatus)}
                 >
-                  <option value="all">همه وضعیت‌ها</option>
-                  <option value="submitted">مورد ارسالی جدید</option>
-                  <option value="under_review">در حال بررسی تخصصی</option>
-                  <option value="in_progress">اکیپ‌های مشغول به کار</option>
-                  <option value="resolved">برطرف شده و نهایی</option>
-                  <option value="archived">بایگانی شده</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">همه وضعیت‌ها</SelectItem>
+                    <SelectItem value="submitted">مورد ارسالی جدید</SelectItem>
+                    <SelectItem value="under_review">
+                      در حال بررسی تخصصی
+                    </SelectItem>
+                    <SelectItem value="in_progress">
+                      اکیپ‌های مشغول به کار
+                    </SelectItem>
+                    <SelectItem value="resolved">برطرف شده و نهایی</SelectItem>
+                    <SelectItem value="archived">بایگانی شده</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
 
           {/* Submissions List */}
-          <div className="space-y-4 max-h-[600px] overflow-y-auto pr-1">
+          <div className="max-h-[500px] space-y-3 overflow-y-auto p-0.5">
             {filteredItems.length > 0 ? (
               filteredItems.map((item) => {
                 const isSelected = selectedItem?.id === item.id;
@@ -268,65 +310,61 @@ export default function AdminPanel({
                 const isProblem = item.type === 'problem';
 
                 return (
-                  <div
+                  <Card
                     key={item.id}
-                    onClick={() => setSelectedItem(item)}
-                    className={`p-4 rounded-xl border text-right cursor-pointer transition-all duration-300 ${
+                    size="sm"
+                    className={cn(
+                      'cursor-pointer transition-all',
                       isSelected
-                        ? 'bg-zinc-900 border-cyan-500 shadow-[0_0_15px_rgba(34,211,238,0.1)]'
-                        : 'bg-[#0f172a] border-zinc-800/80 hover:border-zinc-700'
-                    }`}
+                        ? 'border-primary ring-2 ring-primary/40 shadow-md'
+                        : 'border-border bg-card hover:border-primary/50',
+                    )}
+                    onClick={() => setSelectedItem(item)}
                   >
-                    {/* Header Row */}
-                    <div className="flex justify-between items-start gap-2 mb-2">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`px-2 py-0.5 text-[10px] rounded-md font-bold tracking-wide border ${
-                            isProblem
-                              ? 'bg-red-950/20 border-red-500/20 text-red-400'
-                              : 'bg-emerald-900/20 border-emerald-500/20 text-emerald-400'
-                          }`}
-                        >
-                          {isProblem ? 'گزارش مشکل' : 'ایده خلاق'}
-                        </span>
-                        <span className="text-[10px] text-zinc-400 font-mono tracking-wider bg-zinc-950 px-2 py-0.5 rounded border border-zinc-805">
-                          {item.category}
-                        </span>
+                    <CardContent className="flex flex-col gap-2.5 px-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant={isProblem ? 'destructive' : 'default'}
+                            className={cn(
+                              isProblem
+                                ? ''
+                                : 'bg-type-idea/10 text-type-idea hover:bg-type-idea/20',
+                            )}
+                          >
+                            {isProblem ? 'گزارش مشکل' : 'ایده خلاق'}
+                          </Badge>
+                        </div>
+                        <Badge className={statusColors[item.status]?.bg}>
+                          {statusColors[item.status]?.label}
+                        </Badge>
                       </div>
 
-                      <span
-                        className={`px-2 py-0.5 text-[10px] font-bold rounded-md border ${statusColors[item.status]?.bg}`}
-                      >
-                        {statusColors[item.status]?.label}
-                      </span>
-                    </div>
+                      <CardTitle className="text-sm font-bold text-foreground">
+                        {item.title}
+                      </CardTitle>
 
-                    <h3 className="text-sm font-black text-white hover:text-cyan-300 cursor-pointer mb-2 transition-colors">
-                      {item.title}
-                    </h3>
+                      <CardDescription className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                        {item.description}
+                      </CardDescription>
 
-                    <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed mb-3">
-                      {item.description}
-                    </p>
-
-                    {/* Footer specifications */}
-                    <div className="flex flex-wrap items-center justify-between border-t border-zinc-800/50 pt-2.5 text-[10px] text-slate-400 font-mono gap-2">
-                      <span className="flex items-center gap-1 font-sans">
-                        <UserIcon className="w-3.5 h-3.5 text-zinc-500" />
-                        ثبت‌کننده: {item.userName} (
-                        {toPersianDigits(item.region)})
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Calendar01Icon className="w-3.5 h-3.5 text-zinc-500" />
-                        تاریخ ثبت: {dateString}
-                      </span>
-                    </div>
-                  </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <User className="h-3 w-3 text-muted-foreground" />
+                          {item.userName} - {toPersianDigits(item.region)}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3 text-muted-foreground" />
+                          {dateString}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
                 );
               })
             ) : (
-              <div className="bg-[#0f172a] border border-zinc-800 rounded-xl p-10 text-center text-slate-400">
-                <FilterIcon className="w-8 h-8 text-slate-600 mx-auto mb-3" />
+              <div className="rounded-xl border border-border bg-card p-10 text-center text-muted-foreground">
+                <Filter className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
                 <p className="text-xs font-semibold">
                   هیچ موردی منطبق با فیلترهای بالا یافت نشد.
                 </p>
@@ -336,79 +374,91 @@ export default function AdminPanel({
         </div>
 
         {/* Right Column: Detailed Response Dashboard (5 columns on desktop) */}
-        <div className="lg:col-span-5 h-full">
+        <div className="h-full lg:col-span-5">
           {selectedItem ? (
-            <div className="bg-[#0f172a] border border-zinc-800 rounded-xl p-6 shadow-xl relative overflow-hidden space-y-6">
-              <div className="absolute top-0 left-0 w-32 h-32 bg-cyan-500/5 blur-3xl rounded-full" />
-
-              {/* Back button on mobile */}
-              <div className="border-b border-zinc-800 pb-4 mb-4 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-bold text-cyan-400 font-mono tracking-wider block uppercase">
-                    DETAILED ACTION CONTROLLER
+            <Card className="rounded-xl border border-border bg-card shadow-sm">
+              {/* Header */}
+              <div className="flex items-start justify-between gap-4 px-(--card-spacing)">
+                <div className="space-y-1">
+                  <span className="block font-mono text-[10px] font-bold tracking-wider text-primary">
+                    جزئیات درخواست
                   </span>
-                  <h3 className="text-md font-extrabold text-white">
+                  <h3 className="text-base font-extrabold text-foreground">
                     بررسی درخواست برگزیده
                   </h3>
                 </div>
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => setSelectedItem(null)}
-                  className="p-1.5 hover:bg-zinc-850 rounded text-slate-400 hover:text-white transition-colors"
-                  title="بستن پنجره"
                 >
-                  <ArrowLeft01Icon className="w-4 h-4" />
-                </button>
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
 
-              {/* Title & metadata */}
-              <div className="space-y-2">
-                <span className="text-[10px] text-cyan-400 font-bold block">
-                  {selectedItem.category} |{' '}
+              {/* Category & Region */}
+              <div className="flex items-center gap-2 px-(--card-spacing) text-xs font-bold text-muted-foreground">
+                <Badge
+                  variant={selectedItem.type === 'problem' ? 'destructive' : 'default'}
+                  className={cn(
+                    selectedItem.type !== 'problem' &&
+                      'bg-type-idea/10 text-type-idea',
+                  )}
+                >
+                  {selectedItem.type === 'problem' ? 'گزارش مشکل' : 'ایده شهری'}
+                </Badge>
+                <Badge variant="outline">{selectedItem.category}</Badge>
+                <span className="mr-auto text-[10px]">
                   {toPersianDigits(selectedItem.region)}
                 </span>
-                <h4 className="text-base font-black text-white leading-snug">
-                  {selectedItem.title}
-                </h4>
-                <p className="text-xs text-slate-300 leading-relaxed bg-zinc-950 p-3.5 rounded-lg border border-zinc-800 whitespace-pre-line">
-                  {selectedItem.description}
-                </p>
               </div>
 
-              {/* Citizen Personal Info */}
-              <div className="bg-zinc-950/60 border border-zinc-800 rounded-xl p-3.5 space-y-2 text-xs">
-                <div className="flex items-center gap-2 pb-2 border-b border-zinc-800">
-                  <UserIcon className="w-4 h-4 text-cyan-400 shrink-0" />
-                  <strong className="text-slate-200">
-                    اطلاعات تماس شهروند ثبت‌کننده
-                  </strong>
+              {/* Title & Description */}
+              <div className="space-y-3 px-(--card-spacing)">
+                <CardTitle className="text-base font-black text-foreground">
+                  {selectedItem.title}
+                </CardTitle>
+                <div className="rounded-lg border border-border bg-muted/30 p-3.5 text-xs leading-relaxed whitespace-pre-line text-foreground/80">
+                  {selectedItem.description}
                 </div>
-                <div className="grid grid-cols-2 gap-3 pt-1">
+              </div>
+
+              {/* Status */}
+              <div className="px-(--card-spacing)">
+                <Badge className={cn('px-3 py-1 text-[10px]', statusColors[selectedItem.status]?.bg)}>
+                  {statusColors[selectedItem.status]?.label}
+                </Badge>
+              </div>
+
+              {/* Citizen Info */}
+              <div className="mx-(--card-spacing) rounded-lg border border-border bg-muted/20 p-3.5">
+                <div className="flex items-center gap-2 pb-2">
+                  <User className="h-4 w-4 text-primary" />
+                  <span className="text-xs font-bold text-foreground">
+                    اطلاعات تماس شهروند
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <span className="text-slate-400 text-[10px] block">
-                      نام ثبت‌کننده:
-                    </span>
-                    <span className="text-slate-200 font-bold">
-                      {selectedItem.userName}
-                    </span>
+                    <span className="block text-[10px] text-muted-foreground">نام:</span>
+                    <span className="text-xs font-bold text-foreground">{selectedItem.userName}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 text-[10px] block">
-                      شماره همراه شهروند:
-                    </span>
-                    <span className="text-slate-200 font-mono" dir="rtl">
+                    <span className="block text-[10px] text-muted-foreground">شماره همراه:</span>
+                    <span className="font-mono text-xs text-foreground" dir="rtl">
                       {toPersianDigits(selectedItem.userPhone)}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Map Preview of Issue Location */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-300 flex items-center gap-1">
-                  <Location01Icon className="w-3.5 h-3.5 text-cyan-400" />
-                  موقعیت جغرافیایی پیوست شده
-                </label>
-                <div className="h-[200px] w-full rounded-xl overflow-hidden border border-slate-205 dark:border-zinc-800 bg-white dark:bg-zinc-950 relative">
+              {/* Map */}
+              <div className="space-y-2 px-(--card-spacing)">
+                <span className="flex items-center gap-1 text-xs font-bold text-muted-foreground">
+                  <MapPin className="h-3.5 w-3.5 text-primary" />
+                  موقعیت جغرافیایی
+                </span>
+                <div className="h-[180px] overflow-hidden rounded-lg border border-border bg-background">
                   <MapComponent
                     pickerMode={false}
                     items={[selectedItem]}
@@ -417,83 +467,69 @@ export default function AdminPanel({
                 </div>
               </div>
 
-              {/* Modification Form */}
+              {/* Admin Response Form */}
               <form
                 onSubmit={handleUpdate}
-                className="border-t border-zinc-800 pt-5 space-y-4"
+                className="space-y-3 px-(--card-spacing)"
               >
                 {saveSuccess && (
-                  <div className="flex items-center gap-2 p-2.5 rounded-lg bg-emerald-950/20 border border-emerald-500/20 text-xs text-emerald-300">
-                    <CheckmarkCircle01Icon className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>بروزرسانی وضعیت با موفقیت روی سرور اعمال گردید!</span>
+                  <div className="flex items-center gap-2 rounded-lg border border-type-idea/20 bg-type-idea/10 p-2.5 text-xs text-type-idea">
+                    <CheckCircle className="h-4 w-4 shrink-0" />
+                    <span>بروزرسانی با موفقیت اعمال شد!</span>
                   </div>
                 )}
 
-                {/* Status selector */}
-                <div className="flex flex-col gap-1.5 text-right">
-                  <label className="text-xs font-bold text-slate-300">
-                    ارتقای وضعیت اجرایی درخواست
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-muted-foreground">
+                    تغییر وضعیت درخواست
                   </label>
-                  <select
+                  <Select
                     value={statusVal}
-                    onChange={(e) =>
-                      setStatusVal(e.target.value as RequestStatus)
-                    }
-                    className="w-full px-4 py-2.5 text-sm bg-zinc-950 border border-zinc-800 rounded-lg text-white focus:outline-none focus:border-cyan-500 font-sans"
+                    onValueChange={(v) => setStatusVal(v as RequestStatus)}
                   >
-                    <option value="submitted">گزارش معلق (به صف جدید)</option>
-                    <option value="under_review">
-                      تحت بررسی فنی و تایید اعتبار
-                    </option>
-                    <option value="in_progress">
-                      اعزام اکیپ عملیاتی (در دست اقدام)
-                    </option>
-                    <option value="resolved">
-                      برطرف شده و پایان پروژه معبر
-                    </option>
-                    <option value="archived">
-                      بایگانی شده (خارج از توان/غیر مرتبط)
-                    </option>
-                  </select>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="submitted">جدید (صف انتظار)</SelectItem>
+                      <SelectItem value="under_review">تحت بررسی فنی</SelectItem>
+                      <SelectItem value="in_progress">در دست اقدام</SelectItem>
+                      <SelectItem value="resolved">برطرف شده</SelectItem>
+                      <SelectItem value="archived">بایگانی</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                {/* Text Response */}
-                <div className="flex flex-col gap-1.5 text-right">
-                  <label className="text-xs font-bold text-slate-300">
-                    پاسخ رسمی مسئول شهرداری به شهروند
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-muted-foreground">
+                    پاسخ رسمی شهرداری
                   </label>
-                  <textarea
+                  <Textarea
                     rows={3}
                     required
-                    placeholder="نامه یا پاسخ رسمی که به اطلاع ثبت‌کننده و عموم بازدیدکنندگان خواهد رسید..."
+                    placeholder="پاسخ رسمی که به اطلاع شهروند و عموم خواهد رسید..."
                     value={adminResponse}
                     onChange={(e) => setAdminResponse(e.target.value)}
-                    className="w-full px-4 py-2 text-sm bg-zinc-950 border border-zinc-800 rounded-lg text-white focus:outline-none focus:border-cyan-500 transition-colors resize-none leading-relaxed font-sans"
                   />
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full py-2 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-zinc-950 font-bold rounded-lg transition-all duration-300 shadow-[0_0_15px_rgba(245,158,11,0.15)] text-xs font-sans"
-                >
-                  {submitting
-                    ? 'در حال انتشار پاسخ...'
-                    : 'تایید و ثبت نهایی پاسخ مدیریت'}
-                </button>
+                <Button type="submit" variant="default" className="w-full" disabled={submitting}>
+                  {submitting ? 'در حال انتشار...' : 'ثبت و انتشار پاسخ'}
+                </Button>
               </form>
-            </div>
+            </Card>
           ) : (
-            <div className="bg-[#0f172a] border border-zinc-800 rounded-xl p-10 text-center text-slate-400 h-full min-h-[400px] flex flex-col items-center justify-center dark-dotted-grid">
-              <Comment01Icon className="w-12 h-12 text-slate-700 mb-4 animate-pulse" />
-              <h3 className="text-sm font-bold text-slate-300">
-                پنجره اقدام اداری
-              </h3>
-              <p className="text-xs text-slate-500 max-w-xs mt-2 leading-relaxed">
-                جهت مشاهده اطلاعات تماس شهروند، محل روی نقشه و پاسخ‌دهی رسمی با
-                تغییر وضعیت، یکی از موارد سمت راست را برگزینید.
-              </p>
-            </div>
+            <Card className="flex h-full min-h-[400px] flex-col items-center justify-center rounded-xl border border-border bg-card text-center">
+              <CardContent className="p-6">
+                <MessageSquare className="mx-auto mb-4 h-10 w-10 text-muted-foreground/50" />
+                <h3 className="mb-1 text-sm font-bold text-foreground">
+                  پنجره اقدام اداری
+                </h3>
+                <p className="max-w-xs text-xs leading-relaxed text-muted-foreground">
+                  برای مشاهده جزئیات و پاسخ‌دهی، یک درخواست از لیست انتخاب کنید.
+                </p>
+              </CardContent>
+            </Card>
           )}
         </div>
       </div>

@@ -2,7 +2,7 @@
 
 .PHONY: install install-backend install-frontend dev dev-backend dev-frontend \
         build lint lint-backend lint-frontend format format-backend format-frontend \
-        clean clean-backend clean-frontend test test-backend db-reset help
+        clean clean-backend clean-frontend test test-backend db-reset seed help
 
 # ─── Install ──────────────────────────────────────────────────────────────────
 
@@ -21,7 +21,7 @@ dev: dev-backend dev-frontend ## Run both servers concurrently
 dev-backend: ## Start backend server (port 8000)
 	cd backend && uvicorn main:app --reload --port 8000
 
-dev-frontend: ## Start frontend dev server (port 5173)
+dev-frontend: ## Start frontend dev server (port 3000)
 	cd frontend && npm run dev
 
 # ─── Build ────────────────────────────────────────────────────────────────────
@@ -36,8 +36,8 @@ lint: lint-backend lint-frontend ## Run all linters
 lint-backend: ## Lint backend with Ruff
 	cd backend && ruff check --fix .
 
-lint-frontend: ## Type-check frontend with TypeScript
-	cd frontend && npx tsc --noEmit
+lint-frontend: ## Lint frontend with ESLint + TypeScript
+	cd frontend && npx eslint . && npx tsc --noEmit
 
 # ─── Format ───────────────────────────────────────────────────────────────────
 
@@ -58,10 +58,14 @@ test-backend: ## Run backend API tests
 
 # ─── Database ────────────────────────────────────────────────────────────────
 
-db-reset: ## Delete & recreate SQLite database
+db-reset: ## Delete, recreate & seed the SQLite database
 	rm -f backend/shahr_ara.db
 	cd backend && python3 -c "from app.db.session import Base, engine; Base.metadata.create_all(bind=engine)"
-	@echo "Database reset complete."
+	cd backend && python3 -m seed
+	@echo "Database reset & seeded."
+
+seed: ## Seed database with sample data
+	cd backend && python3 -m seed
 
 # ─── Clean ────────────────────────────────────────────────────────────────────
 
@@ -78,7 +82,9 @@ clean-frontend: ## Remove frontend dist and node_modules
 # ─── Help ─────────────────────────────────────────────────────────────────────
 
 help: ## Show this help message
-	@awk 'BEGIN {FS = ":.*##"; section = ""} \
+	@awk 'BEGIN {FS = ":.*##"; section = ""; \
+		group["install"]=1; group["dev"]=1; group["lint"]=1; \
+		group["format"]=1; group["test"]=1; group["clean"]=1} \
 		/^# ─── / { \
 			s = $$0; \
 			gsub(/^# ──+ /, "", s); \
@@ -89,13 +95,17 @@ help: ## Show this help message
 			target = $$1; \
 			desc = $$2; \
 			if (!printed_first) { \
-				printf "\n  \033[1mUsage:\033[0m  make \033[36m<target>\033[0m\n\n"; \
+				printf "\n\n"; \
 				printed_first = 1; \
 			} \
 			if (section != "" && section != last_section) { \
-				printf "  \033[33m%s\033[0m\n", section; \
+				if (last_section != "") printf "\n"; \
+				printf "  \033[1;33m%s\033[0m\n", section; \
 				last_section = section; \
 			} \
-			printf "    \033[36m%-20s\033[0m %s\n", target, desc; \
+			if (target in group) \
+				printf "   \033[1;36m%-22s\033[0m \033[97m%s\033[0m\n", target, desc; \
+			else \
+				printf "   \033[36m%-22s\033[0m %s\n", target, desc; \
 		}' Makefile
 	@echo ""
