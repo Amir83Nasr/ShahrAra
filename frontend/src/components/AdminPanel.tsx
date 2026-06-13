@@ -111,11 +111,11 @@ export default function AdminPanel({
     return matchesSearch && matchesType && matchesCategory && matchesStatus;
   });
 
-// Reset pagination on filter change
-   useEffect(() => {
-     // eslint-disable-next-line react-hooks/set-state-in-effect
-     setVisibleCount(12);
-   }, [searchTerm, selectedType, selectedCategory, selectedStatus]);
+  // Reset pagination on filter change
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setVisibleCount(12);
+  }, [searchTerm, selectedType, selectedCategory, selectedStatus]);
 
   // IntersectionObserver for infinite scroll
   useEffect(() => {

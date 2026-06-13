@@ -167,6 +167,7 @@ export default function MapComponent({
       mapInstanceRef.current = null;
       pickerMarkerRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run once on load
 
   // Handle Updates to Display Markers (Submissions items)
@@ -256,7 +257,6 @@ export default function MapComponent({
       [selectedCoordinates.lat, selectedCoordinates.lng],
       map.getZoom(),
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCoordinates, pickerMode]);
 
   return (

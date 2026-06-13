@@ -16,7 +16,9 @@ class TestCreateRequest:
         assert req["likes"] == 0
         assert req["id"].startswith("req_")
 
-    def test_create_request_without_region_defaults(self, client, registered_user, sample_request_data):
+    def test_create_request_without_region_defaults(
+        self, client, registered_user, sample_request_data
+    ):
         data = {**sample_request_data, "region": ""}
         r = client.post("/api/v1/requests", json=data)
         assert r.status_code == 201
@@ -36,7 +38,9 @@ class TestCreateRequest:
             ("type", "invalid"),
         ],
     )
-    def test_create_request_invalid_data(self, client, registered_user, sample_request_data, field, value):
+    def test_create_request_invalid_data(
+        self, client, registered_user, sample_request_data, field, value
+    ):
         data = {**sample_request_data, field: value}
         r = client.post("/api/v1/requests", json=data)
         assert r.status_code == 422

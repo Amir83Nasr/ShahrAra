@@ -7,7 +7,7 @@ from starlette.status import (
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
     HTTP_405_METHOD_NOT_ALLOWED,
-    HTTP_422_UNPROCESSABLE_ENTITY,
+    HTTP_422_UNPROCESSABLE_CONTENT,
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
 
@@ -17,7 +17,7 @@ PERSIAN_ERRORS: dict[int, str] = {
     HTTP_403_FORBIDDEN: "شما مجوز دسترسی به این بخش را ندارید.",
     HTTP_404_NOT_FOUND: "مورد درخواستی یافت نشد.",
     HTTP_405_METHOD_NOT_ALLOWED: "این روش درخواست برای این مسیر پشتیبانی نمی‌شود.",
-    HTTP_422_UNPROCESSABLE_ENTITY: "داده‌های ارسالی از نظر ساختاری مشکل دارند.",
+    HTTP_422_UNPROCESSABLE_CONTENT: "داده‌های ارسالی از نظر ساختاری مشکل دارند.",
     HTTP_500_INTERNAL_SERVER_ERROR: "خطایی در سرور رخ داده است. لطفاً بعداً تلاش کنید.",
 }
 
@@ -64,12 +64,12 @@ async def validation_exception_handler(
         })
 
     return JSONResponse(
-        status_code=HTTP_422_UNPROCESSABLE_ENTITY,
+        status_code=HTTP_422_UNPROCESSABLE_CONTENT,
         content={
             "success": False,
             "error": {
-                "code": HTTP_422_UNPROCESSABLE_ENTITY,
-                "message": PERSIAN_ERRORS[HTTP_422_UNPROCESSABLE_ENTITY],
+                "code": HTTP_422_UNPROCESSABLE_CONTENT,
+                "message": PERSIAN_ERRORS[HTTP_422_UNPROCESSABLE_CONTENT],
                 "fields": field_errors,
             },
         },
