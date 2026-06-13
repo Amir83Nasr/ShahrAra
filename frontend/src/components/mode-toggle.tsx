@@ -20,7 +20,9 @@ export function ModeToggle({
     const next = theme === 'light' ? 'dark' : 'light';
 
     if ('startViewTransition' in document) {
-      (document as unknown as { startViewTransition: (cb: () => void) => void }).startViewTransition(() => onThemeChange(next));
+      (
+        document as unknown as { startViewTransition: (cb: () => void) => void }
+      ).startViewTransition(() => onThemeChange(next));
     } else {
       onThemeChange(next);
     }

@@ -18,10 +18,10 @@ install-frontend: ## Install frontend npm dependencies
 
 dev: dev-backend dev-frontend ## Run both servers concurrently
 
-dev-backend: ## Start backend server (port 8000)
-	cd backend && uvicorn main:app --reload --port 8000
+dev-backend: ## Start backend server (port 8000, accessible on network)
+	cd backend && uvicorn main:app --reload --port 8000 --host 0.0.0.0
 
-dev-frontend: ## Start frontend dev server (port 3000)
+dev-frontend: ## Start frontend dev server (port 3000, accessible on network)
 	cd frontend && npm run dev
 
 # ─── Build ────────────────────────────────────────────────────────────────────
@@ -54,7 +54,7 @@ format-frontend: ## Format frontend with Prettier
 test: test-backend ## Run all tests
 
 test-backend: ## Run backend API tests
-	cd backend && python3 -m tests.test_api
+	cd backend && python3 -m pytest tests/ -v
 
 # ─── Database ────────────────────────────────────────────────────────────────
 

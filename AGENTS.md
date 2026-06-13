@@ -107,15 +107,16 @@ make dev-frontend   # Start frontend dev server (port 5173)
 
 ## API Endpoints
 
-| Method | Endpoint                    | Description                                      |
-| ------ | --------------------------- | ------------------------------------------------ |
-| POST   | `/api/auth/login`           | Login/register (phone + nationalId)              |
-| GET    | `/api/requests`             | List (search, type, category, status, userPhone) |
-| POST   | `/api/requests`             | Create request                                   |
-| PUT    | `/api/requests/{id}/status` | Update status (admin only)                       |
-| POST   | `/api/requests/{id}/like`   | Toggle like                                      |
-| GET    | `/api/stats`                | Aggregate statistics                             |
-| GET    | `/api/health`               | Health check                                     |
+| Method | Endpoint                       | Description                                      |
+| ------ | ------------------------------ | ------------------------------------------------ |
+| GET    | `/api`                         | API root (version info)                          |
+| GET    | `/api/health`                  | Health check                                     |
+| POST   | `/api/v1/auth/login`           | Login/register (phone + nationalId)              |
+| GET    | `/api/v1/requests`             | List (search, type, category, status, userPhone) |
+| POST   | `/api/v1/requests`             | Create request                                   |
+| PUT    | `/api/v1/requests/{id}/status` | Update status (admin only)                       |
+| POST   | `/api/v1/requests/{id}/like`   | Toggle like                                      |
+| GET    | `/api/v1/stats`                | Aggregate statistics                             |
 
 ---
 

@@ -17,6 +17,7 @@ api_router.include_router(requests.router, prefix="/requests")
     response_model=StatsResponse,
     summary="Aggregate statistics",
     description="Get total counts, breakdown by type, status, and category.",
+    tags=["stats"],
 )
 def get_stats(db: Session = Depends(get_db)):
     all_requests = db.query(Request).all()

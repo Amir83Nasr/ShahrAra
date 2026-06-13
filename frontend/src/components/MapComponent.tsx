@@ -24,7 +24,7 @@ interface MapComponentProps {
 // Function to generate dynamic inline SVG markers to bypass standard Leaflet asset link breaks
 const createMarkerIcon = (type: 'problem' | 'idea' | 'picker') => {
   const color =
-    type === 'problem' ? '#f87171' : type === 'idea' ? '#10b981' : '#0891b2'; // red-500, emerald-500, cyan-600
+    type === 'problem' ? '#f87171' : type === 'idea' ? '#10b981' : '#3b82f6'; // red-500, emerald-500, blue-500
   return L.divIcon({
     html: `
       <div class="relative flex items-center justify-center transition-transform hover:scale-110">
@@ -32,7 +32,7 @@ const createMarkerIcon = (type: 'problem' | 'idea' | 'picker') => {
           <path d="M18 0C8.06 0 0 8.06 0 18C0 29.5 16.2 41.1 16.9 41.5C17.6 42.1 18.4 42.1 19.1 41.5C19.8 41.1 36 29.5 36 18C36 8.06 27.94 0 18 0Z" fill="${color}" stroke="#ffffff" stroke-width="2"/>
           <circle cx="18" cy="18" r="6.5" fill="#ffffff" />
         </svg>
-        <span class="absolute top-2.5 w-2.5 h-2.5 rounded-full ${type === 'problem' ? 'bg-red-500' : type === 'idea' ? 'bg-emerald-500' : 'bg-cyan-600'}"></span>
+        <span class="absolute top-2.5 w-2.5 h-2.5 rounded-full ${type === 'problem' ? 'bg-red-500' : type === 'idea' ? 'bg-emerald-500' : 'bg-blue-500'}"></span>
       </div>
     `,
     iconSize: [36, 42],
@@ -74,7 +74,7 @@ export default function MapComponent({
   const itemMarkersRef = useRef<L.Marker[]>([]);
 
   // Qom coordinates as starting default
-  const defaultCenter: [number, number] = [34.6410, 50.8800];
+  const defaultCenter: [number, number] = [34.641, 50.88];
 
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -124,10 +124,7 @@ export default function MapComponent({
         pickerMarkerRef.current.on('dragend', () => {
           if (!pickerMarkerRef.current) return;
           const position = pickerMarkerRef.current.getLatLng();
-          const computedRegion = determineRegion(
-            position.lat,
-            position.lng,
-          );
+          const computedRegion = determineRegion(position.lat, position.lng);
           onCoordinatesChange?.(
             { lat: position.lat, lng: position.lng },
             computedRegion,
@@ -207,13 +204,13 @@ export default function MapComponent({
       const popupHtml = `
         <div class="text-right font-sans p-1 min-w-[210px]" dir="rtl" style="color: var(--foreground)">
           <div class="flex items-center justify-between pb-1.5 mb-2" style="border-bottom: 1px solid var(--border)">
-            <span class="text-[10px] font-black uppercase tracking-wider ${typeColor}">${PersianTypeName}</span>
+            <span class="text-[10px] font-extrabold uppercase tracking-wider ${typeColor}">${PersianTypeName}</span>
             <span class="text-[10px] px-1.5 py-0.5 rounded font-bold" style="background: var(--muted); color: var(--muted-foreground)">${statusLocales[item.status] || item.status}</span>
           </div>
           <h4 class="text-xs font-extrabold mb-1 leading-snug" style="color: var(--foreground)">${item.title}</h4>
           <p class="text-[11px] mb-2.5 line-clamp-2 leading-relaxed" style="color: var(--muted-foreground)">${item.description}</p>
           <div class="text-[10px] font-mono mb-2" dir="rtl" style="color: var(--muted-foreground)">${toPersianDigits(item.region)}</div>
-          <button id="marker-btn-${item.id}" class="w-full text-center font-black py-1 px-2 rounded-md transition-colors text-[10px]" style="background: var(--primary); color: var(--primary-foreground)">
+          <button id="marker-btn-${item.id}" class="w-full text-center font-extrabold py-1 px-2 rounded-md transition-colors text-[10px]" style="background: var(--primary); color: var(--primary-foreground)">
             مشاهده جزئیات درخواست
           </button>
         </div>
@@ -235,6 +232,7 @@ export default function MapComponent({
 
       itemMarkersRef.current.push(marker);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items, pickerMode]);
 
   // Adjust map centering dynamically when coordinates update externally in pick mode
@@ -258,18 +256,22 @@ export default function MapComponent({
       [selectedCoordinates.lat, selectedCoordinates.lng],
       map.getZoom(),
     );
-  }, [selectedCoordinates]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCoordinates, pickerMode]);
 
   return (
-    <div className="relative z-0 w-full isolation-isolate h-full" id="shahr_ara_map_component">
+    <div
+      className="isolation-isolate relative z-0 h-full w-full"
+      id="shahr_ara_map_component"
+    >
       <div
         ref={mapContainerRef}
-        className="h-full min-h-[300px] w-full rounded-xl border border-border transition-colors duration-200"
+        className="h-full min-h-75 w-full rounded-xl transition-colors duration-200"
       />
 
       {pickerMode && (
-        <div className="pointer-events-none absolute bottom-3 left-3 z-[1000] flex items-center gap-1.5 rounded-lg border border-border bg-background/95 px-3 py-2 text-[10px] shadow-lg backdrop-blur transition-colors dark:text-cyan-300">
-          <MapPin className="h-3.5 w-3.5 animate-pulse text-cyan-600 dark:text-cyan-400" />
+        <div className="border-border bg-background/95 text-muted-foreground pointer-events-none absolute bottom-3 left-3 z-[1000] flex items-center gap-1.5 rounded-lg border px-3 py-2 text-[10px] backdrop-blur transition-colors">
+          <MapPin className="text-primary h-3.5 w-3.5 animate-pulse" />
           <span className="font-bold">
             برای جابجایی نشانگر، روی نقشه کلیک کنید یا پین را بکشید.
           </span>

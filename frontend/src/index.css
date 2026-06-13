@@ -35,6 +35,21 @@
   font-style: normal;
   font-display: swap;
 }
+@font-face {
+  font-family: 'Iran Yekan X';
+  src: url('/assets/fonts/iran-yekan-x/IRANYekanX-ExtraBold.ttf')
+    format('truetype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Iran Yekan X';
+  src: url('/assets/fonts/iran-yekan-x/IRANYekanX-Black.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 @theme inline {
   --font-heading: 'Iran Yekan X', sans-serif;
@@ -110,8 +125,8 @@
   --status-archived: oklch(0.45 0 0);
   --type-problem: oklch(0.577 0.245 27.325);
   --type-idea: oklch(0.55 0.14 160);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
+  --border: oklch(0.2 0 0 / 28%);
+  --input: oklch(0.2 0 0 / 32%);
   --ring: oklch(0.55 0.1 240);
   --chart-1: oklch(0.55 0.14 240);
   --chart-2: oklch(0.65 0.12 200);
@@ -125,7 +140,7 @@
   --sidebar-primary-foreground: oklch(1 0 0);
   --sidebar-accent: oklch(0.93 0.04 240);
   --sidebar-accent-foreground: oklch(0.3 0.08 240);
-  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-border: oklch(0.2 0 0 / 28%);
   --sidebar-ring: oklch(0.55 0.1 240);
 }
 
@@ -152,8 +167,8 @@
   --status-archived: oklch(0.55 0 0);
   --type-problem: oklch(0.704 0.191 22.216);
   --type-idea: oklch(0.7 0.1 160);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
+  --border: oklch(1 0 0 / 20%);
+  --input: oklch(1 0 0 / 25%);
   --ring: oklch(0.7 0.08 240);
   --chart-1: oklch(0.85 0.08 240);
   --chart-2: oklch(0.75 0.1 200);
@@ -166,7 +181,7 @@
   --sidebar-primary-foreground: oklch(0.15 0 0);
   --sidebar-accent: oklch(0.25 0.06 240);
   --sidebar-accent-foreground: oklch(0.85 0.08 240);
-  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-border: oklch(1 0 0 / 20%);
   --sidebar-ring: oklch(0.7 0.08 240);
 }
 
@@ -195,11 +210,25 @@
   }
   body {
     @apply bg-background text-foreground;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
     background-image:
-      radial-gradient(ellipse 80% 50% at 50% 0%, hsl(var(--primary) / 0.06) 0%, transparent 70%),
-      radial-gradient(ellipse 50% 80% at 80% 100%, hsl(var(--primary) / 0.04) 0%, transparent 70%),
-      radial-gradient(ellipse 50% 80% at 20% 100%, hsl(var(--primary) / 0.03) 0%, transparent 70%);
+      radial-gradient(
+        ellipse 80% 50% at 50% 0%,
+        hsl(var(--primary) / 0.06) 0%,
+        transparent 70%
+      ),
+      radial-gradient(
+        ellipse 50% 80% at 80% 100%,
+        hsl(var(--primary) / 0.04) 0%,
+        transparent 70%
+      ),
+      radial-gradient(
+        ellipse 50% 80% at 20% 100%,
+        hsl(var(--primary) / 0.03) 0%,
+        transparent 70%
+      );
   }
   body::before {
     content: '';
@@ -207,7 +236,7 @@
     inset: 0;
     pointer-events: none;
     z-index: 0;
-    opacity: 0.035;
+    opacity: 0.025;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
     background-repeat: repeat;
     background-size: 300px 300px;
@@ -232,4 +261,43 @@
   .scrollbar-gutter-stable {
     scrollbar-gutter: stable;
   }
+}
+
+/* Grid pattern overlay — sits between app background and content */
+#shahr_ara_app_root::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(0, 0, 0, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at center, #000 50%, transparent 78%);
+  -webkit-mask-image: radial-gradient(
+    ellipse at center,
+    #000 50%,
+    transparent 78%
+  );
+}
+
+.dark #shahr_ara_app_root::before {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+} /* ---------- Shimmer text animation ---------- */
+@keyframes shimmer-text {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.shimmer-text {
+  background-size: 200% 100%;
+  animation: shimmer-text 4s ease-in-out infinite;
 }

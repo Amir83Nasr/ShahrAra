@@ -56,8 +56,8 @@ export default function RequestForm({
   const [region, setRegion] = useState('');
 
   const [coords, setCoords] = useState<{ lat: number; lng: number }>({
-    lat: 34.6410,
-    lng: 50.8800,
+    lat: 34.641,
+    lng: 50.88,
   });
 
   const [loading, setLoading] = useState(false);
@@ -87,7 +87,7 @@ export default function RequestForm({
     setLoading(true);
 
     try {
-      const response = await fetch('/api/requests', {
+      const response = await fetch('/api/v1/requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -127,14 +127,14 @@ export default function RequestForm({
   if (!currentUser) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-12 text-center">
-        <div className="flex min-h-[400px] flex-col items-center justify-center rounded-2xl border border-border bg-card p-8 shadow-md transition-colors md:p-12">
-          <div className="text-primary mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-primary/20 bg-primary/10 shadow-sm">
+        <div className="border-border bg-card flex min-h-[400px] flex-col items-center justify-center rounded-2xl border p-8 transition-colors md:p-12">
+          <div className="text-primary border-primary/20 bg-primary/10 mb-6 flex h-16 w-16 items-center justify-center rounded-full border">
             <MapPin className="h-8 w-8" />
           </div>
-          <h2 className="mb-3 text-2xl font-black text-foreground">
+          <h2 className="text-foreground mb-3 text-2xl font-extrabold">
             ثبت گزارش مشکل یا ایده شهری
           </h2>
-          <p className="mx-auto mb-8 max-w-md text-sm leading-relaxed font-medium text-muted-foreground">
+          <p className="text-muted-foreground mx-auto mb-8 max-w-md text-sm leading-relaxed font-medium">
             برای مشارکت در زیباتر کردن شهرمان و گزارش مسائل معابر، فضای سبز،
             روشنایی یا دیگر خدمات شهری، ابتدا باید وارد حساب کاربری خود شوید تا
             درخواستتان مستقیماً به دست مسئولان مربوطه برسد.
@@ -151,32 +151,32 @@ export default function RequestForm({
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
         {/* Helper Instructions Column */}
-        <div className="order-last flex flex-col gap-6 lg:order-first lg:col-span-4">
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm transition-colors">
-            <h3 className="text-primary mb-3.5 flex items-center gap-2 border-b border-border pb-2.5 text-sm font-black">
-              <Lightbulb className="h-4 w-4 text-primary" />
+        <div className="form-helper form-section order-last flex flex-col gap-6 lg:order-first lg:col-span-4">
+          <div className="border-border bg-card rounded-xl border p-5 transition-colors">
+            <h3 className="text-primary border-border mb-3.5 flex items-center gap-2 border-b pb-2.5 text-sm font-extrabold">
+              <Lightbulb className="text-primary h-4 w-4" />
               تفاوت گزارش مشکل و ایده چیست؟
             </h3>
 
             <div className="space-y-4">
-              <div className="hover:border-primary/20 rounded-lg border border-primary/10 bg-primary/5 p-3.5 transition-all">
-                <span className="flex items-center gap-1.5 text-xs font-medium text-destructive">
+              <div className="hover:border-primary/20 border-primary/10 bg-primary/5 rounded-lg border p-3.5 transition-all">
+                <span className="text-destructive flex items-center gap-1.5 text-xs font-medium">
                   <AlertTriangle className="h-3.5 w-3.5" />
                   گزارش مشکلات شهری
                 </span>
-                <p className="lines-relaxed mt-1 text-[11.5px] leading-relaxed font-normal text-muted-foreground">
+                <p className="lines-relaxed text-muted-foreground mt-1 text-[11.5px] leading-relaxed font-normal">
                   مسائلی که نیاز به تعمیر فوری شهرداری دارند؛ مانند نارسایی
                   آسفالت، خاموشی چراغ خیابان‌ها، تجمیع زباله، خرابی سطل‌ها و سد
                   معبر.
                 </p>
               </div>
 
-              <div className="hover:border-primary/20 rounded-lg border border-primary/10 bg-primary/5 p-3.5 transition-all">
+              <div className="hover:border-primary/20 border-primary/10 bg-primary/5 rounded-lg border p-3.5 transition-all">
                 <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                   <Lightbulb className="h-3.5 w-3.5" />
                   ارسال ایده‌های نوآورانه
                 </span>
-                <p className="lines-relaxed mt-1 text-[11.5px] leading-relaxed font-normal text-muted-foreground">
+                <p className="lines-relaxed text-muted-foreground mt-1 text-[11.5px] leading-relaxed font-normal">
                   پیشنهادها و طرح‌های خلاقانه‌ای که هوشمندسازی و زیبایی بصری
                   شهرآرا را ارتقا می‌دهد؛ مانند دیوار سبز، سطل‌های پلاستیکی
                   هوشمند، بهبود مبلمان شهری و مناسب‌سازی عبور توان‌یابان.
@@ -185,16 +185,14 @@ export default function RequestForm({
             </div>
           </div>
 
-          <div className="rounded-xl border border-border bg-muted p-5 transition-all">
-            <span
-              className="mb-2 block font-mono text-xs tracking-wider text-muted-foreground uppercase"
-            >
+          <div className="border-border bg-muted rounded-xl border p-5 transition-all">
+            <span className="text-muted-foreground mb-2 block font-mono text-xs tracking-wider uppercase">
               مرحله ۲: انتخاب موقعیت
             </span>
-            <h4 className="text-xs font-semibold text-foreground">
+            <h4 className="text-foreground text-xs font-semibold">
               چگونه لوکیشن دقیق را انتخاب کنیم؟
             </h4>
-            <p className="mt-2.5 text-[11px] leading-relaxed font-normal text-muted-foreground">
+            <p className="text-muted-foreground mt-2.5 text-[11px] leading-relaxed font-normal">
               با استفاده از نقشه روبرو، دکمه نشانگر را به سمت محل دقیق عارضه یا
               اجرای ایده جابجا کنید. پس از رها کردن پین، منطقه شهرداری مربوطه به
               صورت کاملاً خودکار مشخص خواهد شد.
@@ -203,29 +201,32 @@ export default function RequestForm({
         </div>
 
         {/* Form Container Column */}
-        <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-md transition-all md:p-8 lg:col-span-8">
-          <div className="absolute top-0 right-0 h-32 w-32 rounded-full bg-primary/5 blur-3xl" />
+        <div className="form-main form-section border-border bg-card relative overflow-hidden rounded-2xl border p-4 transition-all sm:p-6 md:p-8 lg:col-span-8">
+          <div className="bg-primary/5 absolute top-0 right-0 h-32 w-32 rounded-full blur-3xl" />
 
-          <div className="mb-6 border-b border-border pb-5">
-            <span
-              className="text-primary font-mono text-xs font-semibold tracking-wide uppercase"
-            >
+          <div className="form-main-section border-border mb-6 border-b pb-5">
+            <span className="text-primary font-mono text-[10px] font-semibold tracking-wide uppercase sm:text-xs">
               سامانه مشارکت شهری
             </span>
-            <h2 className="mt-1 text-2xl font-bold text-foreground">
+            <h2 className="text-foreground mt-1 text-lg font-bold sm:text-2xl">
               ثبت پیگیری و مشارکت جدید
             </h2>
-            <p className="mt-1 text-xs font-medium text-muted-foreground">
-              ثبت‌کننده:{' '}
-              <span className="font-semibold text-foreground">
-                {currentUser.firstName} {currentUser.lastName}
-              </span>{' '}
-              | شماره تماس:{' '}
-              <span
-                className="font-mono font-semibold text-foreground"
-                dir="rtl"
-              >
-                {toPersianDigits(currentUser.phone)}
+            <p className="text-muted-foreground mt-1 flex flex-wrap gap-x-1 text-[11px] font-medium sm:text-xs">
+              <span className="truncate">
+                ثبت‌کننده:{' '}
+                <span className="text-foreground font-semibold">
+                  {currentUser.firstName} {currentUser.lastName}
+                </span>
+              </span>
+              <span className="hidden sm:inline">|</span>
+              <span className="block sm:inline">
+                شماره تماس:{' '}
+                <span
+                  className="text-foreground font-mono font-semibold"
+                  dir="rtl"
+                >
+                  {toPersianDigits(currentUser.phone)}
+                </span>
               </span>
             </p>
           </div>
@@ -248,47 +249,47 @@ export default function RequestForm({
             )}
 
             {/* Request Type Selector */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-muted-foreground">
+            <div className="form-main-section flex flex-col gap-2">
+              <label className="text-muted-foreground text-xs font-bold">
                 نوع گزارش خود را مشخص کنید
               </label>
               <RadioGroup
                 value={type}
                 onValueChange={(v) => setType(v as RequestType)}
-                className="mt-1 grid grid-cols-2 gap-4"
+                className="mt-1 grid grid-cols-2 gap-3 sm:gap-4"
               >
                 <label
                   className={cn(
-                    'flex cursor-pointer items-center justify-center gap-2.5 rounded-lg border px-4 py-3 text-sm font-semibold transition-all duration-200',
+                    'flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-semibold transition-all duration-200 sm:gap-2.5 sm:px-4 sm:py-3 sm:text-sm',
                     type === 'problem'
-                      ? 'border-destructive/50 bg-destructive/10 text-destructive shadow-[0_0_15px_rgba(239,68,68,0.1)]'
+                      ? 'border-destructive/50 bg-destructive/10 text-destructive ring-destructive/10 ring-1'
                       : 'border-border text-muted-foreground hover:border-muted-foreground',
                   )}
                 >
                   <RadioGroupItem value="problem" className="sr-only" />
-                  <AlertTriangle className="h-4 w-4" />
-                  <span>گزارش مشکل به شهرداری</span>
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <span>گزارش مشکل</span>
                 </label>
                 <label
                   className={cn(
-                    'flex cursor-pointer items-center justify-center gap-2.5 rounded-lg border px-4 py-3 text-sm font-semibold transition-all duration-200',
+                    'flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-semibold transition-all duration-200 sm:gap-2.5 sm:px-4 sm:py-3 sm:text-sm',
                     type === 'idea'
-                      ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-600 shadow-[0_0_15px_rgba(16,185,129,0.1)]'
+                      ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-500/10'
                       : 'border-border text-muted-foreground hover:border-muted-foreground',
                   )}
                 >
                   <RadioGroupItem value="idea" className="sr-only" />
-                  <Lightbulb className="h-4 w-4" />
-                  <span>ارائه ایده زیبا پویای شهری</span>
+                  <Lightbulb className="h-4 w-4 shrink-0" />
+                  <span>ارائه ایده شهری</span>
                 </label>
               </RadioGroup>
             </div>
 
             {/* Category and title Row */}
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="form-main-section grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="flex flex-col gap-1.5">
-                <label className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
-                  <Tag className="h-3.5 w-3.5 text-primary" />
+                <label className="text-muted-foreground flex items-center gap-1 text-xs font-medium">
+                  <Tag className="text-primary h-3.5 w-3.5" />
                   موضوع درخواست <span className="text-destructive">*</span>
                 </label>
                 <Input
@@ -301,8 +302,8 @@ export default function RequestForm({
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
-                  <MessageSquare className="h-3.5 w-3.5 text-primary" />
+                <label className="text-muted-foreground flex items-center gap-1 text-xs font-medium">
+                  <MessageSquare className="text-primary h-3.5 w-3.5" />
                   دسته‌بندی مربوطه <span className="text-destructive">*</span>
                 </label>
                 <Select value={category} onValueChange={setCategory}>
@@ -321,9 +322,9 @@ export default function RequestForm({
             </div>
 
             {/* Description Area */}
-            <div className="flex flex-col gap-1.5">
-              <label className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
-                <AlignRight className="h-3.5 w-3.5 text-primary" />
+            <div className="form-main-section flex flex-col gap-1.5">
+              <label className="text-muted-foreground flex items-center gap-1 text-xs font-medium">
+                <AlignRight className="text-primary h-3.5 w-3.5" />
                 توضیحات تکمیلی <span className="text-destructive">*</span>
               </label>
               <Textarea
@@ -336,14 +337,14 @@ export default function RequestForm({
             </div>
 
             {/* Interactive Picker Map */}
-            <div className="flex flex-col gap-2">
-              <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                <MapPin className="h-4 w-4 text-primary" />
+            <div className="form-main-section flex flex-col gap-2">
+              <label className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
+                <MapPin className="text-primary h-4 w-4" />
                 موقعیت جغرافیایی روی نقشه{' '}
                 <span className="text-destructive">*</span>
               </label>
 
-              <div className="relative h-[300px] w-full overflow-hidden rounded-xl border border-border bg-card">
+              <div className="border-border bg-card relative h-[300px] w-full overflow-hidden rounded-xl border">
                 <MapComponent
                   pickerMode={true}
                   selectedCoordinates={coords}
@@ -351,32 +352,18 @@ export default function RequestForm({
                   theme={theme}
                 />
               </div>
-
-              <div className="flex items-center justify-between rounded border border-border bg-muted/50 px-1 py-1 font-mono text-xs text-muted-foreground">
-                <span>
-                  محدوده شهرداری شناسایی شده:{' '}
-                  <strong className="font-sans text-primary">
-                    {toPersianDigits(region || 'منطقه ۲ (مرکز قم)')}
-                  </strong>
-                </span>
-                <span dir="rtl" className="font-sans text-[11px]">
-                  {toPersianDigits(coords.lat.toFixed(5))} ,{' '}
-                  {toPersianDigits(coords.lng.toFixed(5))}
-                </span>
-              </div>
             </div>
 
             {/* Action Submit */}
-            <div className="mt-4 flex justify-end border-t border-border pt-5">
-              <Button type="submit" disabled={loading || success} size="lg">
-                <Send className="h-4 w-4 shrink-0" />
-                <span>
-                  {loading
-                    ? 'در حال ثبت درخواست...'
-                    : 'ارسال نهایی گزارش به شهرداری'}
-                </span>
-              </Button>
-            </div>
+
+            <Button type="submit" disabled={loading || success} size="lg">
+              <Send className="h-4 w-4 shrink-0" />
+              <span>
+                {loading
+                  ? 'در حال ثبت درخواست...'
+                  : 'ارسال نهایی گزارش به شهرداری'}
+              </span>
+            </Button>
           </form>
         </div>
       </div>

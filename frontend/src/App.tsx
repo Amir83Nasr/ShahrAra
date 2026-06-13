@@ -1,9 +1,5 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import RequestForm from './components/RequestForm';
@@ -12,11 +8,22 @@ import AdminPanel from './components/AdminPanel';
 import AuthModal from './components/AuthModal';
 import { User, RequestItem, RequestStatus, Stats } from './types';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import { AlertTriangle, Home, FileText } from 'lucide-react';
+import {
+  getCachedData,
+  setCachedData,
+  invalidateCache,
+} from '@/utils/apiCache';
+
+const REQ_CACHE_KEY = 'requests';
+const STATS_CACHE_KEY = 'stats';
+
+const VALID_TABS = ['home', 'reports', 'submit', 'admin'];
 
 export default function App() {
   const [currentTab, setTab] = useState<string>('home');
   const [isAuthOpen, setIsAuthOpen] = useState<boolean>(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('shahr_ara_user');
     if (saved) {
@@ -51,7 +58,18 @@ export default function App() {
 
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Sync theme changes with HTML classes — instant, no animation
+  const safeSetTab = (tab: string) => {
+    if (tab === 'admin' && !currentUser?.isAdmin) {
+      setApiError('دسترسی به پنل مدیریت نیازمند ورود با حساب کاربری مدیر است.');
+      return;
+    }
+    if (!VALID_TABS.includes(tab)) {
+      setTab('not-found');
+      return;
+    }
+    setTab(tab);
+  };
+
   useEffect(() => {
     localStorage.setItem('shahr_ara_theme', theme);
     const root = document.documentElement;
@@ -64,13 +82,32 @@ export default function App() {
     }
   }, [theme]);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (options?: { force?: boolean; silent?: boolean }) => {
+    const { force = false, silent = false } = options ?? {};
+
+    // Stale-while-revalidate: serve cached data first
+    if (!force) {
+      const cachedReqs = getCachedData<RequestItem[]>(REQ_CACHE_KEY);
+      const cachedStats = getCachedData<Stats>(STATS_CACHE_KEY);
+      if (cachedReqs && cachedStats) {
+        setRequests(cachedReqs.data);
+        setStats(cachedStats.data);
+        if (!silent) setLoading(false);
+        if (cachedReqs.isFresh && cachedStats.isFresh) return;
+        // Stale → revalidate silently in background below
+      }
+    }
+
+    if (!silent) setLoading(true);
+    setApiError(null);
+
     try {
-      const userParam = currentUser ? `?currentUserPhone=${currentUser.phone}` : '';
+      const userParam = currentUser
+        ? `?currentUserPhone=${currentUser.phone}`
+        : '';
       const [requestsRes, statsRes] = await Promise.all([
-        fetch(`/api/requests${userParam}`),
-        fetch('/api/stats'),
+        fetch(`/api/v1/requests${userParam}`),
+        fetch('/api/v1/stats'),
       ]);
 
       if (requestsRes.ok && statsRes.ok) {
@@ -78,40 +115,55 @@ export default function App() {
         const statData = await statsRes.json();
         setRequests(reqData);
         setStats(statData);
+        setCachedData(REQ_CACHE_KEY, reqData);
+        setCachedData(STATS_CACHE_KEY, statData);
+      } else {
+        setApiError(
+          'در دریافت اطلاعات از سرور مشکلی پیش آمد. لطفاً بعداً تلاش کنید.',
+        );
       }
     } catch (e) {
       console.error('Error fetching ShahrAra data:', e);
+      setApiError(
+        'ارتباط با سرور برقرار نشد. از اتصال اینترنت خود مطمئن شوید.',
+      );
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchData();
+    const load = async () => {
+      try {
+        await fetchData();
+      } catch {
+        // errors handled inside fetchData
+      }
+    };
+    load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);
 
-  // 2. Interaction Handlers
   const handleLoginSuccess = (user: User) => {
     setCurrentUser(user);
     localStorage.setItem('shahr_ara_user', JSON.stringify(user));
-
-    // Auto toggle to admin tab if admin logs in
+    invalidateCache();
     if (user.isAdmin) {
-      setTab('admin');
+      safeSetTab('admin');
     }
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem('shahr_ara_user');
-    setTab('home');
+    invalidateCache();
+    safeSetTab('home');
   };
 
   const handleLike = async (id: string) => {
     if (!currentUser) return;
     try {
-      const res = await fetch(`/api/requests/${id}/like`, {
+      const res = await fetch(`/api/v1/requests/${id}/like`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userPhone: currentUser.phone }),
@@ -123,6 +175,7 @@ export default function App() {
           setRequests((prev) =>
             prev.map((r) => (r.id === id ? updatedReq.request : r)),
           );
+          invalidateCache();
         }
       }
     } catch (e) {
@@ -136,15 +189,15 @@ export default function App() {
     adminResponse: string,
   ) => {
     try {
-      const res = await fetch(`/api/requests/${id}/status`, {
+      const res = await fetch(`/api/v1/requests/${id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status, adminResponse }),
       });
 
       if (res.ok) {
-        // Redraw lists
-        fetchData();
+        invalidateCache();
+        await fetchData({ force: true, silent: true });
       } else {
         throw new Error('فراخوانی آدرس با خطا مواجه شد.');
       }
@@ -154,15 +207,22 @@ export default function App() {
     }
   };
 
+  const handleRefresh = () => fetchData({ force: true });
+
+  const handleSubmitSuccess = () => {
+    invalidateCache();
+    fetchData({ silent: true });
+    safeSetTab('reports');
+  };
+
   return (
     <div
-      className="flex min-h-screen flex-col justify-between bg-background text-foreground transition-colors duration-300"
+      className="bg-background text-foreground relative z-0 flex min-h-screen flex-col justify-between transition-colors duration-300"
       id="shahr_ara_app_root"
     >
-      {/* Navbar segment */}
       <Navbar
         currentTab={currentTab}
-        setTab={setTab}
+        setTab={safeSetTab}
         currentUser={currentUser}
         onLogout={handleLogout}
         onOpenAuth={() => setIsAuthOpen(true)}
@@ -172,89 +232,135 @@ export default function App() {
         }}
       />
 
-      {/* Main arena */}
       <main className="flex-1 pb-16">
-        {loading && (
-          <div className="flex flex-col items-center justify-center gap-3 py-20 text-cyan-600 dark:text-cyan-400">
-            <span className="h-10 w-10 animate-spin rounded-full border-4 border-cyan-600 border-t-transparent dark:border-cyan-400"></span>
-            <span className="text-sm font-semibold">
-              در حال بارگذاری اطلاعات شهرآرا...
-            </span>
+        {/* API / Auth Error Banner */}
+        {apiError && (
+          <div className="mx-auto flex max-w-7xl items-start gap-3 px-4 pt-4 sm:px-6 lg:px-8">
+            <div className="border-destructive/20 bg-destructive/10 flex w-full items-start gap-3 rounded-xl border px-4 py-3 text-sm">
+              <AlertTriangle className="text-destructive mt-0.5 h-4 w-4 shrink-0" />
+              <p className="text-destructive flex-1 leading-relaxed font-medium">
+                {apiError}
+              </p>
+              <button
+                onClick={() => setApiError(null)}
+                className="text-destructive/60 hover:text-destructive shrink-0 cursor-pointer text-xs font-bold transition-colors"
+              >
+                بستن
+              </button>
+            </div>
           </div>
         )}
 
-        {!loading && (
-          <>
-            {currentTab === 'home' && (
-              <div className="animate-fade-in space-y-12">
-                <Hero
-                  setTab={setTab}
+        <ErrorBoundary>
+          {loading && (
+            <div className="text-primary flex flex-col items-center justify-center gap-3 py-20">
+              <span className="border-primary h-10 w-10 animate-spin rounded-full border-4 border-t-transparent"></span>
+              <span className="text-sm font-semibold">
+                در حال بارگذاری اطلاعات شهرآرا...
+              </span>
+            </div>
+          )}
+
+          {!loading && (
+            <div>
+              {currentTab === 'home' && (
+                <div className="space-y-12">
+                  <Hero
+                    setTab={safeSetTab}
+                    currentUser={currentUser}
+                    onOpenAuth={() => setIsAuthOpen(true)}
+                    stats={stats}
+                  />
+                </div>
+              )}
+
+              {currentTab === 'reports' && (
+                <ReportsDirectory
+                  items={requests}
+                  currentUser={currentUser}
+                  onLike={handleLike}
+                  onOpenAuth={() => setIsAuthOpen(true)}
+                  onRefresh={handleRefresh}
+                  theme={theme}
+                />
+              )}
+
+              {currentTab === 'submit' && (
+                <RequestForm
                   currentUser={currentUser}
                   onOpenAuth={() => setIsAuthOpen(true)}
-                  stats={stats}
+                  onSubmitSuccess={handleSubmitSuccess}
+                  theme={theme}
                 />
-              </div>
-            )}
+              )}
 
-            {currentTab === 'reports' && (
-              <ReportsDirectory
-                items={requests}
-                currentUser={currentUser}
-                onLike={handleLike}
-                onOpenAuth={() => setIsAuthOpen(true)}
-                onRefresh={fetchData}
-                theme={theme}
-              />
-            )}
+              {currentTab === 'admin' && currentUser?.isAdmin && (
+                <AdminPanel
+                  requests={requests}
+                  onUpdateStatus={handleUpdateStatus}
+                  onRefresh={handleRefresh}
+                  theme={theme}
+                />
+              )}
 
-            {currentTab === 'submit' && (
-              <RequestForm
-                currentUser={currentUser}
-                onOpenAuth={() => setIsAuthOpen(true)}
-                onSubmitSuccess={() => {
-                  fetchData();
-                  setTab('reports');
-                }}
-                theme={theme}
-              />
-            )}
-
-            {currentTab === 'admin' && currentUser?.isAdmin && (
-              <AdminPanel
-                requests={requests}
-                onUpdateStatus={handleUpdateStatus}
-                onRefresh={fetchData}
-                theme={theme}
-              />
-            )}
-          </>
-        )}
+              {currentTab === 'not-found' && (
+                <div className="mx-auto flex max-w-md flex-col items-center justify-center gap-6 px-4 py-24 text-center">
+                  <div className="border-border bg-card flex h-20 w-20 items-center justify-center rounded-full border">
+                    <FileText className="text-muted-foreground h-10 w-10" />
+                  </div>
+                  <div className="space-y-2">
+                    <h2 className="text-foreground text-2xl font-extrabold">
+                      صفحه مورد نظر یافت نشد
+                    </h2>
+                    <p className="text-muted-foreground text-sm leading-relaxed font-medium">
+                      صفحه‌ای که به دنبال آن هستید وجود ندارد یا به آدرس دیگری
+                      منتقل شده است.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => safeSetTab('home')}
+                    size="lg"
+                    className="font-bold"
+                  >
+                    <Home className="h-4 w-4" />
+                    بازگشت به صفحه اصلی
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </ErrorBoundary>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-background text-muted-foreground border-t py-8 text-xs">
+      <footer className="bg-background/90 text-muted-foreground border-t py-6 text-xs backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6 lg:px-8">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-foreground">
-              شهرآرا
-            </span>
+            <span className="text-foreground font-bold">شهرآرا</span>
             <span className="text-muted-foreground/70">
               سامانه الکترونیکی ثبت و ارتقای مطالبات و ایده‌های مردمی
             </span>
           </div>
 
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" onClick={() => setTab('home')}>
+          <div className="flex flex-wrap items-center justify-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => safeSetTab('home')}
+            >
               صفحه اصلی
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => setTab('reports')}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => safeSetTab('reports')}
+            >
               گزارش‌ها
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => {
-                if (currentUser?.isAdmin) setTab('admin');
+                if (currentUser?.isAdmin) safeSetTab('admin');
                 else setIsAuthOpen(true);
               }}
             >
@@ -262,21 +368,18 @@ export default function App() {
             </Button>
           </div>
 
-          <div
-            className="text-muted-foreground/50 text-[10px]"
-          >
-            &copy; {new Date().getFullYear()} شهرآرا — سامانه هوشمند مشارکت مردمی. کلیه حقوق محفوظ است.
+          <div className="text-muted-foreground/50 text-[10px]">
+            &copy; {new Date().getFullYear()} شهرآرا — سامانه هوشمند مشارکت
+            مردمی. کلیه حقوق محفوظ است.
           </div>
         </div>
       </footer>
 
-      {/* Auth Control Center */}
       <AuthModal
         open={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         onLoginSuccess={handleLoginSuccess}
       />
-
     </div>
   );
 }

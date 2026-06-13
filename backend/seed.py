@@ -191,15 +191,15 @@ def seed():
     db.commit()
     print(f"Seeded {len(USERS) + 1} users (1 admin + {len(USERS)} citizens)")
 
-    all_users = db.query(User).filter(User.is_admin == False).all()
+    all_users = db.query(User).filter(User.is_admin.is_(False)).all()
 
     base_time = datetime.now(timezone.utc) - timedelta(days=60)
 
-    REQUEST_COUNT = 60
+    request_count = 60
 
     from sqlalchemy import text
 
-    for i in range(REQUEST_COUNT):
+    for i in range(request_count):
         user = random.choice(all_users)
         is_problem = random.random() < 0.65
         category = random.choice(CATEGORIES)
@@ -260,7 +260,7 @@ def seed():
     db.commit()
     db.close()
     print(
-        f"Seeded {REQUEST_COUNT} requests across {len(CATEGORIES)} categories and {len(STATUSES)} statuses"
+        f"Seeded {request_count} requests across {len(CATEGORIES)} categories and {len(STATUSES)} statuses"
     )
 
 

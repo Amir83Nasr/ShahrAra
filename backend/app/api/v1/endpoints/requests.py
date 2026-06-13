@@ -77,7 +77,7 @@ def get_requests(
     status_code=status.HTTP_201_CREATED,
     summary="Create a new request",
     description="Submit a new urban problem or improvement idea with location coordinates.",
-    responses={400: {"description": "Invalid input data"}},
+    responses={400: {"description": "داده‌های ورودی نامعتبر است"}},
 )
 def create_request(request_data: RequestCreate, db: Session = Depends(get_db)):
     region = request_data.region or "Central District"
@@ -107,8 +107,8 @@ def create_request(request_data: RequestCreate, db: Session = Depends(get_db)):
     summary="Update request status (admin only)",
     description="Change the status of a request. Requires admin Bearer token. You can also add an admin response.",
     responses={
-        403: {"description": "Admin access required"},
-        404: {"description": "Request not found"},
+        403: {"description": "دسترسی نیازمند حساب مدیر است"},
+        404: {"description": "درخواست مورد نظر یافت نشد"},
     },
 )
 def update_status(
@@ -121,7 +121,7 @@ def update_status(
     if not req:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Request not found.",
+            detail="درخواست مورد نظر یافت نشد.",
         )
 
     req.status = (
@@ -142,14 +142,14 @@ def update_status(
     response_model=LikeResponse,
     summary="Toggle like on a request",
     description="Like or unlike a request. Toggles per user based on their phone number.",
-    responses={404: {"description": "Request not found"}},
+    responses={404: {"description": "درخواست مورد نظر یافت نشد"}},
 )
 def toggle_like(request_id: str, like_data: LikeRequest, db: Session = Depends(get_db)):
     req = db.query(Request).filter(Request.id == request_id).first()
     if not req:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Request not found.",
+            detail="درخواست مورد نظر یافت نشد.",
         )
 
     existing = (

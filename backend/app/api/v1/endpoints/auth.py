@@ -16,8 +16,8 @@ router = APIRouter(tags=["auth"])
     summary="Login or register",
     description="Authenticate with phone and national ID. New users are registered automatically (firstName and lastName required). Admin is auto-created from env defaults.",
     responses={
-        400: {"description": "firstName and lastName required for new users"},
-        401: {"description": "National ID does not match the phone number"},
+        400: {"description": "نام و نام خانوادگی برای ثبت‌نام الزامی است"},
+        401: {"description": "کد ملی با شماره تلفن مطابقت ندارد"},
     },
 )
 def login(user_data: UserCreate, db: Session = Depends(get_db)):
@@ -56,7 +56,7 @@ def login(user_data: UserCreate, db: Session = Depends(get_db)):
         if existing_user.national_id != national_id:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="National ID does not match the phone number.",
+                detail="کد ملی با شماره تلفن مطابقت ندارد.",
             )
         if existing_user.is_admin:
             existing_user.first_name = ADMIN_FIRST_NAME
@@ -73,7 +73,7 @@ def login(user_data: UserCreate, db: Session = Depends(get_db)):
     if not first_name or not last_name:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="firstName and lastName are required for new users.",
+            detail="نام و نام خانوادگی برای ثبت‌نام الزامی است.",
         )
 
     new_user = User(

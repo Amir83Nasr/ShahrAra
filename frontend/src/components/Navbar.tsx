@@ -51,7 +51,7 @@ export default function Navbar({
   const [confirmLogout, setConfirmLogout] = useState(false);
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
+    <nav className="border-border bg-background/90 sticky top-0 z-50 border-b backdrop-blur-xl">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <Button
@@ -61,21 +61,21 @@ export default function Navbar({
           >
             <button
               onClick={() => setTab('home')}
-              className="flex cursor-pointer items-center gap-3"
+              className="nav-logo flex cursor-pointer items-center gap-3"
             >
-              <LogoIcon className="text-primary size-9 shrink-0 transition-transform duration-300 hover:scale-110" />
+              <LogoIcon className="text-primary size-7 shrink-0 transition-transform duration-300 hover:scale-110" />
               <div className="flex flex-col items-start text-right">
-                <span className="text-primary text-xl leading-tight font-black tracking-tight">
+                <span className="text-primary leading-tight font-extrabold tracking-tight">
                   شهرآرا
                 </span>
-                <span className="mt-0.5 text-[10px] leading-tight font-bold text-muted-foreground">
+                <span className="text-muted-foreground mt-0.5 text-[10px] leading-tight font-bold">
                   سامانه هوشمند مشارکت مردمی
                 </span>
               </div>
             </button>
           </Button>
 
-          <div className="hidden items-center gap-1 md:flex">
+          <div className="nav-tabs hidden items-center gap-1 md:flex">
             <Button
               variant="ghost"
               size="sm"
@@ -127,7 +127,7 @@ export default function Navbar({
             )}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="nav-actions flex items-center gap-3">
             <ModeToggle theme={theme} onThemeChange={toggleTheme} />
 
             {currentUser ? (
@@ -135,7 +135,7 @@ export default function Navbar({
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="gap-2">
                     <UserRound className="h-4 w-4" />
-                    <span className="font-extrabold">
+                    <span className="hidden max-w-[120px] truncate font-extrabold md:inline lg:max-w-none">
                       {currentUser.firstName} {currentUser.lastName}
                     </span>
                   </Button>
@@ -168,19 +168,20 @@ export default function Navbar({
             ) : (
               <Button variant="default" size="sm" onClick={onOpenAuth}>
                 <LogIn size={14} />
-                <span>ورود / ثبت‌نام شهروند</span>
+                <span className="hidden sm:inline">ورود / ثبت‌نام شهروند</span>
+                <span className="sm:hidden">ورود</span>
               </Button>
             )}
           </div>
         </div>
 
-        <div className="flex items-center justify-around border-t border-border py-2 md:hidden">
+        <div className="border-border flex items-center justify-around border-t py-2 md:hidden">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setTab('home')}
             className={cn(
-              'text-xs font-bold',
+              'flex-1 text-xs font-bold',
               currentTab === 'home' && 'bg-accent text-primary',
             )}
           >
@@ -191,7 +192,7 @@ export default function Navbar({
             size="sm"
             onClick={() => setTab('reports')}
             className={cn(
-              'text-xs font-bold',
+              'flex-1 text-xs font-bold',
               currentTab === 'reports' && 'bg-accent text-primary',
             )}
           >
@@ -202,7 +203,7 @@ export default function Navbar({
             size="sm"
             onClick={() => setTab('submit')}
             className={cn(
-              'text-xs font-bold',
+              'flex-1 text-xs font-bold',
               currentTab === 'submit' && 'bg-accent text-primary',
             )}
           >
@@ -214,7 +215,7 @@ export default function Navbar({
               size="sm"
               onClick={() => setTab('admin')}
               className={cn(
-                'flex items-center gap-1 text-xs font-bold',
+                'flex flex-1 items-center gap-1 text-xs font-bold',
                 currentTab === 'admin' && 'bg-accent text-primary',
               )}
             >

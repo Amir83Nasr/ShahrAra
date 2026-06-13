@@ -74,7 +74,7 @@ export default function AuthModal({
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/v1/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -96,8 +96,7 @@ export default function AuthModal({
 
       if (!response.ok) {
         throw new Error(
-          (result.detail as string) ||
-            'خطایی در ورود/ثبت‌نام رخ داد.',
+          (result.detail as string) || 'خطایی در ورود/ثبت‌نام رخ داد.',
         );
       }
 
@@ -119,7 +118,7 @@ export default function AuthModal({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md gap-0 p-0" showCloseButton={false}>
         <DialogHeader className="bg-muted/30 flex flex-row items-center justify-between p-5">
-          <DialogTitle className="text-foreground text-lg font-black">
+          <DialogTitle className="text-foreground text-lg font-extrabold">
             {isSignUp
               ? 'ثبت‌نام شهروند جدید شهرآرا'
               : 'ورود شهروندان به شهرآرا'}
@@ -138,8 +137,8 @@ export default function AuthModal({
           )}
 
           {success && (
-            <div className="flex items-center gap-2 rounded-lg border border-status-resolved/20 bg-status-resolved/10 p-3 text-xs text-status-resolved">
-              <CheckCircle className="h-4 w-4 shrink-0 text-status-resolved" />
+            <div className="border-status-resolved/20 bg-status-resolved/10 text-status-resolved flex items-center gap-2 rounded-lg border p-3 text-xs">
+              <CheckCircle className="text-status-resolved h-4 w-4 shrink-0" />
               <span>{success}</span>
             </div>
           )}
@@ -199,8 +198,8 @@ export default function AuthModal({
                 !isPhoneDirty
                   ? ''
                   : isPhoneValid
-                    ? 'border-status-resolved ring-2 ring-status-resolved/10 focus-visible:border-status-resolved focus-visible:ring-status-resolved/20'
-                    : 'border-destructive ring-2 ring-destructive/10 focus-visible:border-destructive focus-visible:ring-destructive/20',
+                    ? 'border-status-resolved ring-status-resolved/10 focus-visible:border-status-resolved focus-visible:ring-status-resolved/20 ring-2'
+                    : 'border-destructive ring-destructive/10 focus-visible:border-destructive focus-visible:ring-destructive/20 ring-2',
               )}
               aria-invalid={isPhoneDirty && !isPhoneValid ? true : undefined}
             />
@@ -211,15 +210,15 @@ export default function AuthModal({
                   {toPersianDigits('09123456789')})
                 </span>
               ) : isPhoneValid ? (
-                <span className="flex items-center gap-1 rounded-md border border-status-resolved/10 bg-status-resolved/5 px-2.5 py-1 text-[10.5px] font-bold text-status-resolved">
+                <span className="border-status-resolved/10 bg-status-resolved/5 text-status-resolved flex items-center gap-1 rounded-md border px-2.5 py-1 text-[10.5px] font-bold">
                   ✓ شماره همراه معتبر و صحیح است
                 </span>
               ) : !startsWith09 ? (
-                <span className="rounded-md border border-destructive/10 bg-destructive/5 px-2.5 py-1 text-[10.5px] font-bold text-destructive">
+                <span className="border-destructive/10 bg-destructive/5 text-destructive rounded-md border px-2.5 py-1 text-[10.5px] font-bold">
                   خطا: شماره همراه حتماً باید با ۰۹ آغاز شود
                 </span>
               ) : (
-                <span className="rounded-md border border-status-in-progress/10 bg-status-in-progress/5 px-2.5 py-1 text-[10.5px] font-bold text-status-in-progress">
+                <span className="border-status-in-progress/10 bg-status-in-progress/5 text-status-in-progress rounded-md border px-2.5 py-1 text-[10.5px] font-bold">
                   در حال تکمیل... ({toPersianDigits(phone.length)} از ۱۱ رقم
                   وارد شده)
                 </span>
@@ -248,8 +247,8 @@ export default function AuthModal({
                 !isNationalIdDirty
                   ? ''
                   : isNationalIdValid
-                    ? 'border-status-resolved ring-2 ring-status-resolved/10 focus-visible:border-status-resolved focus-visible:ring-status-resolved/20'
-                    : 'border-destructive ring-2 ring-destructive/10 focus-visible:border-destructive focus-visible:ring-destructive/20',
+                    ? 'border-status-resolved ring-status-resolved/10 focus-visible:border-status-resolved focus-visible:ring-status-resolved/20 ring-2'
+                    : 'border-destructive ring-destructive/10 focus-visible:border-destructive focus-visible:ring-destructive/20 ring-2',
               )}
               aria-invalid={
                 isNationalIdDirty && !isNationalIdValid ? true : undefined
@@ -262,11 +261,11 @@ export default function AuthModal({
                   {toPersianDigits('037000000')})
                 </span>
               ) : isNationalIdValid ? (
-                <span className="flex items-center gap-1 rounded-md border border-status-resolved/10 bg-status-resolved/5 px-2.5 py-1 text-[10.5px] font-bold text-status-resolved">
+                <span className="border-status-resolved/10 bg-status-resolved/5 text-status-resolved flex items-center gap-1 rounded-md border px-2.5 py-1 text-[10.5px] font-bold">
                   ✓ کد ملی معتبر و صحیح است
                 </span>
               ) : (
-                <span className="rounded-md border border-destructive/10 bg-destructive/5 px-2.5 py-1 text-[10.5px] font-bold text-destructive">
+                <span className="border-destructive/10 bg-destructive/5 text-destructive rounded-md border px-2.5 py-1 text-[10.5px] font-bold">
                   کد ملی ۱۰ رقمی ناقص است (در حال حاضر:{' '}
                   {toPersianDigits(nationalId.length)} رقم)
                 </span>
@@ -290,7 +289,7 @@ export default function AuthModal({
                   type="button"
                   variant="link"
                   onClick={() => setIsSignUp(false)}
-                  className="font-black"
+                  className="font-extrabold"
                 >
                   ورود به حساب
                 </Button>
@@ -302,7 +301,7 @@ export default function AuthModal({
                   type="button"
                   variant="link"
                   onClick={() => setIsSignUp(true)}
-                  className="font-black"
+                  className="font-extrabold"
                 >
                   ایجاد حساب جدید (ثبت‌نام)
                 </Button>

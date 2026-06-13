@@ -1,91 +1,48 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 
-from app.api.v1.router import api_router
-from app.db.session import Base, engine
-
-
-def register_openapi_schema(app: FastAPI) -> None:
-    schema = app.openapi()
-    if schema is None:
-        return
-    schema.setdefault("components", {})
-    schema["components"]["securitySchemes"] = {
-        "BearerAuth": {
-            "type": "http",
-            "scheme": "bearer",
-            "bearerFormat": "JWT",
-            "description": "Enter your JWT token from the /api/auth/login response.",
-        }
-    }
-    app.openapi_schema = schema
-
-
-app = FastAPI(
-    title="ShahrAra API",
-    description=(
-        "Municipal engagement platform for reporting urban problems, submitting city improvement ideas, "
-        "tracking request status in real-time, and voting on community submissions.\n\n"
-        "This API powers the ShahrAra civic platform, connecting citizens directly with "
-        "municipal administrators via an interactive map interface."
-    ),
-    version="1.0.0",
-    contact={
-        "name": "ShahrAra Team",
-        "url": "https://github.com/anomalyco/SharAra",
-    },
-    license_info={
-        "name": "Apache 2.0",
-        "url": "https://www.apache.org/licenses/LICENSE-2.0",
-    },
-    servers=[
-        {"url": "http://localhost:8000", "description": "Local development"},
-    ],
-    docs_url="/docs",
-    redoc_url="/redoc",
-    swagger_ui_parameters={
-        "defaultModelsExpandDepth": -1,
-        "persistAuthorization": True,
-        "displayRequestDuration": True,
-        "filter": True,
-        "tryItOutEnabled": True,
-    },
+from app.api.v1.router import api_router as v1_router
+from app.core.errors import (
+    generic_exception_handler,
+    http_exception_handler,
+    validation_exception_handler,
 )
-
-register_openapi_schema(app)
+from app.db.session import Base, engine
 
 Base.metadata.create_all(bind=engine)
 
+NAME = "ShahrAra API"
+VERSION = "1.1.0"
+
 app = FastAPI(
-    title="ShahrAra API",
+    title=NAME,
     description=(
         "Municipal engagement platform for reporting urban problems, submitting city improvement ideas, "
         "tracking request status in real-time, and voting on community submissions.\n\n"
         "This API powers the ShahrAra civic platform, connecting citizens directly with "
         "municipal administrators via an interactive map interface."
     ),
-    version="1.0.0",
-    contact={
-        "name": "ShahrAra Team",
-        "url": "https://github.com/anomalyco/SharAra",
-    },
+    version=VERSION,
     license_info={
         "name": "Apache 2.0",
         "url": "https://www.apache.org/licenses/LICENSE-2.0",
     },
     servers=[
+        {"url": "http://192.168.1.20:8000", "description": "On Network development"},
         {"url": "http://localhost:8000", "description": "Local development"},
     ],
-    docs_url="/docs",
-    redoc_url="/redoc",
     swagger_ui_parameters={
         "defaultModelsExpandDepth": -1,
-        "persistAuthorization": True,
-        "displayRequestDuration": True,
-        "filter": True,
-        "tryItOutEnabled": True,
     },
 )
+
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+    "http://192.168.1.21",
+]
 
 app.add_middleware(
     CORSMiddleware,
@@ -95,9 +52,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(api_router, prefix="/api")
+app.include_router(v1_router, prefix="/api/v1")
+
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(Exception, generic_exception_handler)
 
 
-@app.get("/api/health", tags=["health"], summary="Health check")
-def health_check():
+@app.get("/", tags=["info"], summary="Root redirect", include_in_schema=False)
+def root():
+    return RedirectResponse(url="/docs")
+
+
+@app.get("/api", tags=["info"], summary="API root")
+def api_root():
+    return {
+        "name": NAME,
+        "version": VERSION,
+        "description": "Municipal engagement platform API",
+        "documentation": "/docs",
+        "versions": {
+            "v1": "/api/v1",
+        },
+        "endpoints": {
+            "health": "/api/health",
+            "v1": {
+                "auth": "/api/v1/auth/login",
+                "requests": "/api/v1/requests",
+                "stats": "/api/v1/stats",
+            },
+        },
+    }
+
+
+@app.get("/api/health", tags=["health"], summary="API health check")
+def api_health():
     return {"status": "ok"}
