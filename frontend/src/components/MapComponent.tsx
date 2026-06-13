@@ -261,7 +261,7 @@ export default function MapComponent({
   }, [selectedCoordinates]);
 
   return (
-    <div className="relative h-full w-full" id="shahr_ara_map_component">
+    <div className="relative z-0 w-full isolation-isolate h-full" id="shahr_ara_map_component">
       <div
         ref={mapContainerRef}
         className="h-full min-h-[300px] w-full rounded-xl border border-border transition-colors duration-200"
