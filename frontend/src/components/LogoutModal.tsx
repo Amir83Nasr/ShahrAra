@@ -23,9 +23,11 @@ export default function LogoutModal({
 }: LogoutModalProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="sm:max-w-sm">
+      <AlertDialogContent className="w-full sm:max-w-sm md:min-w-xl">
         <AlertDialogHeader className="place-items-center gap-1 text-center">
-          <AlertDialogTitle className="text-xl">خروج از حساب</AlertDialogTitle>
+          <AlertDialogTitle className="text-xl font-bold">
+            خروج از حساب
+          </AlertDialogTitle>
           <AlertDialogDescription className="text-balance">
             'آیا مطمئن هستید که می‌خواهید از حساب خود خارج شوید؟'
           </AlertDialogDescription>

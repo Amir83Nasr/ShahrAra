@@ -102,7 +102,14 @@ export default function AuthModal({
 
       setSuccess('ورود با موفقیت انجام شد!');
       setTimeout(() => {
-        onLoginSuccess(result.user as User);
+        const user = result.user as User;
+        const tokenObj = result.token as Record<string, unknown> | undefined;
+        const tokenStr =
+          typeof tokenObj === 'string'
+            ? tokenObj
+            : (tokenObj?.accessToken as string | undefined);
+        if (tokenStr) user.token = tokenStr;
+        onLoginSuccess(user);
         onClose();
       }, 1000);
     } catch (err: unknown) {

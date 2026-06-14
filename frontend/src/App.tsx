@@ -189,9 +189,14 @@ export default function App() {
     adminResponse: string,
   ) => {
     try {
+      const user = JSON.parse(localStorage.getItem('shahr_ara_user') || 'null');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (user?.token) {
+        headers['Authorization'] = `Bearer ${user.token}`;
+      }
       const res = await fetch(`/api/v1/requests/${id}/status`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ status, adminResponse }),
       });
 
@@ -199,7 +204,8 @@ export default function App() {
         invalidateCache();
         await fetchData({ force: true, silent: true });
       } else {
-        throw new Error('فراخوانی آدرس با خطا مواجه شد.');
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.detail || 'خطا در بروزرسانی وضعیت.');
       }
     } catch (e) {
       console.error(e);

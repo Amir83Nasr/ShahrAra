@@ -1,28 +1,27 @@
 import React, { useState } from 'react';
-import { User, RequestType } from '../types';
+import { RequestType, User } from '../types';
 import MapComponent from './MapComponent';
 import {
+  AlertCircleIcon,
   AlertTriangle,
-  Lightbulb,
-  MapPin,
-  Send,
-  MessageSquare,
-  Tag,
   AlignRight,
   CheckCircle,
-  AlertCircleIcon,
+  Lightbulb,
+  MapPin,
+  MessageSquare,
+  Send,
+  Tag,
 } from 'lucide-react';
-import { toPersianDigits } from '../utils/numberUtils';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
-  SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
@@ -153,13 +152,13 @@ export default function RequestForm({
         {/* Helper Instructions Column */}
         <div className="form-helper form-section order-last flex flex-col gap-6 lg:order-first lg:col-span-4">
           <div className="border-border bg-card rounded-xl border p-5 transition-colors">
-            <h3 className="text-primary border-border mb-3.5 flex items-center gap-2 border-b pb-2.5 text-sm font-extrabold">
+            <h3 className="text-primary border-border mb-3.5 flex items-center gap-2 pb-2.5 text-sm font-extrabold">
               <Lightbulb className="text-primary h-4 w-4" />
               تفاوت گزارش مشکل و ایده چیست؟
             </h3>
 
             <div className="space-y-4">
-              <div className="hover:border-primary/20 border-primary/10 bg-primary/5 rounded-lg border p-3.5 transition-all">
+              <div className="hover:border-destructive/20 border-destructive/10 bg-destructive/5 rounded-lg border p-3.5 transition-all">
                 <span className="text-destructive flex items-center gap-1.5 text-xs font-medium">
                   <AlertTriangle className="h-3.5 w-3.5" />
                   گزارش مشکلات شهری
@@ -171,8 +170,8 @@ export default function RequestForm({
                 </p>
               </div>
 
-              <div className="hover:border-primary/20 border-primary/10 bg-primary/5 rounded-lg border p-3.5 transition-all">
-                <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              <div className="hover:border-type-idea/20 border-type-idea/10 bg-type-idea/5 rounded-lg border p-3.5 transition-all">
+                <span className="text-type-idea flex items-center gap-1.5 text-xs font-medium">
                   <Lightbulb className="h-3.5 w-3.5" />
                   ارسال ایده‌های نوآورانه
                 </span>
@@ -185,7 +184,7 @@ export default function RequestForm({
             </div>
           </div>
 
-          <div className="border-border bg-muted rounded-xl border p-5 transition-all">
+          <div className="border-border bg-card rounded-xl border p-5 transition-all">
             <span className="text-muted-foreground mb-2 block font-mono text-xs tracking-wider uppercase">
               مرحله ۲: انتخاب موقعیت
             </span>
@@ -203,45 +202,28 @@ export default function RequestForm({
         {/* Form Container Column */}
         <div className="form-main form-section border-border bg-card relative overflow-hidden rounded-2xl border p-4 transition-all sm:p-6 md:p-8 lg:col-span-8">
           <div className="bg-primary/5 absolute top-0 right-0 h-32 w-32 rounded-full blur-3xl" />
+          <div className="bg-primary/5 absolute bottom-0 left-0 h-28 w-28 rounded-full blur-3xl" />
 
-          <div className="form-main-section border-border mb-6 border-b pb-5">
+          <div className="form-main-section border-border mb-6 pb-5">
             <span className="text-primary font-mono text-[10px] font-semibold tracking-wide uppercase sm:text-xs">
               سامانه مشارکت شهری
             </span>
             <h2 className="text-foreground mt-1 text-lg font-bold sm:text-2xl">
               ثبت پیگیری و مشارکت جدید
             </h2>
-            <p className="text-muted-foreground mt-1 flex flex-wrap gap-x-1 text-[11px] font-medium sm:text-xs">
-              <span className="truncate">
-                ثبت‌کننده:{' '}
-                <span className="text-foreground font-semibold">
-                  {currentUser.firstName} {currentUser.lastName}
-                </span>
-              </span>
-              <span className="hidden sm:inline">|</span>
-              <span className="block sm:inline">
-                شماره تماس:{' '}
-                <span
-                  className="text-foreground font-mono font-semibold"
-                  dir="rtl"
-                >
-                  {toPersianDigits(currentUser.phone)}
-                </span>
-              </span>
-            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="flex items-start gap-2.5 rounded-lg border border-red-500/20 bg-red-950/20 p-3 text-xs text-red-300">
-                <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
+              <div className="border-destructive/20 bg-destructive/10 text-destructive flex items-start gap-2.5 rounded-lg border p-3 text-xs">
+                <AlertCircleIcon className="text-destructive mt-0.5 h-4 w-4 shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
             {success && (
-              <div className="flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-950/20 p-3.5 text-sm text-emerald-300">
-                <CheckCircle className="h-5 w-5 shrink-0 text-emerald-400" />
+              <div className="border-type-idea/20 bg-type-idea/10 text-type-idea flex items-center gap-2 rounded-lg border p-3.5 text-sm">
+                <CheckCircle className="text-type-idea h-5 w-5 shrink-0" />
                 <span>
                   درخواست شما با موفقیت ثبت گردید و در اسرع وقت رسیدگی خواهد شد!
                 </span>
@@ -274,7 +256,7 @@ export default function RequestForm({
                   className={cn(
                     'flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-semibold transition-all duration-200 sm:gap-2.5 sm:px-4 sm:py-3 sm:text-sm',
                     type === 'idea'
-                      ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-500/10'
+                      ? 'border-type-idea/50 bg-type-idea/10 text-type-idea ring-type-idea/10 ring-1'
                       : 'border-border text-muted-foreground hover:border-muted-foreground',
                   )}
                 >

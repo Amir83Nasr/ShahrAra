@@ -160,7 +160,7 @@ export default function AdminPanel({
       }, 2000);
     } catch (err) {
       console.error(err);
-      alert('خطا در بروزرسانی وضعیت.');
+      alert(err instanceof Error ? err.message : 'خطا در بروزرسانی وضعیت.');
     } finally {
       setSubmitting(false);
     }

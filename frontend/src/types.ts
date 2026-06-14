@@ -10,6 +10,7 @@ export interface User {
   firstName: string;
   lastName: string;
   isAdmin: boolean;
+  token?: string;
 }
 
 export type RequestStatus =
