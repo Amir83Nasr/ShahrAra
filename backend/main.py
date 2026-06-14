@@ -14,7 +14,7 @@ from app.db.session import Base, engine
 Base.metadata.create_all(bind=engine)
 
 NAME = "ShahrAra API"
-VERSION = "1.1.0"
+VERSION: str = "1.1.0"
 
 app = FastAPI(
     title=NAME,
@@ -30,8 +30,8 @@ app = FastAPI(
         "url": "https://www.apache.org/licenses/LICENSE-2.0",
     },
     servers=[
-        {"url": "http://192.168.1.20:8000", "description": "On Network development"},
         {"url": "http://localhost:8000", "description": "Local development"},
+        {"url": "http://192.168.1.20:8000", "description": "On Network development"},
     ],
     swagger_ui_parameters={
         "defaultModelsExpandDepth": -1,

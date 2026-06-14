@@ -22,15 +22,17 @@ PERSIAN_ERRORS: dict[int, str] = {
 }
 
 # Default HTTP status phrases from Starlette that should be overridden
-_DEFAULT_PHRASES = frozenset({
-    "Not Found",
-    "Method Not Allowed",
-    "Forbidden",
-    "Unauthorized",
-    "Bad Request",
-    "Unprocessable Entity",
-    "Internal Server Error",
-})
+_DEFAULT_PHRASES = frozenset(
+    {
+        "Not Found",
+        "Method Not Allowed",
+        "Forbidden",
+        "Unauthorized",
+        "Bad Request",
+        "Unprocessable Entity",
+        "Internal Server Error",
+    }
+)
 
 
 def persian_error_detail(status_code: int, detail: str | None = None) -> str:
@@ -58,10 +60,12 @@ async def validation_exception_handler(
     field_errors = []
     for err in exc.errors():
         field = ".".join(str(loc) for loc in err.get("loc", []))
-        field_errors.append({
-            "field": field,
-            "message": err.get("msg", "مقدار نامعتبر"),
-        })
+        field_errors.append(
+            {
+                "field": field,
+                "message": err.get("msg", "مقدار نامعتبر"),
+            }
+        )
 
     return JSONResponse(
         status_code=HTTP_422_UNPROCESSABLE_CONTENT,
