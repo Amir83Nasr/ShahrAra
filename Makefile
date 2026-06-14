@@ -14,8 +14,6 @@ install-frontend: ## Install frontend npm dependencies
 	cd frontend && npm install
 
 # ─── Development ──────────────────────────────────────────────────────────────
-dev: dev-backend dev-frontend ## Run both servers concurrently
-
 dev-backend: ## Start backend server (port 8000)
 	cd backend && uvicorn main:app --reload --port 8000 --host 0.0.0.0
 

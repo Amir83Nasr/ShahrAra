@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { User } from '../types';
 import { toPersianDigits, toEnglishDigits } from '../utils/numberUtils';
@@ -38,6 +38,18 @@ export default function AuthModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setIsSignUp(false);
+    setPhone('');
+    setNationalId('');
+    setFirstName('');
+    setLastName('');
+    setLoading(false);
+    setError(null);
+    setSuccess(null);
+  }, [open]);
 
   const isPhoneDirty = phone.length > 0;
   const isPhoneValid = /^09\d{9}$/.test(phone);

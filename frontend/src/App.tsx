@@ -190,7 +190,9 @@ export default function App() {
   ) => {
     try {
       const user = JSON.parse(localStorage.getItem('shahr_ara_user') || 'null');
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
       if (user?.token) {
         headers['Authorization'] = `Bearer ${user.token}`;
       }
