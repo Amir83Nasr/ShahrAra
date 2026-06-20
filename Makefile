@@ -13,6 +13,10 @@ install-backend: ## Install backend Python dependencies
 install-frontend: ## Install frontend npm dependencies
 	cd frontend && npm install
 
+install-precommit: ## Install pre-commit hooks
+	@pip3 install pre-commit -q 2>/dev/null && pre-commit install
+	@echo "  $(GREEN)✓$(RESET) Pre-commit hooks installed"
+
 # ─── Development ──────────────────────────────────────────────────────────────
 dev-backend: ## Start backend server (port 8000)
 	cd backend && uvicorn main:app --reload --port 8000 --host 0.0.0.0
@@ -74,9 +78,9 @@ clean-frontend-full: ## Remove frontend dist + node_modules
 	rm -rf frontend/dist frontend/node_modules
 
 
-# ─── Generate ASCII Logo ───────────────────────────────────────────────────────
-generate-logo: ## Generate ASCII logo
-	@python3 scripts/ascii_logo.py $(PROJECT_NAME)
+# ─── Pre-commit ──────────────────────────────────────────────────
+precommit: ## Run pre-commit on all files
+	@pre-commit run --all-files
 
 # ─── Project Variables ──────────────────────────────────────────────────────────
 PROJECT_NAME := SHAR ARA
@@ -85,7 +89,7 @@ PROJECT_NAME_ASCII := $(shell python3 scripts/ascii_logo.py $(PROJECT_NAME))
 # ─── Help ──────────────────────────────────────────────────────────────────────
 help: ## Show this help message
 	@printf "\n\n\n\n"
-	@printf "\033[1;30m"
+	@printf "\033[1;36m"
 	@printf "%s\n" "$$(python3 scripts/ascii_logo.py $(PROJECT_NAME))"
 	@printf "\033[0m\n"
 	@printf "\n"

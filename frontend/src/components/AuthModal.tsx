@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { User } from '../types';
 import { toPersianDigits, toEnglishDigits } from '../utils/numberUtils';
@@ -38,18 +38,6 @@ export default function AuthModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    setIsSignUp(false);
-    setPhone('');
-    setNationalId('');
-    setFirstName('');
-    setLastName('');
-    setLoading(false);
-    setError(null);
-    setSuccess(null);
-  }, [open]);
 
   const isPhoneDirty = phone.length > 0;
   const isPhoneValid = /^09\d{9}$/.test(phone);
@@ -134,7 +122,11 @@ export default function AuthModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+    <Dialog
+      open={open}
+      key={String(open)}
+      onOpenChange={(o) => !o && onClose()}
+    >
       <DialogContent className="max-w-md gap-0 p-0" showCloseButton={false}>
         <DialogHeader className="bg-muted/30 flex flex-row items-center justify-between p-5">
           <DialogTitle className="text-foreground text-lg font-extrabold">
