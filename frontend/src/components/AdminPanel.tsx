@@ -36,7 +36,9 @@ import {
   SelectTrigger,
   SelectValue,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
 } from '@/components/ui/select';
 
 interface AdminPanelProps {
@@ -60,6 +62,11 @@ const CATEGORIES = [
   'سایر',
 ];
 
+const REGIONS = Array.from(
+  { length: 8 },
+  (_, i) => `منطقه ${toPersianDigits(i + 1)}`,
+);
+
 export default function AdminPanel({
   requests,
   onUpdateStatus,
@@ -69,6 +76,7 @@ export default function AdminPanel({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<RequestType | 'all'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedRegion, setSelectedRegion] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<RequestStatus | 'all'>(
     'all',
   );
@@ -107,15 +115,29 @@ export default function AdminPanel({
       selectedCategory === 'all' || item.category === selectedCategory;
     const matchesStatus =
       selectedStatus === 'all' || item.status === selectedStatus;
+    const matchesRegion =
+      selectedRegion === 'all' || item.region.startsWith(selectedRegion);
 
-    return matchesSearch && matchesType && matchesCategory && matchesStatus;
+    return (
+      matchesSearch &&
+      matchesType &&
+      matchesCategory &&
+      matchesStatus &&
+      matchesRegion
+    );
   });
 
   // Reset pagination on filter change
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setVisibleCount(12);
-  }, [searchTerm, selectedType, selectedCategory, selectedStatus]);
+  }, [
+    searchTerm,
+    selectedType,
+    selectedCategory,
+    selectedStatus,
+    selectedRegion,
+  ]);
 
   // IntersectionObserver for infinite scroll
   useEffect(() => {
@@ -247,7 +269,7 @@ export default function AdminPanel({
             </div>
 
             {/* Quick Filters Group */}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="flex justify-between">
               {/* Type selector */}
               <div className="flex flex-col gap-1.5 text-right">
                 <span className="text-muted-foreground flex items-center gap-1 text-[10px] font-bold">
@@ -255,6 +277,7 @@ export default function AdminPanel({
                   نوع مشارکت
                 </span>
                 <Select
+                  dir="rtl"
                   value={selectedType}
                   onValueChange={(v) =>
                     setSelectedType(v as 'all' | 'problem' | 'idea')
@@ -263,14 +286,19 @@ export default function AdminPanel({
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">
-                      همه دسته‌ها (مشکل و ایده)
-                    </SelectItem>
-                    <SelectItem value="problem">
-                      فقط گزارش مشکلات شهری
-                    </SelectItem>
-                    <SelectItem value="idea">فقط ایده‌های نوآورانه</SelectItem>
+                  <SelectContent position="popper">
+                    <SelectGroup>
+                      <SelectLabel>نوع مشارکت</SelectLabel>
+                      <SelectItem value="all">
+                        همه دسته‌ها (مشکل و ایده)
+                      </SelectItem>
+                      <SelectItem value="problem">
+                        فقط گزارش مشکلات شهری
+                      </SelectItem>
+                      <SelectItem value="idea">
+                        فقط ایده‌های نوآورانه
+                      </SelectItem>
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
               </div>
@@ -282,19 +310,23 @@ export default function AdminPanel({
                   موضوع خدمت
                 </span>
                 <Select
+                  dir="rtl"
                   value={selectedCategory}
                   onValueChange={setSelectedCategory}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">همه موضوعات خدمتی</SelectItem>
-                    {CATEGORIES.map((c, i) => (
-                      <SelectItem key={i} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
+                  <SelectContent position="popper" align="end">
+                    <SelectGroup>
+                      <SelectLabel>موضوع خدمت</SelectLabel>
+                      <SelectItem value="all">همه موضوعات خدمتی</SelectItem>
+                      {CATEGORIES.map((c, i) => (
+                        <SelectItem key={i} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
               </div>
@@ -306,23 +338,59 @@ export default function AdminPanel({
                   وضعیت فرآیند
                 </span>
                 <Select
+                  dir="rtl"
                   value={selectedStatus}
                   onValueChange={(v) => setSelectedStatus(v as RequestStatus)}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">همه وضعیت‌ها</SelectItem>
-                    <SelectItem value="submitted">مورد ارسالی جدید</SelectItem>
-                    <SelectItem value="under_review">
-                      در حال بررسی تخصصی
-                    </SelectItem>
-                    <SelectItem value="in_progress">
-                      اکیپ‌های مشغول به کار
-                    </SelectItem>
-                    <SelectItem value="resolved">برطرف شده و نهایی</SelectItem>
-                    <SelectItem value="archived">بایگانی شده</SelectItem>
+                  <SelectContent position="popper" align="end">
+                    <SelectGroup>
+                      <SelectLabel>وضعیت فرآیند</SelectLabel>
+                      <SelectItem value="all">همه وضعیت‌ها</SelectItem>
+                      <SelectItem value="submitted">
+                        مورد ارسالی جدید
+                      </SelectItem>
+                      <SelectItem value="under_review">
+                        در حال بررسی تخصصی
+                      </SelectItem>
+                      <SelectItem value="in_progress">
+                        اکیپ‌های مشغول به کار
+                      </SelectItem>
+                      <SelectItem value="resolved">
+                        برطرف شده و نهایی
+                      </SelectItem>
+                      <SelectItem value="archived">بایگانی شده</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Region selector */}
+              <div className="flex flex-col gap-1.5 text-right">
+                <span className="text-muted-foreground flex items-center gap-1 text-[10px] font-bold">
+                  <MapPin className="text-primary h-3 w-3" />
+                  منطقه شهری
+                </span>
+                <Select
+                  dir="rtl"
+                  value={selectedRegion}
+                  onValueChange={setSelectedRegion}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent position="popper" align="end">
+                    <SelectGroup>
+                      <SelectLabel>منطقه</SelectLabel>
+                      <SelectItem value="all">همه مناطق</SelectItem>
+                      {REGIONS.map((r) => (
+                        <SelectItem key={r} value={r}>
+                          {r}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
               </div>
@@ -350,7 +418,7 @@ export default function AdminPanel({
                       'admin-card cursor-pointer transition-all',
                       isSelected
                         ? 'border-primary ring-primary/40 ring-2'
-                        : 'border-border bg-card hover:border-primary/50',
+                        : 'border-border bg-card hover:shadow-sm',
                     )}
                     onClick={() => setSelectedItem(item)}
                   >
@@ -377,7 +445,7 @@ export default function AdminPanel({
                         {item.title}
                       </CardTitle>
 
-                      <CardDescription className="text-muted-foreground line-clamp-2 text-xs leading-relaxed">
+                      <CardDescription className="text-muted-foreground line-clamp-2 min-h-[2lh] text-xs leading-relaxed">
                         {item.description}
                       </CardDescription>
 
@@ -538,22 +606,28 @@ export default function AdminPanel({
                     تغییر وضعیت درخواست
                   </label>
                   <Select
+                    dir="rtl"
                     value={statusVal}
                     onValueChange={(v) => setStatusVal(v as RequestStatus)}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="submitted">
-                        جدید (صف انتظار)
-                      </SelectItem>
-                      <SelectItem value="under_review">
-                        تحت بررسی فنی
-                      </SelectItem>
-                      <SelectItem value="in_progress">در دست اقدام</SelectItem>
-                      <SelectItem value="resolved">برطرف شده</SelectItem>
-                      <SelectItem value="archived">بایگانی</SelectItem>
+                    <SelectContent position="popper" align="end">
+                      <SelectGroup>
+                        <SelectLabel>تغییر وضعیت</SelectLabel>
+                        <SelectItem value="submitted">
+                          جدید (صف انتظار)
+                        </SelectItem>
+                        <SelectItem value="under_review">
+                          تحت بررسی فنی
+                        </SelectItem>
+                        <SelectItem value="in_progress">
+                          در دست اقدام
+                        </SelectItem>
+                        <SelectItem value="resolved">برطرف شده</SelectItem>
+                        <SelectItem value="archived">بایگانی</SelectItem>
+                      </SelectGroup>
                     </SelectContent>
                   </Select>
                 </div>

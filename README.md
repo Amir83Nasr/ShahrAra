@@ -27,6 +27,10 @@ interactive map interface.
 
 ![Admin Panel](docs/images/پنل%20مدیریت.png)
 
+### My Profile
+
+![My Profile](docs/images/my%20profile.png)
+
 ### Dark Mode
 
 ![Dark Mode](docs/images/تم%20دارک.png)
@@ -63,14 +67,18 @@ ShahrAra/
 │   │   │   ├── LogoutModal.tsx       Logout confirmation (AlertDialog)
 │   │   │   ├── MapComponent.tsx      Leaflet interactive map (Qom, Iran)
 │   │   │   ├── mode-toggle.tsx       Dark/light theme toggle with CSS view-transition
-│   │   │   ├── Navbar.tsx            Navigation, auth controls, theme toggle
+│   │   │   ├── Navbar.tsx            Navigation, auth controls, theme toggle,
+│   │   │   │                         notification bell dropdown, user dropdown
 │   │   │   ├── ReportsDirectory.tsx  Public listing with search/filter/map/detail modal
-│   │   │   └── RequestForm.tsx       Problem/idea submission + map picker
+│   │   │   ├── RequestForm.tsx       Problem/idea submission + map picker + auto region
+│   │   │   └── UserProfile.tsx       My/liked requests, edit/delete own, card detail dialog
 │   │   ├── lib/
 │   │   │   └── utils.ts             cn() — clsx + tailwind-merge
 │   │   ├── utils/
 │   │   │   ├── apiCache.ts          Stale-while-revalidate in-memory cache (30s TTL)
-│   │   │   └── numberUtils.ts       toPersianDigits / toEnglishDigits converters
+│   │   │   ├── numberUtils.ts       toPersianDigits / toEnglishDigits converters
+│   │   │   ├── persianDate.ts       Jalali date formatting helpers
+│   │   │   └── regionUtils.ts       determineRegion() — lat/lng → Qom district (1-8)
 │   │   ├── App.tsx                  Root app (state-based tab switching, data fetching)
 │   │   ├── main.tsx                 Entry point (React 19 createRoot)
 │   │   ├── types.ts                 User, RequestItem, Stats, RequestStatus, RequestType
@@ -163,17 +171,24 @@ make dev-frontend   # Start frontend dev server (port 3000)
 
 ## API Endpoints
 
-| Method | Endpoint                       | Description                                      | Auth     |
-| ------ | ------------------------------ | ------------------------------------------------ | -------- |
-| GET    | `/`                            | Redirect to Swagger docs                          | —        |
-| GET    | `/api`                         | API root (version info)                           | —        |
-| GET    | `/api/health`                  | Health check                                     | —        |
-| GET    | `/api/v1/stats`                | Aggregate statistics                             | —        |
-| POST   | `/api/v1/auth/login`           | Login/register (phone + nationalId)                | —        |
-| GET    | `/api/v1/requests`             | List (search, type, category, status, userPhone)  | —        |
-| POST   | `/api/v1/requests`             | Create request (problem or idea)                  | —        |
-| PUT    | `/api/v1/requests/{id}/status` | Update status + admin response                    | Admin    |
-| POST   | `/api/v1/requests/{id}/like`   | Toggle like per user                              | —        |
+| Method | Endpoint                                     | Description                                           | Auth     |
+| ------ | -------------------------------------------- | ----------------------------------------------------- | -------- |
+| GET    | `/`                                          | Redirect to Swagger docs                              | —        |
+| GET    | `/api`                                       | API root (version info)                               | —        |
+| GET    | `/api/health`                                | Health check                                          | —        |
+| GET    | `/api/v1/stats`                              | Aggregate statistics                                  | —        |
+| POST   | `/api/v1/auth/login`                         | Login/register (phone + nationalId)                   | —        |
+| GET    | `/api/v1/requests`                           | List (search, type, category, status, region,         | —        |
+|        |                                              | userPhone, limit, offset, sort, date range)           |          |
+| POST   | `/api/v1/requests`                           | Create request (problem or idea)                      | —        |
+| GET    | `/api/v1/requests/{id}`                      | Get single request by ID                              | —        |
+| PUT    | `/api/v1/requests/{id}`                      | Edit own request (title, description, category)       | User     |
+| DELETE | `/api/v1/requests/{id}`                      | Delete own submitted request                          | User     |
+| PUT    | `/api/v1/requests/{id}/status`               | Update status + admin response                        | Admin    |
+| POST   | `/api/v1/requests/{id}/like`                 | Toggle like per user                                  | —        |
+| GET    | `/api/v1/requests/user/{phone}/stats`        | User stats (total requests, likes received)           | —        |
+| GET    | `/api/v1/notifications`                      | List notifications for a user                         | —        |
+| PUT    | `/api/v1/notifications/{id}/read`            | Mark notification as read                             | —        |
 
 Swagger UI is available at `http://localhost:8000/docs`.
 
@@ -318,17 +333,24 @@ Copy `backend/.env.example` to `backend/.env` and adjust as needed.
 ### Component Hierarchy
 
 ```
-App (state: currentTab, currentUser, theme, requests, stats, apiError)
-├── Navbar (tabs, user dropdown, auth controls, theme toggle, mobile bottom bar)
+App (state: currentTab, currentUser, theme, requests, stats, apiError, notifications)
+├── Navbar (tabs, user dropdown, auth controls, theme toggle, mobile bottom bar,
+│          notification bell with dropdown)
 ├── API Error Banner (dismissable)
 ├── ErrorBoundary (catches render errors, retry button)
 ├── [loading ? Spinner : currentTab]
 │   ├── home:     Hero
-│   ├── reports:  ReportsDirectory (filter bar + category chips + grid + map + detail dialog)
-│   ├── submit:   RequestForm (with MapComponent picker + helper panels)
-│   └── admin:    AdminPanel (searchable list + detail/response panel with MapComponent)
+│   ├── reports:  ReportsDirectory (filter bar + category chips + sort + date range +
+│   │              region filter + grid with 2-line cards + map + detail dialog)
+│   ├── submit:   RequestForm (with MapComponent picker + auto region detection +
+│   │              region override selector + helper panels)
+│   ├── profile:  UserProfile (sub-tabs: my/liked requests, search/filter bar,
+│   │              region filter, edit/delete, cards with detail dialog + map)
+│   └── admin:    AdminPanel (searchable list + filters + region filter +
+│                  detail/response panel with MapComponent)
 ├── Footer (nav links, copyright)
-└── AuthModal (conditional overlay, login/register toggle with Persian validation)
+├── AuthModal (conditional overlay, login/register toggle with Persian validation)
+└── LogoutModal (confirmation dialog)
 ```
 
 ### Key Design Decisions

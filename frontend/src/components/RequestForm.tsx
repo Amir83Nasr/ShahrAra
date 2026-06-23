@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { RequestType, User } from '../types';
 import MapComponent from './MapComponent';
+import { determineRegion } from '../utils/regionUtils';
 import {
   AlertCircleIcon,
   AlertTriangle,
@@ -19,7 +20,9 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -52,12 +55,15 @@ export default function RequestForm({
   const [description, setDescription] = useState('');
   const [type, setType] = useState<RequestType>('problem');
   const [category, setCategory] = useState(CATEGORIES[0]);
-  const [region, setRegion] = useState('');
 
-  const [coords, setCoords] = useState<{ lat: number; lng: number }>({
-    lat: 34.641,
-    lng: 50.88,
-  });
+  const defaultCoords = { lat: 34.641, lng: 50.88 };
+  const [region, setRegion] = useState(
+    determineRegion(defaultCoords.lat, defaultCoords.lng),
+  );
+
+  const [coords, setCoords] = useState<{ lat: number; lng: number }>(
+    defaultCoords,
+  );
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -288,16 +294,19 @@ export default function RequestForm({
                   <MessageSquare className="text-primary h-3.5 w-3.5" />
                   دسته‌بندی مربوطه <span className="text-destructive">*</span>
                 </label>
-                <Select value={category} onValueChange={setCategory}>
+                <Select dir="rtl" value={category} onValueChange={setCategory}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIES.map((c, i) => (
-                      <SelectItem key={i} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
+                  <SelectContent position="popper" align="end">
+                    <SelectGroup>
+                      <SelectLabel>دسته‌بندی</SelectLabel>
+                      {CATEGORIES.map((c, i) => (
+                        <SelectItem key={i} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
               </div>
@@ -334,6 +343,42 @@ export default function RequestForm({
                   theme={theme}
                 />
               </div>
+            </div>
+
+            {/* Detected Region — auto-filled from map, user can override */}
+            <div className="form-main-section flex flex-col gap-1.5">
+              <label className="text-muted-foreground flex items-center gap-1 text-xs font-medium">
+                <MapPin className="text-primary h-3.5 w-3.5" />
+                منطقه شهری <span className="text-destructive">*</span>
+              </label>
+              <Select dir="rtl" value={region} onValueChange={setRegion}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent position="popper" align="end">
+                  <SelectGroup>
+                    <SelectLabel>منطقه شهرداری</SelectLabel>
+                    {[
+                      'منطقه ۱ (شمال قم)',
+                      'منطقه ۲ (مرکز قم)',
+                      'منطقه ۳ (شرق قم)',
+                      'منطقه ۴ (غرب قم)',
+                      'منطقه ۵ (جنوب قم)',
+                      'منطقه ۶',
+                      'منطقه ۷',
+                      'منطقه ۸',
+                    ].map((r) => (
+                      <SelectItem key={r} value={r}>
+                        {r}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <p className="text-muted-foreground text-[10px]">
+                منطقه به صورت خودکار از موقعیت روی نقشه تعیین شده است. در صورت
+                نیاز می‌توانید دستی تغییر دهید.
+              </p>
             </div>
 
             {/* Action Submit */}

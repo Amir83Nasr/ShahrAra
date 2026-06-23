@@ -8,6 +8,7 @@ import L from 'leaflet';
 import { RequestItem } from '../types';
 import { MapPin } from 'lucide-react';
 import { toPersianDigits } from '../utils/numberUtils';
+import { determineRegion } from '../utils/regionUtils';
 
 interface MapComponentProps {
   pickerMode?: boolean;
@@ -40,24 +41,6 @@ const createMarkerIcon = (type: 'problem' | 'idea' | 'picker') => {
     popupAnchor: [0, -36],
     className: 'custom-svg-marker',
   });
-};
-
-// Simple heuristic to compute municipal districts in Qom
-const determineRegion = (lat: number, lng: number): string => {
-  if (lat > 34.68) return 'منطقه ۱ (شمال قم)';
-  if (lat < 34.58) return 'منطقه ۵ (جنوب قم)';
-  if (lng < 50.83) return 'منطقه ۴ (غرب قم)';
-  if (lng > 50.95) return 'منطقه ۳ (شرق قم)';
-
-  // Random matching for central districts
-  const regions = [
-    'منطقه ۲ (مرکز قم)',
-    'منطقه ۲ (مرکز قم)',
-    'منطقه ۴ (غرب قم)',
-    'منطقه ۱ (شمال قم)',
-  ];
-  const index = Math.floor((lat + lng) * 100) % regions.length;
-  return regions[index];
 };
 
 export default function MapComponent({
@@ -130,6 +113,16 @@ export default function MapComponent({
             computedRegion,
           );
         });
+
+        // Emit initial region so parent has it from the start
+        const initRegion = determineRegion(
+          selectedCoordinates.lat,
+          selectedCoordinates.lng,
+        );
+        onCoordinatesChange?.(
+          { lat: selectedCoordinates.lat, lng: selectedCoordinates.lng },
+          initRegion,
+        );
       }
 
       // Click to pin location

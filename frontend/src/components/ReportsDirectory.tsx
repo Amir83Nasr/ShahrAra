@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RequestItem, RequestStatus, User } from '../types';
 import MapComponent from './MapComponent';
 import {
@@ -21,12 +21,15 @@ import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   Card,
   CardContent,
@@ -65,13 +68,16 @@ export default function ReportsDirectory({
     'all',
   );
   const [showMap, setShowMap] = useState<boolean>(true);
-  const [sortBy, setSortBy] = useState<'newest' | 'most_liked'>('newest');
+  const [sortBy, setSortBy] = useState<
+    'newest' | 'oldest' | 'most_liked' | 'least_liked'
+  >('newest');
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [selectedDetails, setSelectedDetails] = useState<RequestItem | null>(
     null,
   );
   const [visibleCount, setVisibleCount] = useState(12);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [filterRegion, setFilterRegion] = useState<string>('all');
 
   const CATEGORIES = [
     'آسفالت و معابر',
@@ -83,6 +89,11 @@ export default function ReportsDirectory({
     'سایر',
   ];
 
+  const REGIONS = Array.from(
+    { length: 8 },
+    (_, i) => `منطقه ${toPersianDigits(i + 1)}`,
+  );
+
   const filtered = items.filter((item) => {
     const matchesSearch =
       item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -93,34 +104,65 @@ export default function ReportsDirectory({
       activeCategory === 'all' || item.category === activeCategory;
     const matchesType = activeType === 'all' || item.type === activeType;
 
-    return matchesSearch && matchesCategory && matchesType;
+    const matchesRegion =
+      filterRegion === 'all' || item.region.startsWith(filterRegion);
+
+    // Date range filter
+    let matchesDate = true;
+    const itemDate = new Date(item.createdAt).getTime();
+    if (startDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      matchesDate = matchesDate && itemDate >= start.getTime();
+    }
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      matchesDate = matchesDate && itemDate <= end.getTime();
+    }
+
+    return (
+      matchesSearch &&
+      matchesCategory &&
+      matchesType &&
+      matchesRegion &&
+      matchesDate
+    );
   });
 
-  const sorted = [...filtered].sort((a, b) =>
-    sortBy === 'most_liked'
-      ? b.likes - a.likes
-      : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
+  const sorted = [...filtered].sort((a, b) => {
+    switch (sortBy) {
+      case 'oldest':
+        return (
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+      case 'most_liked':
+        return b.likes - a.likes;
+      case 'least_liked':
+        return a.likes - b.likes;
+      default: // newest
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+    }
+  });
+
+  const handleLoadMore = () => {
+    setVisibleCount((prev) => Math.min(prev + 8, sorted.length));
+  };
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setVisibleCount(12);
-  }, [searchTerm, activeCategory, activeType, sortBy]);
-
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel || visibleCount >= sorted.length) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setVisibleCount((prev) => Math.min(prev + 8, sorted.length));
-        }
-      },
-      { rootMargin: '100px' },
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [sorted.length, visibleCount]);
+  }, [
+    searchTerm,
+    activeCategory,
+    activeType,
+    sortBy,
+    startDate,
+    endDate,
+    filterRegion,
+  ]);
 
   const handleLikeClick = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -184,47 +226,19 @@ export default function ReportsDirectory({
   return (
     <div className="mx-auto max-w-7xl px-4 py-8" id="shahr_ara_directory">
       {/* Filters */}
-      <div className="border-border bg-card mb-8 flex flex-col items-center justify-between gap-4 rounded-xl border p-5 md:flex-row">
-        <div className="relative w-full md:w-80">
-          <Search className="text-muted-foreground absolute top-3 right-3 h-4.5 w-4.5" />
-          <Input
-            type="text"
-            placeholder="جستجوی نیاز، ایده، محله..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-background pr-10"
-          />
-        </div>
-
-        <div className="flex w-full flex-wrap items-center justify-start gap-3 md:w-auto">
-          <Select
-            value={sortBy}
-            onValueChange={(v) => setSortBy(v as 'newest' | 'most_liked')}
-          >
-            <SelectTrigger size="sm" className="w-36">
-              <ArrowUpDown className="ml-1.5 h-3.5 w-3.5" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent align="end">
-              <SelectItem value="newest">جدیدترین</SelectItem>
-              <SelectItem value="most_liked">بیشترین لایک</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
-            value={activeType}
-            onValueChange={(v) =>
-              setActiveType(v as 'all' | 'problem' | 'idea')
-            }
-          >
-            <SelectTrigger size="sm" className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent align="end">
-              <SelectItem value="all">همه کارها</SelectItem>
-              <SelectItem value="problem">خرابی‌ها</SelectItem>
-              <SelectItem value="idea">ایده‌ها</SelectItem>
-            </SelectContent>
-          </Select>
+      <div className="bg-card mb-8 flex flex-col gap-4 rounded-xl border p-5">
+        {/* Top row: search + map/refresh buttons */}
+        <div className="flex w-full items-center gap-3">
+          <div className="relative flex-1">
+            <Search className="text-muted-foreground absolute top-3 right-3 h-4.5 w-4.5" />
+            <Input
+              type="text"
+              placeholder="جستجوی نیاز، ایده، محله..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="bg-background pr-10"
+            />
+          </div>
           <Button
             variant={showMap ? 'default' : 'outline'}
             size="sm"
@@ -238,11 +252,94 @@ export default function ReportsDirectory({
             variant="outline"
             size="sm"
             onClick={onRefresh}
-            className="gap-1.5"
+            className="gap-1.5 rounded-lg whitespace-nowrap"
           >
             <RefreshCcw className="h-3.5 w-3.5" />
             <span>بروزرسانی</span>
           </Button>
+        </div>
+
+        {/* Bottom row: selects on start, date pickers on end */}
+        <div className="flex w-full flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <Select
+              dir="rtl"
+              value={sortBy}
+              onValueChange={(v) =>
+                setSortBy(
+                  v as 'newest' | 'oldest' | 'most_liked' | 'least_liked',
+                )
+              }
+            >
+              <SelectTrigger size="sm" className="w-32">
+                <ArrowUpDown />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent position="popper">
+                <SelectGroup>
+                  <SelectLabel>ترتیب بر اساس</SelectLabel>
+                  <SelectItem value="newest">جدیدترین</SelectItem>
+                  <SelectItem value="oldest">قدیمی‌ترین</SelectItem>
+                  <SelectItem value="most_liked">بیشترین حمایت</SelectItem>
+                  <SelectItem value="least_liked">کمترین حمایت</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <Select
+              dir="rtl"
+              value={activeType}
+              onValueChange={(v) =>
+                setActiveType(v as 'all' | 'problem' | 'idea')
+              }
+            >
+              <SelectTrigger size="sm" className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent position="popper">
+                <SelectGroup>
+                  <SelectLabel>فیلتر نوع</SelectLabel>
+                  <SelectItem value="all">همه کارها</SelectItem>
+                  <SelectItem value="problem">خرابی‌ها</SelectItem>
+                  <SelectItem value="idea">ایده‌ها</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <Select
+              dir="rtl"
+              value={filterRegion}
+              onValueChange={setFilterRegion}
+            >
+              <SelectTrigger size="sm" className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent position="popper">
+                <SelectGroup>
+                  <SelectLabel>منطقه</SelectLabel>
+                  <SelectItem value="all">همه مناطق</SelectItem>
+                  {REGIONS.map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {r}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <DatePicker
+              date={startDate}
+              onSelect={setStartDate}
+              placeholder="از تاریخ"
+              className="h-8 w-36 text-xs"
+            />
+            <span className="text-muted-foreground text-xs">تا</span>
+            <DatePicker
+              date={endDate}
+              onSelect={setEndDate}
+              placeholder="تا تاریخ"
+              className="h-8 w-36 text-xs"
+            />
+          </div>
         </div>
       </div>
 
@@ -272,10 +369,7 @@ export default function ReportsDirectory({
       {/* Display Directory Main Arena */}
       <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
         <div className={`${showMap ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
-          <div
-            ref={scrollContainerRef}
-            className="max-h-[600px] overflow-y-auto p-0.5 max-lg:max-h-none max-lg:overflow-visible"
-          >
+          <div className="max-h-[600px] overflow-y-auto p-0.5 max-lg:max-h-none max-lg:overflow-visible">
             <div
               className={cn(
                 'grid grid-cols-1 gap-5',
@@ -296,7 +390,7 @@ export default function ReportsDirectory({
                       key={item.id}
                       className={cn(
                         'report-card cursor-pointer overflow-hidden transition-all duration-300',
-                        'hover:border-primary/30',
+                        'hover:shadow-sm',
                         'border-border bg-card',
                       )}
                       onClick={() => setSelectedDetails(item)}
@@ -327,10 +421,10 @@ export default function ReportsDirectory({
                         </div>
 
                         {/* Content */}
-                        <CardTitle className="text-foreground hover:text-primary line-clamp-1 cursor-pointer text-sm font-extrabold transition-colors">
+                        <CardTitle className="text-foreground line-clamp-1 cursor-pointer text-sm font-extrabold">
                           {item.title}
                         </CardTitle>
-                        <CardDescription className="text-muted-foreground line-clamp-3 text-xs leading-relaxed">
+                        <CardDescription className="text-muted-foreground line-clamp-2 min-h-[2lh] text-xs leading-relaxed">
                           {item.description}
                         </CardDescription>
 
@@ -379,9 +473,19 @@ export default function ReportsDirectory({
                 </div>
               )}
 
-              {/* Sentinel for infinite scroll */}
+              {/* Load More button */}
               {sorted.length > 0 && sorted.length > visibleCount && (
-                <div ref={sentinelRef} className="col-span-full h-4" />
+                <div className="col-span-full flex justify-center pt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleLoadMore}
+                    className="gap-2 font-bold"
+                  >
+                    بارگذاری بیشتر (
+                    {toPersianDigits(sorted.length - visibleCount)} مورد)
+                  </Button>
+                </div>
               )}
             </div>
           </div>

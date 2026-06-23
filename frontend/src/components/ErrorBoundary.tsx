@@ -47,8 +47,14 @@ export default class ErrorBoundary extends Component<Props, State> {
               متأسفانه در اجرای برنامه مشکلی پیش آمد. لطفاً مجدداً تلاش کنید یا
               صفحه را بازنشانی نمایید.
             </p>
+            {/* Dev-only: show actual error */}
+            {this.state.error && (
+              <p className="mt-3 rounded-md bg-black/5 p-2 font-mono text-[11px] text-red-600 dark:bg-white/5 dark:text-red-400">
+                {this.state.error.name}: {this.state.error.message}
+              </p>
+            )}
           </div>
-          <Button onClick={this.handleRetry} size="lg" className="font-bold">
+          <Button onClick={this.handleRetry} className="font-bold">
             <RefreshCcw className="h-4 w-4" />
             تلاش مجدد
           </Button>

@@ -203,3 +203,58 @@ class StatsResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     detail: str = Field(examples=["Request not found."])
+
+
+# ── Notification ───────────────────────────────────────
+
+
+class NotificationResponse(BaseModel):
+    id: str = Field(examples=["ntf_a1b2c3d4"])
+    userPhone: str = Field(alias="userPhone", examples=["09123456789"])
+    message: str = Field(examples=["Your request status changed."])
+    requestId: str | None = Field(None, alias="requestId", examples=["req_x1y2z3w4"])
+    requestTitle: str | None = Field(None, alias="requestTitle", examples=["Pothole repair"])
+    createdAt: str = Field(alias="createdAt", examples=["2025-06-13T10:30:00"])
+    isRead: bool = Field(alias="isRead")
+
+    model_config = {"from_attributes": True, "populate_by_name": True}
+
+
+class NotificationReadResponse(BaseModel):
+    success: bool
+
+
+# ── Request Update / Delete ─────────────────────────────
+
+
+class RequestUpdate(BaseModel):
+    title: str | None = Field(None, min_length=1, max_length=200)
+    description: str | None = Field(None, min_length=1)
+    category: str | None = None
+    region: str | None = None
+
+    model_config = {"populate_by_name": True}
+
+
+class RequestDeleteResponse(BaseModel):
+    success: bool
+
+
+# ── Pagination ──────────────────────────────────────────
+
+
+class PaginatedRequestResponse(BaseModel):
+    items: list[RequestResponse]
+    total: int = Field(ge=0)
+    limit: int = Field(ge=0)
+    offset: int = Field(ge=0)
+
+
+# ── User Stats ──────────────────────────────────────────
+
+
+class UserStatsResponse(BaseModel):
+    totalLikesReceived: int = Field(alias="totalLikesReceived", ge=0)
+    totalRequests: int = Field(alias="totalRequests", ge=0)
+
+    model_config = {"populate_by_name": True}

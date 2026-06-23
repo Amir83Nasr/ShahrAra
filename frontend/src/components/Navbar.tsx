@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { User } from '../types';
-import { LogIn, LogOut, Shield, UserRound } from 'lucide-react';
+import { User, Notification } from '../types';
+import { Bell, LogIn, LogOut, Shield, UserRound } from 'lucide-react';
 import { toPersianDigits } from '../utils/numberUtils';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,9 @@ interface NavbarProps {
   onOpenAuth: () => void;
   theme: 'light' | 'dark';
   toggleTheme: (theme: 'light' | 'dark') => void;
+  notifications?: Notification[];
+  unreadCount?: number;
+  onNotificationClick?: (notification: Notification) => void;
 }
 
 export default function Navbar({
@@ -46,6 +49,9 @@ export default function Navbar({
   onOpenAuth,
   theme,
   toggleTheme,
+  notifications = [],
+  unreadCount = 0,
+  onNotificationClick,
 }: NavbarProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
@@ -125,46 +131,120 @@ export default function Navbar({
                 پنل مدیریت شهری
               </Button>
             )}
+            {currentUser && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setTab('profile')}
+                className={cn(
+                  'flex items-center gap-1.5 font-bold',
+                  currentTab === 'profile' && 'bg-accent text-primary',
+                )}
+              >
+                <UserRound />
+                پروفایل من
+              </Button>
+            )}
           </div>
 
           <div className="nav-actions flex items-center gap-3">
             <ModeToggle theme={theme} onThemeChange={toggleTheme} />
 
             {currentUser ? (
-              <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    <UserRound className="h-4 w-4" />
-                    <span className="hidden max-w-[120px] truncate font-extrabold md:inline lg:max-w-none">
-                      {currentUser.firstName} {currentUser.lastName}
-                    </span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col gap-1 text-right">
-                      <span className="font-extrabold">
+              <>
+                {/* Notification bell */}
+                <DropdownMenu dir="rtl">
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost">
+                      <Bell />
+                      {unreadCount > 0 && (
+                        <span className="bg-destructive text-destructive-foreground absolute -top-1 -right-1 flex min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] leading-tight font-bold">
+                          {toPersianDigits(Math.min(unreadCount, 99))}
+                        </span>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-80 border">
+                    <DropdownMenuLabel>اعلان‌ها</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {notifications.length > 0 ? (
+                      notifications.slice(0, 5).map((n) => (
+                        <DropdownMenuItem
+                          key={n.id}
+                          onClick={() => onNotificationClick?.(n)}
+                          className={cn(
+                            'flex flex-col items-start gap-1 py-3',
+                            !n.isRead && 'bg-accent/50',
+                          )}
+                        >
+                          <span className="text-xs font-semibold">
+                            {n.message}
+                          </span>
+                          {n.requestTitle && (
+                            <span className="text-muted-foreground text-[10px]">
+                              {n.requestTitle}
+                            </span>
+                          )}
+                        </DropdownMenuItem>
+                      ))
+                    ) : (
+                      <div className="text-muted-foreground px-4 py-6 text-center text-xs">
+                        هیچ اعلان جدیدی ندارید.
+                      </div>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <DropdownMenu
+                  dir="rtl"
+                  open={dropdownOpen}
+                  onOpenChange={setDropdownOpen}
+                >
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost">
+                      <UserRound />
+                      <span className="hidden max-w-[120px] truncate font-extrabold md:inline lg:max-w-none">
                         {currentUser.firstName} {currentUser.lastName}
                       </span>
-                      <span className="text-muted-foreground font-mono text-xs font-normal">
-                        {toPersianDigits(currentUser.phone)}
-                      </span>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => {
-                      setDropdownOpen(false);
-                      setConfirmLogout(true);
-                    }}
-                    className="flex flex-row-reverse gap-2"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span>خروج از حساب</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56 border">
+                    <DropdownMenuLabel>
+                      <div className="flex flex-col gap-1">
+                        <span className="font-extrabold">
+                          {currentUser.firstName} {currentUser.lastName}
+                        </span>
+                        <span className="text-muted-foreground font-mono text-xs font-normal">
+                          {toPersianDigits(currentUser.phone)}
+                        </span>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        setTab('profile');
+                      }}
+                      className="flex gap-2"
+                    >
+                      <UserRound />
+                      <span>پروفایل من</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        setConfirmLogout(true);
+                      }}
+                      className="flex gap-2"
+                    >
+                      <LogOut />
+                      <span>خروج از حساب</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
             ) : (
               <Button variant="default" size="sm" onClick={onOpenAuth}>
                 <LogIn size={14} />
@@ -209,6 +289,19 @@ export default function Navbar({
           >
             ثبت درخواست
           </Button>
+          {currentUser && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setTab('profile')}
+              className={cn(
+                'flex-1 text-xs font-bold',
+                currentTab === 'profile' && 'bg-accent text-primary',
+              )}
+            >
+              پروفایل
+            </Button>
+          )}
           {currentUser?.isAdmin && (
             <Button
               variant="ghost"

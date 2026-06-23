@@ -49,3 +49,32 @@ export interface Stats {
   byStatus: Record<RequestStatus, number>;
   byCategory: Record<string, number>;
 }
+
+export interface Notification {
+  id: string;
+  userPhone: string;
+  message: string;
+  requestId: string | null;
+  requestTitle: string | null;
+  createdAt: string;
+  isRead: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface UserStats {
+  totalLikesReceived: number;
+  totalRequests: number;
+}
+
+export interface RequestUpdateData {
+  title?: string;
+  description?: string;
+  category?: string;
+  region?: string;
+}

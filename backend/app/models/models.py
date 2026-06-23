@@ -115,3 +115,18 @@ class Like(Base):
 
     def __repr__(self) -> str:
         return f"<Like {self.id} user={self.user_phone} request={self.request_id}>"
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id: str = Column(String, primary_key=True, default=lambda: f"ntf_{uuid.uuid4().hex[:8]}")
+    user_phone: str = Column(String, nullable=False, index=True)
+    message: str = Column(String, nullable=False)
+    request_id: str = Column(String, ForeignKey("requests.id"), nullable=True)
+    request_title: str = Column(String, nullable=True)
+    created_at: datetime = Column(DateTime(timezone=True), server_default=func.now())
+    is_read: bool = Column(Boolean, default=False)
+
+    def __repr__(self) -> str:
+        return f"<Notification {self.id} user={self.user_phone} read={self.is_read}>"

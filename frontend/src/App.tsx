@@ -5,8 +5,9 @@ import Hero from './components/Hero';
 import RequestForm from './components/RequestForm';
 import ReportsDirectory from './components/ReportsDirectory';
 import AdminPanel from './components/AdminPanel';
+import UserProfile from './components/UserProfile';
 import AuthModal from './components/AuthModal';
-import { User, RequestItem, RequestStatus, Stats } from './types';
+import { User, RequestItem, RequestStatus, Stats, Notification } from './types';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Home, FileText } from 'lucide-react';
 import {
@@ -18,7 +19,7 @@ import {
 const REQ_CACHE_KEY = 'requests';
 const STATS_CACHE_KEY = 'stats';
 
-const VALID_TABS = ['home', 'reports', 'submit', 'admin'];
+const VALID_TABS = ['home', 'reports', 'submit', 'admin', 'profile'];
 
 export default function App() {
   const [currentTab, setTab] = useState<string>('home');
@@ -57,6 +58,8 @@ export default function App() {
   });
 
   const [loading, setLoading] = useState<boolean>(true);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
 
   const safeSetTab = (tab: string) => {
     if (tab === 'admin' && !currentUser?.isAdmin) {
@@ -144,6 +147,36 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);
 
+  // Notification polling
+  useEffect(() => {
+    if (!currentUser) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setNotifications([]);
+
+      setUnreadCount(0);
+      return;
+    }
+
+    const pollNotifications = async () => {
+      try {
+        const res = await fetch(
+          `/api/v1/notifications?userPhone=${currentUser.phone}`,
+        );
+        if (res.ok) {
+          const data: Notification[] = await res.json();
+          setNotifications(data);
+          setUnreadCount(data.filter((n) => !n.isRead).length);
+        }
+      } catch {
+        // silent fail — polling is best-effort
+      }
+    };
+
+    pollNotifications();
+    const interval = setInterval(pollNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [currentUser]);
+
   const handleLoginSuccess = (user: User) => {
     setCurrentUser(user);
     localStorage.setItem('shahr_ara_user', JSON.stringify(user));
@@ -158,6 +191,30 @@ export default function App() {
     localStorage.removeItem('shahr_ara_user');
     invalidateCache();
     safeSetTab('home');
+  };
+
+  const handleMarkNotificationRead = async (notificationId: string) => {
+    try {
+      await fetch(`/api/v1/notifications/${notificationId}/read`, {
+        method: 'PUT',
+      });
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n)),
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch {
+      // silent fail
+    }
+  };
+
+  const handleNotificationClick = async (notification: Notification) => {
+    if (!notification.isRead) {
+      await handleMarkNotificationRead(notification.id);
+    }
+    if (notification.requestId) {
+      // Navigate to reports tab — user can find their request there
+      safeSetTab('reports');
+    }
   };
 
   const handleLike = async (id: string) => {
@@ -238,6 +295,9 @@ export default function App() {
         toggleTheme={(newTheme) => {
           setTheme(newTheme);
         }}
+        notifications={notifications}
+        unreadCount={unreadCount}
+        onNotificationClick={handleNotificationClick}
       />
 
       <main className="flex-1 pb-16">
@@ -306,6 +366,16 @@ export default function App() {
                 <AdminPanel
                   requests={requests}
                   onUpdateStatus={handleUpdateStatus}
+                  onRefresh={handleRefresh}
+                  theme={theme}
+                />
+              )}
+
+              {currentTab === 'profile' && currentUser && (
+                <UserProfile
+                  currentUser={currentUser}
+                  requests={requests}
+                  onLike={handleLike}
                   onRefresh={handleRefresh}
                   theme={theme}
                 />

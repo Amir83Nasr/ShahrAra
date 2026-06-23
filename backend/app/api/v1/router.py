@@ -5,11 +5,12 @@ from app.db.session import get_db
 from app.models.models import Request
 from app.schemas.schemas import StatsResponse
 
-from .endpoints import auth, requests
+from .endpoints import auth, notifications, requests
 
 api_router = APIRouter()
 api_router.include_router(auth.router, prefix="/auth")
 api_router.include_router(requests.router, prefix="/requests")
+api_router.include_router(notifications.router, prefix="/notifications")
 
 
 @api_router.get(
