@@ -149,7 +149,7 @@ export default function App() {
     localStorage.setItem('shahr_ara_user', JSON.stringify(user));
     invalidateCache();
     if (user.isAdmin) {
-      safeSetTab('admin');
+      setTab('admin');
     }
   };
 
