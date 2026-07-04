@@ -6,8 +6,12 @@ English labels, ShahrAra theme colors
 import matplotlib
 
 matplotlib.use("Agg")
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
+
+OUTPUT_DIR = Path(__file__).resolve().parent / "images"
 
 # ── Theme ──────────────────────────────────────────────
 PRIMARY_BLUE = "#4A7CF7"
@@ -129,7 +133,7 @@ ax.annotate(
 
 plt.tight_layout()
 fig.savefig(
-    "/Users/amir/Desktop/ShahrAra/docs/charts/growth_forecast.png",
+    OUTPUT_DIR / "growth_forecast.png",
     dpi=200,
     bbox_inches="tight",
     facecolor=BG_CARD,

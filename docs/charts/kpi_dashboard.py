@@ -6,7 +6,11 @@ English labels, ShahrAra theme colors
 import matplotlib
 
 matplotlib.use("Agg")
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+
+OUTPUT_DIR = Path(__file__).resolve().parent / "images"
 
 # ── Theme ──────────────────────────────────────────────
 PRIMARY_BLUE = "#4A7CF7"
@@ -221,7 +225,7 @@ fig.suptitle(
 )
 
 plt.savefig(
-    "/Users/amir/Desktop/ShahrAra/docs/charts/kpi_dashboard.png",
+    OUTPUT_DIR / "kpi_dashboard.png",
     dpi=200,
     bbox_inches="tight",
     facecolor=BG_CARD,

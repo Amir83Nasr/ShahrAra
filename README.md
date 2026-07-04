@@ -29,7 +29,7 @@ interactive map interface.
 
 ### My Profile
 
-![My Profile](docs/images/my%20profile.png)
+![My Profile](docs/images/پروفایل%20من.png)
 
 ### Dark Mode
 
@@ -124,14 +124,21 @@ ShahrAra/
 │
 ├── docs/                           # Project documentation & visual assets
 │   ├── شرح پروژه شهرآرا.docx       Project specification document
+│   ├── Poster.jpg                  Project presentation poster
 │   ├── icons/
 │   │   └── icon.svg                 App logo (mountain/city silhouette)
-│   └── images/
-│       ├── صفحه اصلی.png            Home page screenshot
-│       ├── گزارش و ایده.png         Reports & ideas directory screenshot
-│       ├── ثبت درخواست جدید.png      Request submission form screenshot
-│       ├── پنل مدیریت.png           Admin panel screenshot
-│       └── تم دارک.png             Dark mode screenshot
+│   ├── images/
+│   │   ├── صفحه اصلی.png            Home page screenshot
+│   │   ├── گزارش و ایده.png         Reports & ideas directory screenshot
+│   │   ├── ثبت درخواست جدید.png      Request submission form screenshot
+│   │   ├── پنل مدیریت.png           Admin panel screenshot
+│   │   ├── پروفایل من.png           My profile screenshot
+│   │   └── تم دارک.png             Dark mode screenshot
+│   └── charts/                     # Matplotlib scripts for the poster's charts
+│       ├── burndown.py              Sprint burndown chart generator
+│       ├── kpi_dashboard.py         KPI dashboard chart generator
+│       ├── growth_forecast.py       User growth forecast chart generator
+│       └── images/                  Generated chart PNGs
 │
 ├── scripts/
 │   └── ascii_logo.py               ASCII logo generator (used in `make help`)
@@ -178,11 +185,13 @@ make dev-frontend   # Start frontend dev server (port 3000)
 | GET    | `/api/health`                                | Health check                                          | —        |
 | GET    | `/api/v1/stats`                              | Aggregate statistics                                  | —        |
 | POST   | `/api/v1/auth/login`                         | Login/register (phone + nationalId)                   | —        |
-| GET    | `/api/v1/requests`                           | List (search, type, category, status, region,         | —        |
-|        |                                              | userPhone, limit, offset, sort, date range)           |          |
+| GET    | `/api/v1/requests`                           | List (search — matches title/description/region —,    | —        |
+|        |                                              | type, category, status, userPhone, likedByUser,       |          |
+|        |                                              | currentUserPhone, limit, offset, sort, date range)     |          |
 | POST   | `/api/v1/requests`                           | Create request (problem or idea)                      | —        |
 | GET    | `/api/v1/requests/{id}`                      | Get single request by ID                              | —        |
-| PUT    | `/api/v1/requests/{id}`                      | Edit own request (title, description, category)       | User     |
+| PUT    | `/api/v1/requests/{id}`                      | Edit own request (title, description, category,       | User     |
+|        |                                              | region)                                               |          |
 | DELETE | `/api/v1/requests/{id}`                      | Delete own submitted request                          | User     |
 | PUT    | `/api/v1/requests/{id}/status`               | Update status + admin response                        | Admin    |
 | POST   | `/api/v1/requests/{id}/like`                 | Toggle like per user                                  | —        |
@@ -427,7 +436,6 @@ App (state: currentTab, currentUser, theme, requests, stats, apiError, notificat
 
 - Custom `http_exception_handler`, `validation_exception_handler`, `generic_exception_handler`
 - All errors return `{ success: false, error: { code, message, fields? } }` format
-- All errors return `{ success: false, error: { code, message, fields? } }` format
 - Persian error messages throughout (16 distinct Persian error strings)
 - Default Starlette status phrases are detected and replaced with Persian equivalents
 
@@ -447,11 +455,11 @@ App (state: currentTab, currentUser, theme, requests, stats, apiError, notificat
 ## Known Gaps
 
 - No database migration system — schema changes require manual migration or delete-and-reset
-- No notification system — users are not notified when their request status changes
 - No image upload — request descriptions are text-only
-- No pagination on `/api/v1/requests` — returns all records at once
+- Pagination on `/api/v1/requests` is opt-in via `limit`/`offset` (defaults to returning the
+  full flat list for backward compatibility) — frontend pagination UX is not yet unified
+  across `AdminPanel`, `ReportsDirectory`, and `UserProfile`
 - No refresh token mechanism — tokens expire after 24 hours with no way to renew
-- No user profile page — users cannot view or edit their submitted requests
 
 ---
 

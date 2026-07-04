@@ -7,9 +7,12 @@ import matplotlib
 
 matplotlib.use("Agg")
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+
+OUTPUT_DIR = Path(__file__).resolve().parent / "images"
 
 # ── Theme ──────────────────────────────────────────────
 PRIMARY_BLUE = "#4A7CF7"
@@ -132,7 +135,7 @@ ax.set_title(
 
 plt.tight_layout()
 fig.savefig(
-    "/Users/amir/Desktop/ShahrAra/docs/charts/burndown.png",
+    OUTPUT_DIR / "burndown.png",
     dpi=200,
     bbox_inches="tight",
     facecolor=BG_CARD,

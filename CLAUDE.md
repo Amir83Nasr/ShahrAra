@@ -25,7 +25,7 @@ When the user *does* ask for a commit:
 - Clean code and best practices are the highest priority
 - Match the surrounding code's style, comment density, and idioms
 - Zero lint/type errors: always run `ruff check` (backend) and `tsc --noEmit` (frontend) before finishing
-- All 41 backend tests must pass: `make test`
+- All 67 backend tests must pass: `make test`
 - Use pre-commit hooks: `pre-commit install` (runs on every `git commit`)
 - Never leave dead code, commented-out code, or `console.log`/`print` debugging
 
