@@ -3,12 +3,11 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.core.security import get_current_user, require_admin
+from app.core.security import get_current_user, require_admin, require_user
 from app.db.session import get_db
 from app.models.models import Like, Notification, Request, User
 from app.schemas.schemas import (
     CreateRequestResponse,
-    LikeRequest,
     LikeResponse,
     PaginatedRequestResponse,
     RequestCreate,
@@ -128,7 +127,11 @@ def get_requests(
     description="Submit a new urban problem or improvement idea with location coordinates.",
     responses={400: {"description": "داده‌های ورودی نامعتبر است"}},
 )
-def create_request(request_data: RequestCreate, db: Session = Depends(get_db)):
+def create_request(
+    request_data: RequestCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
     region = request_data.region or "Central District"
 
     new_request = Request(
@@ -139,8 +142,8 @@ def create_request(request_data: RequestCreate, db: Session = Depends(get_db)):
         lat=str(request_data.coordinates.lat),
         lng=str(request_data.coordinates.lng),
         region=region,
-        user_phone=request_data.userPhone,
-        user_name=request_data.userName,
+        user_phone=current_user.phone,
+        user_name=f"{current_user.firstName} {current_user.lastName}",
         status="submitted",
         likes=0,
     )
@@ -325,10 +328,14 @@ def update_status(
     "/{request_id}/like",
     response_model=LikeResponse,
     summary="Toggle like on a request",
-    description="Like or unlike a request. Toggles per user based on their phone number.",
+    description="Like or unlike a request. Toggles per authenticated user.",
     responses={404: {"description": "درخواست مورد نظر یافت نشد"}},
 )
-def toggle_like(request_id: str, like_data: LikeRequest, db: Session = Depends(get_db)):
+def toggle_like(
+    request_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
     req = db.query(Request).filter(Request.id == request_id).first()
     if not req:
         raise HTTPException(
@@ -339,7 +346,7 @@ def toggle_like(request_id: str, like_data: LikeRequest, db: Session = Depends(g
     existing = (
         db.query(Like)
         .filter(
-            Like.user_phone == like_data.userPhone,
+            Like.user_phone == current_user.phone,
             Like.request_id == request_id,
         )
         .first()
@@ -349,7 +356,7 @@ def toggle_like(request_id: str, like_data: LikeRequest, db: Session = Depends(g
         db.delete(existing)
         req.likes = max(0, req.likes - 1)
     else:
-        db.add(Like(user_phone=like_data.userPhone, request_id=request_id))
+        db.add(Like(user_phone=current_user.phone, request_id=request_id))
         req.likes += 1
 
     db.commit()

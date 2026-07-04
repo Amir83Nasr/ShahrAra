@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from app.api.v1.router import api_router as v1_router
+from app.core.config import CORS_ORIGINS
 from app.core.errors import (
     generic_exception_handler,
     http_exception_handler,
@@ -38,15 +39,9 @@ app = FastAPI(
     },
 )
 
-origins = [
-    "http://localhost",
-    "http://localhost:3000",
-    "http://192.168.1.21",
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

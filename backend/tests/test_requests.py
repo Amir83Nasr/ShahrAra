@@ -4,8 +4,12 @@ import pytest
 
 
 class TestCreateRequest:
-    def test_create_request(self, client, registered_user, sample_request_data):
-        r = client.post("/api/v1/requests", json=sample_request_data)
+    def test_create_request(self, client, registered_user, sample_request_data, user_token):
+        r = client.post(
+            "/api/v1/requests",
+            json=sample_request_data,
+            headers={"Authorization": f"Bearer {user_token}"},
+        )
         assert r.status_code == 201
         data = r.json()
         assert data["success"] is True
@@ -17,18 +21,28 @@ class TestCreateRequest:
         assert req["id"].startswith("req_")
 
     def test_create_request_without_region_defaults(
-        self, client, registered_user, sample_request_data
+        self, client, registered_user, sample_request_data, user_token
     ):
         data = {**sample_request_data, "region": ""}
-        r = client.post("/api/v1/requests", json=data)
+        r = client.post(
+            "/api/v1/requests", json=data, headers={"Authorization": f"Bearer {user_token}"}
+        )
         assert r.status_code == 201
         assert r.json()["request"]["region"] == "Central District"
 
-    def test_create_idea(self, client, registered_user, sample_request_data):
+    def test_create_idea(self, client, registered_user, sample_request_data, user_token):
         data = {**sample_request_data, "type": "idea"}
-        r = client.post("/api/v1/requests", json=data)
+        r = client.post(
+            "/api/v1/requests", json=data, headers={"Authorization": f"Bearer {user_token}"}
+        )
         assert r.status_code == 201
         assert r.json()["request"]["type"] == "idea"
+
+    def test_create_request_without_token_returns_401(
+        self, client, registered_user, sample_request_data
+    ):
+        r = client.post("/api/v1/requests", json=sample_request_data)
+        assert r.status_code == 401
 
     @pytest.mark.parametrize(
         "field, value",
@@ -39,10 +53,12 @@ class TestCreateRequest:
         ],
     )
     def test_create_request_invalid_data(
-        self, client, registered_user, sample_request_data, field, value
+        self, client, registered_user, sample_request_data, user_token, field, value
     ):
         data = {**sample_request_data, field: value}
-        r = client.post("/api/v1/requests", json=data)
+        r = client.post(
+            "/api/v1/requests", json=data, headers={"Authorization": f"Bearer {user_token}"}
+        )
         assert r.status_code == 422
 
 
@@ -89,32 +105,41 @@ class TestListRequests:
 
 
 class TestLikeRequest:
-    def test_like_request(self, client, sample_request_id, user_data):
-        phone = user_data["phone"]
-        r = client.post(f"/api/v1/requests/{sample_request_id}/like", json={"userPhone": phone})
+    def test_like_request(self, client, sample_request_id, user_token):
+        r = client.post(
+            f"/api/v1/requests/{sample_request_id}/like",
+            headers={"Authorization": f"Bearer {user_token}"},
+        )
         assert r.status_code == 200
         data = r.json()
         assert data["success"] is True
         assert data["request"]["likes"] == 1
         assert data["request"]["likedByCurrentUser"] is True
 
-    def test_unlike_request(self, client, sample_request_id, user_data):
-        phone = user_data["phone"]
-        client.post(f"/api/v1/requests/{sample_request_id}/like", json={"userPhone": phone})
-        r = client.post(f"/api/v1/requests/{sample_request_id}/like", json={"userPhone": phone})
+    def test_unlike_request(self, client, sample_request_id, user_token):
+        headers = {"Authorization": f"Bearer {user_token}"}
+        client.post(f"/api/v1/requests/{sample_request_id}/like", headers=headers)
+        r = client.post(f"/api/v1/requests/{sample_request_id}/like", headers=headers)
         assert r.status_code == 200
         assert r.json()["request"]["likes"] == 0
         assert r.json()["request"]["likedByCurrentUser"] is False
 
-    def test_like_toggle_multiple_times(self, client, sample_request_id, user_data):
-        phone = user_data["phone"]
+    def test_like_toggle_multiple_times(self, client, sample_request_id, user_token):
+        headers = {"Authorization": f"Bearer {user_token}"}
         for expected_likes, expected_current in [(1, True), (0, False), (1, True)]:
-            r = client.post(f"/api/v1/requests/{sample_request_id}/like", json={"userPhone": phone})
+            r = client.post(f"/api/v1/requests/{sample_request_id}/like", headers=headers)
             assert r.json()["request"]["likes"] == expected_likes
             assert r.json()["request"]["likedByCurrentUser"] is expected_current
 
-    def test_like_nonexistent_request_returns_persian_error(self, client):
-        r = client.post("/api/v1/requests/nonexistent/like", json={"userPhone": "09123456789"})
+    def test_like_without_token_returns_401(self, client, sample_request_id):
+        r = client.post(f"/api/v1/requests/{sample_request_id}/like")
+        assert r.status_code == 401
+
+    def test_like_nonexistent_request_returns_persian_error(self, client, user_token):
+        r = client.post(
+            "/api/v1/requests/nonexistent/like",
+            headers={"Authorization": f"Bearer {user_token}"},
+        )
         assert r.status_code == 404
         data = r.json()
         assert data["success"] is False
@@ -194,10 +219,19 @@ class TestStats:
         assert data["problemsCount"] == 1
         assert data["ideasCount"] == 0
 
-    def test_stats_counts_across_types(self, client, registered_user, sample_request_data):
-        client.post("/api/v1/requests", json={**sample_request_data, "type": "problem"})
-        client.post("/api/v1/requests", json={**sample_request_data, "type": "idea"})
-        client.post("/api/v1/requests", json={**sample_request_data, "type": "problem"})
+    def test_stats_counts_across_types(
+        self, client, registered_user, sample_request_data, user_token
+    ):
+        headers = {"Authorization": f"Bearer {user_token}"}
+        client.post(
+            "/api/v1/requests", json={**sample_request_data, "type": "problem"}, headers=headers
+        )
+        client.post(
+            "/api/v1/requests", json={**sample_request_data, "type": "idea"}, headers=headers
+        )
+        client.post(
+            "/api/v1/requests", json={**sample_request_data, "type": "problem"}, headers=headers
+        )
         r = client.get("/api/v1/stats")
         assert r.json()["totalCount"] == 3
         assert r.json()["problemsCount"] == 2
@@ -205,10 +239,12 @@ class TestStats:
 
 
 class TestLikeAwareListing:
-    def test_liked_by_current_user_true(self, client, sample_request_id, user_data):
-        phone = user_data["phone"]
-        client.post(f"/api/v1/requests/{sample_request_id}/like", json={"userPhone": phone})
-        r = client.get(f"/api/v1/requests?currentUserPhone={phone}")
+    def test_liked_by_current_user_true(self, client, sample_request_id, user_data, user_token):
+        client.post(
+            f"/api/v1/requests/{sample_request_id}/like",
+            headers={"Authorization": f"Bearer {user_token}"},
+        )
+        r = client.get(f"/api/v1/requests?currentUserPhone={user_data['phone']}")
         assert r.json()[0]["likedByCurrentUser"] is True
 
     def test_liked_by_current_user_false_when_not_liked(self, client, sample_request_id, user_data):
@@ -221,19 +257,31 @@ class TestLikeAwareListing:
 
 
 class TestPagination:
-    def test_pagination_default_returns_all(self, client, registered_user, sample_request_data):
+    def test_pagination_default_returns_all(
+        self, client, registered_user, sample_request_data, user_token
+    ):
+        headers = {"Authorization": f"Bearer {user_token}"}
         for i in range(3):
-            client.post("/api/v1/requests", json={**sample_request_data, "title": f"Req {i}"})
+            client.post(
+                "/api/v1/requests",
+                json={**sample_request_data, "title": f"Req {i}"},
+                headers=headers,
+            )
         r = client.get("/api/v1/requests")
         assert r.status_code == 200
         assert isinstance(r.json(), list)
         assert len(r.json()) == 3
 
     def test_pagination_with_limit_returns_wrapped(
-        self, client, registered_user, sample_request_data
+        self, client, registered_user, sample_request_data, user_token
     ):
+        headers = {"Authorization": f"Bearer {user_token}"}
         for i in range(5):
-            client.post("/api/v1/requests", json={**sample_request_data, "title": f"Req {i}"})
+            client.post(
+                "/api/v1/requests",
+                json={**sample_request_data, "title": f"Req {i}"},
+                headers=headers,
+            )
         r = client.get("/api/v1/requests?limit=2")
         data = r.json()
         assert "items" in data
@@ -241,39 +289,66 @@ class TestPagination:
         assert data["total"] == 5
         assert len(data["items"]) == 2
 
-    def test_pagination_offset(self, client, registered_user, sample_request_data):
+    def test_pagination_offset(self, client, registered_user, sample_request_data, user_token):
+        headers = {"Authorization": f"Bearer {user_token}"}
         for i in range(3):
-            client.post("/api/v1/requests", json={**sample_request_data, "title": f"Req {i}"})
+            client.post(
+                "/api/v1/requests",
+                json={**sample_request_data, "title": f"Req {i}"},
+                headers=headers,
+            )
         r = client.get("/api/v1/requests?limit=2&offset=2")
         data = r.json()
         assert len(data["items"]) == 1
 
-    def test_sort_by_likes(self, client, registered_user, sample_request_data):
-        r1 = client.post("/api/v1/requests", json={**sample_request_data, "title": "A"})
-        client.post("/api/v1/requests", json={**sample_request_data, "title": "B"})
+    def test_sort_by_likes(
+        self, client, registered_user, sample_request_data, user_token, token_for
+    ):
+        headers = {"Authorization": f"Bearer {user_token}"}
+        r1 = client.post(
+            "/api/v1/requests", json={**sample_request_data, "title": "A"}, headers=headers
+        )
+        client.post("/api/v1/requests", json={**sample_request_data, "title": "B"}, headers=headers)
         id1 = r1.json()["request"]["id"]
-        phone = sample_request_data["userPhone"]
-        client.post(f"/api/v1/requests/{id1}/like", json={"userPhone": phone})
-        client.post(f"/api/v1/requests/{id1}/like", json={"userPhone": "09999999999"})
+
+        other_token = token_for("09999999999")
+        client.post(f"/api/v1/requests/{id1}/like", headers=headers)
+        client.post(
+            f"/api/v1/requests/{id1}/like", headers={"Authorization": f"Bearer {other_token}"}
+        )
         r = client.get("/api/v1/requests?sort_by=likes&sort_order=desc&limit=10")
         data = r.json()
         assert data["items"][0]["id"] == id1
 
-    def test_sort_by_created_at_asc(self, client, registered_user, sample_request_data):
-        client.post("/api/v1/requests", json={**sample_request_data, "title": "First"})
-        client.post("/api/v1/requests", json={**sample_request_data, "title": "Second"})
+    def test_sort_by_created_at_asc(self, client, registered_user, sample_request_data, user_token):
+        headers = {"Authorization": f"Bearer {user_token}"}
+        client.post(
+            "/api/v1/requests", json={**sample_request_data, "title": "First"}, headers=headers
+        )
+        client.post(
+            "/api/v1/requests", json={**sample_request_data, "title": "Second"}, headers=headers
+        )
         r = client.get("/api/v1/requests?sort_by=created_at&sort_order=asc&limit=10")
         data = r.json()
         assert data["items"][0]["title"] == "First"
 
-    def test_liked_by_user_filter(self, client, registered_user, sample_request_data, user_data):
-        r = client.post("/api/v1/requests", json={**sample_request_data, "title": "Mine"})
+    def test_liked_by_user_filter(
+        self, client, registered_user, sample_request_data, user_data, user_token, token_for
+    ):
+        headers = {"Authorization": f"Bearer {user_token}"}
+        r = client.post(
+            "/api/v1/requests", json={**sample_request_data, "title": "Mine"}, headers=headers
+        )
+
+        other_token = token_for("09999999999")
         client.post(
             "/api/v1/requests",
-            json={**sample_request_data, "title": "Other", "userPhone": "09999999999"},
+            json={**sample_request_data, "title": "Other"},
+            headers={"Authorization": f"Bearer {other_token}"},
         )
+
         id_mine = r.json()["request"]["id"]
-        client.post(f"/api/v1/requests/{id_mine}/like", json={"userPhone": user_data["phone"]})
+        client.post(f"/api/v1/requests/{id_mine}/like", headers=headers)
         r = client.get(f"/api/v1/requests?likedByUser={user_data['phone']}&limit=10")
         data = r.json()
         assert len(data["items"]) == 1
@@ -281,8 +356,12 @@ class TestPagination:
 
 
 class TestDateFilters:
-    def test_start_date_filter(self, client, registered_user, sample_request_data):
-        client.post("/api/v1/requests", json=sample_request_data)
+    def test_start_date_filter(self, client, registered_user, sample_request_data, user_token):
+        client.post(
+            "/api/v1/requests",
+            json=sample_request_data,
+            headers={"Authorization": f"Bearer {user_token}"},
+        )
         from datetime import datetime, timedelta, timezone
 
         yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
@@ -290,8 +369,14 @@ class TestDateFilters:
         data = r.json()
         assert len(data["items"]) >= 1
 
-    def test_end_date_filter_excludes_future(self, client, registered_user, sample_request_data):
-        client.post("/api/v1/requests", json=sample_request_data)
+    def test_end_date_filter_excludes_future(
+        self, client, registered_user, sample_request_data, user_token
+    ):
+        client.post(
+            "/api/v1/requests",
+            json=sample_request_data,
+            headers={"Authorization": f"Bearer {user_token}"},
+        )
         from datetime import datetime, timedelta, timezone
 
         yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
@@ -366,37 +451,61 @@ class TestDeleteRequest:
 
 
 class TestNotifications:
-    def test_get_notifications_empty(self, client, user_data):
-        r = client.get(f"/api/v1/notifications?userPhone={user_data['phone']}")
+    def test_get_notifications_empty(self, client, user_token):
+        r = client.get("/api/v1/notifications", headers={"Authorization": f"Bearer {user_token}"})
         assert r.status_code == 200
         assert r.json() == []
 
+    def test_get_notifications_without_token_returns_401(self, client):
+        r = client.get("/api/v1/notifications")
+        assert r.status_code == 401
+
     def test_notification_created_on_status_update(
-        self, client, sample_request_id, admin_token, user_data
+        self, client, sample_request_id, admin_token, user_token
     ):
         client.put(
             f"/api/v1/requests/{sample_request_id}/status",
             json={"status": "in_progress", "adminResponse": "Working on it"},
             headers={"Authorization": f"Bearer {admin_token}"},
         )
-        r = client.get(f"/api/v1/notifications?userPhone={user_data['phone']}")
+        r = client.get("/api/v1/notifications", headers={"Authorization": f"Bearer {user_token}"})
         assert len(r.json()) == 1
         notification = r.json()[0]
         assert notification["isRead"] is False
         assert "وضعیت" in notification["message"]
 
-    def test_mark_notification_read(self, client, sample_request_id, admin_token, user_data):
+    def test_mark_notification_read(self, client, sample_request_id, admin_token, user_token):
+        headers = {"Authorization": f"Bearer {user_token}"}
         client.put(
             f"/api/v1/requests/{sample_request_id}/status",
             json={"status": "resolved"},
             headers={"Authorization": f"Bearer {admin_token}"},
         )
-        r = client.get(f"/api/v1/notifications?userPhone={user_data['phone']}")
+        r = client.get("/api/v1/notifications", headers=headers)
         n_id = r.json()[0]["id"]
-        r = client.put(f"/api/v1/notifications/{n_id}/read")
+        r = client.put(f"/api/v1/notifications/{n_id}/read", headers=headers)
         assert r.status_code == 200
-        r = client.get(f"/api/v1/notifications?userPhone={user_data['phone']}")
+        r = client.get("/api/v1/notifications", headers=headers)
         assert r.json() == []
+
+    def test_mark_other_users_notification_read_fails(
+        self, client, sample_request_id, admin_token, user_token, token_for
+    ):
+        headers = {"Authorization": f"Bearer {user_token}"}
+        client.put(
+            f"/api/v1/requests/{sample_request_id}/status",
+            json={"status": "resolved"},
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        r = client.get("/api/v1/notifications", headers=headers)
+        n_id = r.json()[0]["id"]
+
+        other_token = token_for("09999999999")
+        r = client.put(
+            f"/api/v1/notifications/{n_id}/read",
+            headers={"Authorization": f"Bearer {other_token}"},
+        )
+        assert r.status_code == 403
 
 
 class TestUserStats:

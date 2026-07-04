@@ -90,8 +90,6 @@ class RequestCreate(BaseModel):
     category: str = Field(examples=["Asphalt & Roads"])
     coordinates: Coordinates
     region: str = Field(default="", examples=["District 3"])
-    userPhone: str = Field(alias="userPhone", examples=["09123456789"])
-    userName: str = Field(alias="userName", examples=["Ali Rezaei"])
 
     model_config = {"populate_by_name": True}
 
@@ -174,12 +172,6 @@ class StatusUpdate(BaseModel):
 class StatusUpdateResponse(BaseModel):
     success: bool
     request: RequestResponse
-
-
-class LikeRequest(BaseModel):
-    userPhone: str = Field(alias="userPhone", examples=["09123456789"])
-
-    model_config = {"populate_by_name": True}
 
 
 class LikeResponse(BaseModel):

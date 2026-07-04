@@ -92,9 +92,16 @@ export default function RequestForm({
     setLoading(true);
 
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (currentUser.token) {
+        headers['Authorization'] = `Bearer ${currentUser.token}`;
+      }
+
       const response = await fetch('/api/v1/requests', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           title: title.trim(),
           description: description.trim(),
@@ -102,8 +109,6 @@ export default function RequestForm({
           category,
           coordinates: coords,
           region: region || 'منطقه ۲ (مرکز قم)',
-          userPhone: currentUser.phone,
-          userName: `${currentUser.firstName} ${currentUser.lastName}`,
         }),
       });
 

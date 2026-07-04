@@ -45,3 +45,11 @@ def require_admin(
             detail="دسترسی به این بخش نیازمند حساب مدیر است.",
         )
     return current_user
+
+
+def require_user(
+    current_user: User | None = Depends(get_current_user),
+) -> User:
+    if current_user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    return current_user

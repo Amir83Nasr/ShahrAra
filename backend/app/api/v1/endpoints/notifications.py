@@ -3,8 +3,9 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.core.security import require_user
 from app.db.session import get_db
-from app.models.models import Notification
+from app.models.models import Notification, User
 from app.schemas.schemas import NotificationReadResponse, NotificationResponse
 
 router = APIRouter(tags=["notifications"])
@@ -14,14 +15,14 @@ router = APIRouter(tags=["notifications"])
     "",
     response_model=list[NotificationResponse],
     summary="Get notifications",
-    description="Get notifications for a user, ordered by newest first.",
+    description="Get notifications for the authenticated user, ordered by newest first.",
 )
 def get_notifications(
-    userPhone: str = Query(..., alias="userPhone", description="User phone number"),
     includeRead: bool = Query(False, alias="includeRead", description="Include read notifications"),
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
 ):
-    query = db.query(Notification).filter(Notification.user_phone == userPhone)
+    query = db.query(Notification).filter(Notification.user_phone == current_user.phone)
 
     if not includeRead:
         query = query.filter(Notification.is_read.is_(False))
@@ -51,12 +52,19 @@ def get_notifications(
 def mark_notification_read(
     notification_id: str,
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
 ):
     notification = db.query(Notification).filter(Notification.id == notification_id).first()
     if not notification:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="اعلان مورد نظر یافت نشد.",
+        )
+
+    if notification.user_phone != current_user.phone:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="شما اجازه دسترسی به این اعلان را ندارید.",
         )
 
     notification.is_read = True

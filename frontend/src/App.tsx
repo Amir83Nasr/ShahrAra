@@ -158,10 +158,11 @@ export default function App() {
     }
 
     const pollNotifications = async () => {
+      if (!currentUser.token) return;
       try {
-        const res = await fetch(
-          `/api/v1/notifications?userPhone=${currentUser.phone}`,
-        );
+        const res = await fetch('/api/v1/notifications', {
+          headers: { Authorization: `Bearer ${currentUser.token}` },
+        });
         if (res.ok) {
           const data: Notification[] = await res.json();
           setNotifications(data);
@@ -194,9 +195,11 @@ export default function App() {
   };
 
   const handleMarkNotificationRead = async (notificationId: string) => {
+    if (!currentUser?.token) return;
     try {
       await fetch(`/api/v1/notifications/${notificationId}/read`, {
         method: 'PUT',
+        headers: { Authorization: `Bearer ${currentUser.token}` },
       });
       setNotifications((prev) =>
         prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n)),
@@ -218,12 +221,11 @@ export default function App() {
   };
 
   const handleLike = async (id: string) => {
-    if (!currentUser) return;
+    if (!currentUser?.token) return;
     try {
       const res = await fetch(`/api/v1/requests/${id}/like`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userPhone: currentUser.phone }),
+        headers: { Authorization: `Bearer ${currentUser.token}` },
       });
 
       if (res.ok) {

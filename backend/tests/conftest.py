@@ -91,7 +91,9 @@ def admin_token(client):
 
 
 @pytest.fixture
-def sample_request_data(user_data) -> dict[str, Any]:
+def sample_request_data() -> dict[str, Any]:
+    # userPhone/userName are no longer part of the payload — the server derives
+    # the request owner from the authenticated user's JWT.
     return {
         "title": "Pothole repair",
         "description": "The asphalt on the street is damaged",
@@ -99,16 +101,38 @@ def sample_request_data(user_data) -> dict[str, Any]:
         "category": "Asphalt & Roads",
         "coordinates": {"lat": 35.72, "lng": 51.40},
         "region": "District 3",
-        "userPhone": user_data["phone"],
-        "userName": f"{user_data['firstName']} {user_data['lastName']}",
     }
 
 
 @pytest.fixture
-def sample_request(client, registered_user, sample_request_data):
-    r = client.post("/api/v1/requests", json=sample_request_data)
+def sample_request(client, registered_user, sample_request_data, user_token):
+    r = client.post(
+        "/api/v1/requests",
+        json=sample_request_data,
+        headers={"Authorization": f"Bearer {user_token}"},
+    )
     assert r.status_code == 201
     return r.json()
+
+
+@pytest.fixture
+def token_for(client):
+    """Factory fixture: register/login an arbitrary phone and return its access token."""
+
+    def _make(phone: str, first_name: str = "Test", last_name: str = "User") -> str:
+        r = client.post(
+            "/api/v1/auth/login",
+            json={
+                "phone": phone,
+                "nationalId": "1111111111",
+                "firstName": first_name,
+                "lastName": last_name,
+            },
+        )
+        assert r.status_code == 200
+        return r.json()["token"]["accessToken"]
+
+    return _make
 
 
 @pytest.fixture
