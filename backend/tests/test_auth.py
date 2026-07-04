@@ -147,6 +147,37 @@ class TestAdminAuth:
         assert r.status_code == 401
         assert r.json()["error"]["code"] == 401
 
+    def test_admin_custom_name_survives_relogin(self, client):
+        # First login creates the admin from env defaults.
+        client.post(
+            "/api/v1/auth/login",
+            json={"phone": "09120000000", "nationalId": "1234567890"},
+        )
+
+        # Admin edits their own name directly in the DB (no self-service
+        # rename endpoint exists yet, but this simulates a custom name).
+        from app.db.session import SessionLocal
+        from app.models.models import User
+
+        db = SessionLocal()
+        try:
+            admin_user = db.query(User).filter(User.phone == "09120000000").first()
+            admin_user.first_name = "سیما"
+            admin_user.last_name = "رستمی"
+            db.commit()
+        finally:
+            db.close()
+
+        # Logging in again must not reset the name back to env defaults.
+        r = client.post(
+            "/api/v1/auth/login",
+            json={"phone": "09120000000", "nationalId": "1234567890"},
+        )
+        assert r.status_code == 200
+        data = r.json()["user"]
+        assert data["firstName"] == "سیما"
+        assert data["lastName"] == "رستمی"
+
 
 @pytest.mark.parametrize(
     "payload, expected_status",

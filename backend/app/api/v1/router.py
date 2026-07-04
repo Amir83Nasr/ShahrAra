@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -12,6 +13,8 @@ api_router.include_router(auth.router, prefix="/auth")
 api_router.include_router(requests.router, prefix="/requests")
 api_router.include_router(notifications.router, prefix="/notifications")
 
+ALL_STATUSES = ["submitted", "under_review", "in_progress", "resolved", "archived"]
+
 
 @api_router.get(
     "/stats",
@@ -21,17 +24,20 @@ api_router.include_router(notifications.router, prefix="/notifications")
     tags=["stats"],
 )
 def get_stats(db: Session = Depends(get_db)):
-    all_requests = db.query(Request).all()
-    total_count = len(all_requests)
-    problems_count = len([r for r in all_requests if r.type == "problem"])
-    ideas_count = len([r for r in all_requests if r.type == "idea"])
+    total_count = db.query(func.count(Request.id)).scalar()
 
-    statuses = ["submitted", "under_review", "in_progress", "resolved", "archived"]
-    by_status = {s: len([r for r in all_requests if r.status == s]) for s in statuses}
+    type_counts = dict(db.query(Request.type, func.count(Request.id)).group_by(Request.type).all())
+    problems_count = type_counts.get("problem", 0)
+    ideas_count = type_counts.get("idea", 0)
 
-    by_category = {}
-    for r in all_requests:
-        by_category[r.category] = by_category.get(r.category, 0) + 1
+    status_counts = dict(
+        db.query(Request.status, func.count(Request.id)).group_by(Request.status).all()
+    )
+    by_status = {s: status_counts.get(s, 0) for s in ALL_STATUSES}
+
+    by_category = dict(
+        db.query(Request.category, func.count(Request.id)).group_by(Request.category).all()
+    )
 
     return StatsResponse(
         totalCount=total_count,

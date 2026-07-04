@@ -30,10 +30,8 @@ def login(user_data: UserCreate, db: Session = Depends(get_db)):
         admin_user = db.query(User).filter(User.phone == ADMIN_PHONE).first()
         if not admin_user:
             admin_user = db.query(User).filter(User.is_admin).first()
-        if admin_user:
-            admin_user.first_name = ADMIN_FIRST_NAME
-            admin_user.last_name = ADMIN_LAST_NAME
-        else:
+        if not admin_user:
+            # First-ever admin login: seed the name from env defaults.
             admin_user = User(
                 phone=ADMIN_PHONE,
                 national_id=ADMIN_NATIONAL_ID,
@@ -42,8 +40,8 @@ def login(user_data: UserCreate, db: Session = Depends(get_db)):
                 is_admin=True,
             )
             db.add(admin_user)
-        db.commit()
-        db.refresh(admin_user)
+            db.commit()
+            db.refresh(admin_user)
         token = create_access_token(phone=admin_user.phone, is_admin=admin_user.is_admin)
         return LoginResponse(
             success=True,
@@ -58,11 +56,6 @@ def login(user_data: UserCreate, db: Session = Depends(get_db)):
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="کد ملی با شماره تلفن مطابقت ندارد.",
             )
-        if existing_user.is_admin:
-            existing_user.first_name = ADMIN_FIRST_NAME
-            existing_user.last_name = ADMIN_LAST_NAME
-            db.commit()
-            db.refresh(existing_user)
         token = create_access_token(phone=existing_user.phone, is_admin=existing_user.is_admin)
         return LoginResponse(
             success=True,
