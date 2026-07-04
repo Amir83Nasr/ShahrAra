@@ -18,6 +18,7 @@ import {
 import { toPersianDigits } from '../utils/numberUtils';
 import { REGIONS } from '../utils/regionUtils';
 import { CATEGORIES } from '../utils/categoryUtils';
+import { filterRequests, sortRequests } from '../utils/requestFilters';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import {
@@ -81,58 +82,17 @@ export default function ReportsDirectory({
   const [visibleCount, setVisibleCount] = useState(12);
   const [filterRegion, setFilterRegion] = useState<string>('all');
 
-  const filtered = items.filter((item) => {
-    const matchesSearch =
-      item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.region.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesCategory =
-      activeCategory === 'all' || item.category === activeCategory;
-    const matchesType = activeType === 'all' || item.type === activeType;
-
-    const matchesRegion =
-      filterRegion === 'all' || item.region.startsWith(filterRegion);
-
-    // Date range filter
-    let matchesDate = true;
-    const itemDate = new Date(item.createdAt).getTime();
-    if (startDate) {
-      const start = new Date(startDate);
-      start.setHours(0, 0, 0, 0);
-      matchesDate = matchesDate && itemDate >= start.getTime();
-    }
-    if (endDate) {
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-      matchesDate = matchesDate && itemDate <= end.getTime();
-    }
-
-    return (
-      matchesSearch &&
-      matchesCategory &&
-      matchesType &&
-      matchesRegion &&
-      matchesDate
-    );
+  const filtered = filterRequests(items, {
+    searchTerm,
+    searchFields: ['title', 'description', 'region'],
+    category: activeCategory,
+    type: activeType,
+    region: filterRegion,
+    startDate,
+    endDate,
   });
 
-  const sorted = [...filtered].sort((a, b) => {
-    switch (sortBy) {
-      case 'oldest':
-        return (
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        );
-      case 'most_liked':
-        return b.likes - a.likes;
-      case 'least_liked':
-        return a.likes - b.likes;
-      default: // newest
-        return (
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-    }
-  });
+  const sorted = sortRequests(filtered, sortBy);
 
   const handleLoadMore = () => {
     setVisibleCount((prev) => Math.min(prev + 8, sorted.length));

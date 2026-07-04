@@ -18,6 +18,7 @@ import {
 import { User, RequestItem, RequestUpdateData } from '../types';
 import { toPersianDigits } from '../utils/numberUtils';
 import { REGIONS } from '../utils/regionUtils';
+import { filterRequests } from '../utils/requestFilters';
 import { cn } from '@/lib/utils';
 import { invalidateCache } from '@/utils/apiCache';
 import { Button } from '@/components/ui/button';
@@ -136,16 +137,11 @@ export default function UserProfile({
   // Filtered list based on active tab + search/filter
   const filteredRequests = useMemo(() => {
     const source = activeSubTab === 'my' ? myRequests : likedRequests;
-    return source.filter((r) => {
-      const matchesSearch =
-        !searchTerm ||
-        r.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        r.description.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesType = filterType === 'all' || r.type === filterType;
-      const matchesStatus = filterStatus === 'all' || r.status === filterStatus;
-      const matchesRegion =
-        filterRegion === 'all' || r.region.startsWith(filterRegion);
-      return matchesSearch && matchesType && matchesStatus && matchesRegion;
+    return filterRequests(source, {
+      searchTerm,
+      type: filterType,
+      status: filterStatus,
+      region: filterRegion,
     });
   }, [
     activeSubTab,

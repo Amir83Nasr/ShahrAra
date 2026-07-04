@@ -22,6 +22,7 @@ import {
 import { toPersianDigits } from '../utils/numberUtils';
 import { REGIONS } from '../utils/regionUtils';
 import { CATEGORIES } from '../utils/categoryUtils';
+import { filterRequests } from '../utils/requestFilters';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -90,28 +91,13 @@ export default function AdminPanel({
   }, [selectedItem]);
 
   // Filter list
-  const filteredItems = requests.filter((item) => {
-    const matchesSearch =
-      item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.userPhone.includes(searchTerm);
-
-    const matchesType = selectedType === 'all' || item.type === selectedType;
-    const matchesCategory =
-      selectedCategory === 'all' || item.category === selectedCategory;
-    const matchesStatus =
-      selectedStatus === 'all' || item.status === selectedStatus;
-    const matchesRegion =
-      selectedRegion === 'all' || item.region.startsWith(selectedRegion);
-
-    return (
-      matchesSearch &&
-      matchesType &&
-      matchesCategory &&
-      matchesStatus &&
-      matchesRegion
-    );
+  const filteredItems = filterRequests(requests, {
+    searchTerm,
+    searchFields: ['title', 'description', 'userName', 'userPhone'],
+    type: selectedType,
+    category: selectedCategory,
+    status: selectedStatus,
+    region: selectedRegion,
   });
 
   // Reset pagination on filter change
