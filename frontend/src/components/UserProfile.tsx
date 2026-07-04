@@ -19,6 +19,12 @@ import { User, RequestItem, RequestUpdateData } from '../types';
 import { toPersianDigits } from '../utils/numberUtils';
 import { REGIONS } from '../utils/regionUtils';
 import { filterRequests } from '../utils/requestFilters';
+import {
+  STATUS_LABELS,
+  STATUS_BADGE_CLASS,
+  TYPE_LABELS,
+  TYPE_BADGE_CLASS,
+} from '../utils/requestBadges';
 import { cn } from '@/lib/utils';
 import { invalidateCache } from '@/utils/apiCache';
 import { Button } from '@/components/ui/button';
@@ -61,32 +67,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import MapComponent from './MapComponent';
-
-const typeBadgeStyle = {
-  problem: 'bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/20',
-  idea: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
-};
-
-const statusBadgeStyle: Record<string, string> = {
-  submitted:
-    'bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/20',
-  under_review:
-    'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20',
-  in_progress:
-    'bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/20',
-  resolved:
-    'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
-  archived: 'bg-muted text-muted-foreground border-border',
-};
-
-const typeLabel = { problem: 'مشکل شهری', idea: 'ایده شهری' };
-const statusLabel: Record<string, string> = {
-  submitted: 'ثبت شده',
-  under_review: 'در حال بررسی',
-  in_progress: 'در حال انجام',
-  resolved: 'حل شده',
-  archived: 'بایگانی شده',
-};
 
 interface UserProfileProps {
   currentUser: User;
@@ -484,16 +464,12 @@ export default function UserProfile({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Badge
-                variant={
-                  syncedDetails?.type === 'problem' ? 'destructive' : 'default'
+                variant="outline"
+                className={
+                  syncedDetails ? TYPE_BADGE_CLASS[syncedDetails.type] : ''
                 }
-                className={cn(
-                  syncedDetails?.type !== 'problem'
-                    ? 'bg-emerald-500/20 text-emerald-400'
-                    : '',
-                )}
               >
-                {syncedDetails?.type === 'problem' ? 'گزارش مشکل' : 'ایده شهری'}
+                {syncedDetails ? TYPE_LABELS[syncedDetails.type] : ''}
               </Badge>
               <Badge variant="outline" className="font-mono">
                 {syncedDetails?.category}
@@ -509,7 +485,8 @@ export default function UserProfile({
               <span className="text-muted-foreground mt-1.5 block font-mono text-xs font-bold">
                 منطقه: {toPersianDigits(syncedDetails?.region ?? '')} | وضعیت:{' '}
                 {syncedDetails
-                  ? (statusLabel[syncedDetails.status] ?? syncedDetails.status)
+                  ? (STATUS_LABELS[syncedDetails.status] ??
+                    syncedDetails.status)
                   : ''}
               </span>
             </div>
@@ -641,19 +618,19 @@ function RequestGrid({
                 variant="outline"
                 className={cn(
                   'border text-[10px] font-bold',
-                  typeBadgeStyle[req.type],
+                  TYPE_BADGE_CLASS[req.type],
                 )}
               >
-                {typeLabel[req.type]}
+                {TYPE_LABELS[req.type]}
               </Badge>
               <Badge
                 variant="outline"
                 className={cn(
                   'border text-[10px] font-bold',
-                  statusBadgeStyle[req.status],
+                  STATUS_BADGE_CLASS[req.status],
                 )}
               >
-                {statusLabel[req.status] ?? req.status}
+                {STATUS_LABELS[req.status] ?? req.status}
               </Badge>
             </div>
 

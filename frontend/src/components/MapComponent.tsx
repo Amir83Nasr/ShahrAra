@@ -10,6 +10,7 @@ import { MapPin } from 'lucide-react';
 import { toPersianDigits } from '../utils/numberUtils';
 import { determineRegion } from '../utils/regionUtils';
 import { escapeHtml } from '../utils/stringUtils';
+import { STATUS_LABELS, TYPE_LABELS } from '../utils/requestBadges';
 
 interface MapComponentProps {
   pickerMode?: boolean;
@@ -182,25 +183,16 @@ export default function MapComponent({
       }).addTo(map);
 
       // Customize elegant light/dark themed popup
-      const PersianTypeName =
-        item.type === 'problem' ? 'گزارش مشکل' : 'ایده شهری';
       const typeColor =
         item.type === 'problem'
           ? 'text-[var(--type-problem)] font-bold'
           : 'text-[var(--type-idea)] font-bold';
-      const statusLocales: Record<string, string> = {
-        submitted: 'ثبت شده',
-        under_review: 'در حال بررسی',
-        in_progress: 'در حال اجرا',
-        resolved: 'حل شده',
-        archived: 'بایگانی‌شده',
-      };
 
       const popupHtml = `
         <div class="text-right font-sans p-1 min-w-[210px]" dir="rtl" style="color: var(--foreground)">
           <div class="flex items-center justify-between pb-1.5 mb-2" style="border-bottom: 1px solid var(--border)">
-            <span class="text-[10px] font-extrabold uppercase tracking-wider ${typeColor}">${PersianTypeName}</span>
-            <span class="text-[10px] px-1.5 py-0.5 rounded font-bold" style="background: var(--muted); color: var(--muted-foreground)">${statusLocales[item.status] || item.status}</span>
+            <span class="text-[10px] font-extrabold uppercase tracking-wider ${typeColor}">${TYPE_LABELS[item.type]}</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded font-bold" style="background: var(--muted); color: var(--muted-foreground)">${STATUS_LABELS[item.status] || item.status}</span>
           </div>
           <h4 class="text-xs font-extrabold mb-1 leading-snug" style="color: var(--foreground)">${escapeHtml(item.title)}</h4>
           <p class="text-[11px] mb-2.5 line-clamp-2 leading-relaxed" style="color: var(--muted-foreground)">${escapeHtml(item.description)}</p>

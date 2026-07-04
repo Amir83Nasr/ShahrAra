@@ -23,6 +23,12 @@ import { toPersianDigits } from '../utils/numberUtils';
 import { REGIONS } from '../utils/regionUtils';
 import { CATEGORIES } from '../utils/categoryUtils';
 import { filterRequests } from '../utils/requestFilters';
+import {
+  STATUS_LABELS,
+  STATUS_BADGE_CLASS,
+  TYPE_LABELS,
+  TYPE_BADGE_CLASS,
+} from '../utils/requestBadges';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -159,37 +165,6 @@ export default function AdminPanel({
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const statusColors: Record<
-    RequestStatus,
-    { bg: string; text: string; label: string }
-  > = {
-    submitted: {
-      bg: 'bg-status-under-review/20 border-status-under-review/30 text-status-under-review',
-      text: 'text-status-under-review',
-      label: 'ثبت شده معلق',
-    },
-    under_review: {
-      bg: 'bg-status-in-progress/20 border-status-in-progress/30 text-status-in-progress',
-      text: 'text-status-in-progress',
-      label: 'در حال بررسی فنی',
-    },
-    in_progress: {
-      bg: 'bg-status-in-progress/20 border-status-in-progress/30 text-status-in-progress',
-      text: 'text-status-in-progress',
-      label: 'در حال اجرای فنی',
-    },
-    resolved: {
-      bg: 'bg-status-resolved/20 border-status-resolved/30 text-status-resolved',
-      text: 'text-status-resolved',
-      label: 'برطرف شده و نهایی',
-    },
-    archived: {
-      bg: 'bg-muted border-border text-muted-foreground',
-      text: 'text-muted-foreground',
-      label: 'بایگانی‌شده',
-    },
   };
 
   return (
@@ -381,7 +356,6 @@ export default function AdminPanel({
                 const dateString = new Date(item.createdAt).toLocaleDateString(
                   'fa-IR',
                 );
-                const isProblem = item.type === 'problem';
 
                 return (
                   <Card
@@ -399,18 +373,17 @@ export default function AdminPanel({
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <Badge
-                            variant={isProblem ? 'destructive' : 'default'}
-                            className={cn(
-                              isProblem
-                                ? ''
-                                : 'bg-type-idea/10 text-type-idea hover:bg-type-idea/20',
-                            )}
+                            variant="outline"
+                            className={TYPE_BADGE_CLASS[item.type]}
                           >
-                            {isProblem ? 'گزارش مشکل' : 'ایده خلاق'}
+                            {TYPE_LABELS[item.type]}
                           </Badge>
                         </div>
-                        <Badge className={statusColors[item.status]?.bg}>
-                          {statusColors[item.status]?.label}
+                        <Badge
+                          variant="outline"
+                          className={STATUS_BADGE_CLASS[item.status]}
+                        >
+                          {STATUS_LABELS[item.status]}
                         </Badge>
                       </div>
 
@@ -478,15 +451,10 @@ export default function AdminPanel({
               {/* Category & Region */}
               <div className="text-muted-foreground flex items-center gap-2 px-(--card-spacing) text-xs font-bold">
                 <Badge
-                  variant={
-                    selectedItem.type === 'problem' ? 'destructive' : 'default'
-                  }
-                  className={cn(
-                    selectedItem.type !== 'problem' &&
-                      'bg-type-idea/10 text-type-idea',
-                  )}
+                  variant="outline"
+                  className={TYPE_BADGE_CLASS[selectedItem.type]}
                 >
-                  {selectedItem.type === 'problem' ? 'گزارش مشکل' : 'ایده شهری'}
+                  {TYPE_LABELS[selectedItem.type]}
                 </Badge>
                 <Badge variant="outline">{selectedItem.category}</Badge>
                 <span className="mr-auto text-[10px]">
@@ -507,12 +475,13 @@ export default function AdminPanel({
               {/* Status */}
               <div className="px-(--card-spacing)">
                 <Badge
+                  variant="outline"
                   className={cn(
                     'px-3 py-1 text-[10px]',
-                    statusColors[selectedItem.status]?.bg,
+                    STATUS_BADGE_CLASS[selectedItem.status],
                   )}
                 >
-                  {statusColors[selectedItem.status]?.label}
+                  {STATUS_LABELS[selectedItem.status]}
                 </Badge>
               </div>
 

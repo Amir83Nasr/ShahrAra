@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { RequestItem, RequestStatus, User } from '../types';
+import { RequestItem, User } from '../types';
 import MapComponent from './MapComponent';
 import {
   Heart,
@@ -19,6 +19,12 @@ import { toPersianDigits } from '../utils/numberUtils';
 import { REGIONS } from '../utils/regionUtils';
 import { CATEGORIES } from '../utils/categoryUtils';
 import { filterRequests, sortRequests } from '../utils/requestFilters';
+import {
+  STATUS_LABELS,
+  STATUS_BADGE_CLASS,
+  TYPE_LABELS,
+  TYPE_BADGE_CLASS,
+} from '../utils/requestBadges';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import {
@@ -141,34 +147,6 @@ export default function ReportsDirectory({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items]);
-
-  const statusLabels: Record<RequestStatus, { label: string; color: string }> =
-    {
-      submitted: {
-        label: 'جدید ثبت شده',
-        color:
-          'text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/50 border border-border',
-      },
-      under_review: {
-        label: 'تحت بررسی کارشناسی',
-        color:
-          'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 border border-border',
-      },
-      in_progress: {
-        label: 'اکیپ شهرداری مشغول کار',
-        color:
-          'text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-950/50 border border-border',
-      },
-      resolved: {
-        label: 'برطرف شده نهایی',
-        color:
-          'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 border border-border',
-      },
-      archived: {
-        label: 'بایگانی‌شده',
-        color: 'text-muted-foreground bg-muted border-border',
-      },
-    };
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8" id="shahr_ara_directory">
@@ -327,7 +305,6 @@ export default function ReportsDirectory({
             >
               {sorted.length > 0 ? (
                 sorted.slice(0, visibleCount).map((item) => {
-                  const isProblem = item.type === 'problem';
                   const hasLikedStatus = currentUser
                     ? item.likedByCurrentUser
                     : false;
@@ -346,24 +323,23 @@ export default function ReportsDirectory({
                         {/* Badge / Header row */}
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <Badge
-                            variant={isProblem ? 'destructive' : 'default'}
+                            variant="outline"
                             className={cn(
                               'font-semibold',
-                              isProblem
-                                ? 'border-border border bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300'
-                                : 'border-border border bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
+                              TYPE_BADGE_CLASS[item.type],
                             )}
                           >
-                            {isProblem ? 'گزارش مشکل' : 'ایده شهری'}
+                            {TYPE_LABELS[item.type]}
                           </Badge>
 
                           <Badge
+                            variant="outline"
                             className={cn(
                               'text-xs font-semibold',
-                              statusLabels[item.status]?.color,
+                              STATUS_BADGE_CLASS[item.status],
                             )}
                           >
-                            {statusLabels[item.status]?.label}
+                            {STATUS_LABELS[item.status]}
                           </Badge>
                         </div>
 
@@ -459,22 +435,14 @@ export default function ReportsDirectory({
         <DialogContent className="max-sm:p-4 sm:max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Badge
-                variant={
-                  selectedDetails?.type === 'problem'
-                    ? 'destructive'
-                    : 'default'
-                }
-                className={cn(
-                  selectedDetails?.type !== 'problem'
-                    ? 'bg-emerald-500/20 text-emerald-400'
-                    : '',
-                )}
-              >
-                {selectedDetails?.type === 'problem'
-                  ? 'گزارش مشکل'
-                  : 'ایده شهری'}
-              </Badge>
+              {selectedDetails && (
+                <Badge
+                  variant="outline"
+                  className={TYPE_BADGE_CLASS[selectedDetails.type]}
+                >
+                  {TYPE_LABELS[selectedDetails.type]}
+                </Badge>
+              )}
               <Badge variant="outline" className="font-mono">
                 {selectedDetails?.category}
               </Badge>
