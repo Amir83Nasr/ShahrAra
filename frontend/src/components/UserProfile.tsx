@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { User, RequestItem, RequestUpdateData } from '../types';
 import { toPersianDigits } from '../utils/numberUtils';
+import { REGIONS } from '../utils/regionUtils';
 import { cn } from '@/lib/utils';
 import { invalidateCache } from '@/utils/apiCache';
 import { Button } from '@/components/ui/button';
@@ -122,11 +123,6 @@ export default function UserProfile({
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editCategory, setEditCategory] = useState('');
-
-  const REGIONS = Array.from(
-    { length: 8 },
-    (_, i) => `منطقه ${toPersianDigits(i + 1)}`,
-  );
 
   const myRequests = useMemo(
     () => requests.filter((r) => r.userPhone === currentUser.phone),

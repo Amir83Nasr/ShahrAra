@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { RequestType, User } from '../types';
 import MapComponent from './MapComponent';
-import { determineRegion } from '../utils/regionUtils';
+import { determineRegion, REGIONS } from '../utils/regionUtils';
+import { CATEGORIES } from '../utils/categoryUtils';
 import {
   AlertCircleIcon,
   AlertTriangle,
@@ -35,16 +36,6 @@ interface RequestFormProps {
   theme?: 'light' | 'dark';
 }
 
-const CATEGORIES = [
-  'آسفالت و معابر',
-  'زیباسازی و فضای سبز',
-  'روشنایی و برق شهری',
-  'مدیریت پسماند و بازیافت',
-  'ترافیک و حمل و نقل',
-  'مناسب‌سازی و خدمات اجتماعی',
-  'سایر',
-];
-
 export default function RequestForm({
   currentUser,
   onOpenAuth,
@@ -54,7 +45,7 @@ export default function RequestForm({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState<RequestType>('problem');
-  const [category, setCategory] = useState(CATEGORIES[0]);
+  const [category, setCategory] = useState<string>(CATEGORIES[0]);
 
   const defaultCoords = { lat: 34.641, lng: 50.88 };
   const [region, setRegion] = useState(
@@ -363,16 +354,7 @@ export default function RequestForm({
                 <SelectContent position="popper" align="end">
                   <SelectGroup>
                     <SelectLabel>منطقه شهرداری</SelectLabel>
-                    {[
-                      'منطقه ۱ (شمال قم)',
-                      'منطقه ۲ (مرکز قم)',
-                      'منطقه ۳ (شرق قم)',
-                      'منطقه ۴ (غرب قم)',
-                      'منطقه ۵ (جنوب قم)',
-                      'منطقه ۶',
-                      'منطقه ۷',
-                      'منطقه ۸',
-                    ].map((r) => (
+                    {REGIONS.map((r) => (
                       <SelectItem key={r} value={r}>
                         {r}
                       </SelectItem>

@@ -16,6 +16,8 @@ import {
   RefreshCcw,
 } from 'lucide-react';
 import { toPersianDigits } from '../utils/numberUtils';
+import { REGIONS } from '../utils/regionUtils';
+import { CATEGORIES } from '../utils/categoryUtils';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import {
@@ -78,21 +80,6 @@ export default function ReportsDirectory({
   );
   const [visibleCount, setVisibleCount] = useState(12);
   const [filterRegion, setFilterRegion] = useState<string>('all');
-
-  const CATEGORIES = [
-    'آسفالت و معابر',
-    'زیباسازی و فضای سبز',
-    'روشنایی و برق شهری',
-    'مدیریت پسماند و بازیافت',
-    'ترافیک و حمل و نقل',
-    'مناسب‌سازی و خدمات اجتماعی',
-    'سایر',
-  ];
-
-  const REGIONS = Array.from(
-    { length: 8 },
-    (_, i) => `منطقه ${toPersianDigits(i + 1)}`,
-  );
 
   const filtered = items.filter((item) => {
     const matchesSearch =

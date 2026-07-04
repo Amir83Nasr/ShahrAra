@@ -20,6 +20,8 @@ import {
   Layers,
 } from 'lucide-react';
 import { toPersianDigits } from '../utils/numberUtils';
+import { REGIONS } from '../utils/regionUtils';
+import { CATEGORIES } from '../utils/categoryUtils';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -51,21 +53,6 @@ interface AdminPanelProps {
   onRefresh: () => void;
   theme?: 'light' | 'dark';
 }
-
-const CATEGORIES = [
-  'آسفالت و معابر',
-  'زیباسازی و فضای سبز',
-  'روشنایی و برق شهری',
-  'مدیریت پسماند و بازیافت',
-  'ترافیک و حمل و نقل',
-  'مناسب‌سازی و خدمات اجتماعی',
-  'سایر',
-];
-
-const REGIONS = Array.from(
-  { length: 8 },
-  (_, i) => `منطقه ${toPersianDigits(i + 1)}`,
-);
 
 export default function AdminPanel({
   requests,
