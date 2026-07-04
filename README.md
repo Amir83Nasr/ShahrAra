@@ -51,12 +51,15 @@ ShahrAra/
 │   │   │   │   │                       Sizes: default/xs/sm/lg/icon/icon-xs/icon-sm/icon-lg
 │   │   │   │   ├── card.tsx          Card, CardHeader, CardTitle, CardDescription,
 │   │   │   │   │                       CardContent, CardFooter; size prop, RTL-aware
+│   │   │   │   ├── date-picker.tsx   Jalali date-range picker (built on popover + calendar)
 │   │   │   │   ├── dialog.tsx        Full Radix dialog primitives, RTL support
 │   │   │   │   ├── dropdown-menu.tsx Radix dropdown with RTL support
 │   │   │   │   ├── input.tsx         Styled input with focus ring, dark mode, aria-invalid
+│   │   │   │   ├── popover.tsx       Radix popover primitives, RTL support
 │   │   │   │   ├── radio-group.tsx   Radix radio group (RTL-aware)
 │   │   │   │   ├── select.tsx        Full Radix select primitives, RTL support
 │   │   │   │   ├── separator.tsx     Radix separator (horizontal/vertical)
+│   │   │   │   ├── tabs.tsx          Radix tabs (used for profile's my/liked sub-tabs)
 │   │   │   │   ├── textarea.tsx      Styled textarea with field-sizing
 │   │   │   │   ├── toggle.tsx        Radix toggle button
 │   │   │   │   └── toggle-group.tsx  Radix toggle group, RTL support
@@ -76,9 +79,13 @@ ShahrAra/
 │   │   │   └── utils.ts             cn() — clsx + tailwind-merge
 │   │   ├── utils/
 │   │   │   ├── apiCache.ts          Stale-while-revalidate in-memory cache (30s TTL)
+│   │   │   ├── categoryUtils.ts     CATEGORIES — single source of truth for category list
 │   │   │   ├── numberUtils.ts       toPersianDigits / toEnglishDigits converters
 │   │   │   ├── persianDate.ts       Jalali date formatting helpers
-│   │   │   └── regionUtils.ts       determineRegion() — lat/lng → Qom district (1-8)
+│   │   │   ├── regionUtils.ts       REGIONS, determineRegion() — lat/lng → Qom district (1-8)
+│   │   │   ├── requestBadges.ts     Shared status/type badge labels + Tailwind color classes
+│   │   │   ├── requestFilters.ts    filterRequests, sortRequests — shared list filtering/sorting
+│   │   │   └── stringUtils.ts       escapeHtml() — sanitize strings for Leaflet popup HTML
 │   │   ├── App.tsx                  Root app (state-based tab switching, data fetching)
 │   │   ├── main.tsx                 Entry point (React 19 createRoot)
 │   │   ├── types.ts                 User, RequestItem, Stats, RequestStatus, RequestType
@@ -97,7 +104,8 @@ ShahrAra/
 │   │   ├── api/v1/
 │   │   │   ├── endpoints/
 │   │   │   │   ├── auth.py           Login/register (phone + national ID, admin auto-create)
-│   │   │   │   └── requests.py       CRUD + like toggle + admin status update
+│   │   │   │   ├── requests.py       CRUD + like toggle + admin status update + user stats
+│   │   │   │   └── notifications.py  List notifications + mark as read
 │   │   │   └── router.py             Route aggregation + /api/v1/stats endpoint
 │   │   ├── core/
 │   │   │   ├── config.py             DATABASE_URL, JWT settings, admin creds from env
@@ -170,6 +178,7 @@ Or use the Makefile:
 
 ```bash
 make install        # Install all dependencies
+make dev            # Start backend + frontend dev servers concurrently
 make dev-backend    # Start backend server (port 8000)
 make dev-frontend   # Start frontend dev server (port 3000)
 ```
@@ -409,13 +418,22 @@ App (state: currentTab, currentUser, theme, requests, stats, apiError, notificat
 - `id` — UUID-based (`lik_xxxxxxxx`)
 - `user_phone` + `request_id` — unique constraint (one like per user per request)
 
+**Notification** (`notifications` table)
+
+- `id` — UUID-based (`ntf_xxxxxxxx`)
+- `user_phone`, `message`, `request_id` (nullable FK), `request_title` (nullable)
+- `created_at` — server default `func.now()`
+- `is_read` — boolean, defaults to `False`
+
 ### Schemas (Pydantic v2)
 
 - All use `model_config = {"populate_by_name": True}` for camelCase ↔ snake_case
 - `UserCreate`, `UserResponse`, `TokenResponse`, `LoginResponse`
-- `RequestCreate`, `RequestResponse`, `CreateRequestResponse`
-- `StatusUpdate`, `StatusUpdateResponse`, `LikeRequest`, `LikeResponse`
-- `StatsResponse` (total, problems, ideas, byStatus, byCategory)
+- `RequestCreate`, `RequestResponse`, `CreateRequestResponse`, `RequestUpdate`, `RequestDeleteResponse`
+- `StatusUpdate`, `StatusUpdateResponse`, `LikeResponse`
+- `StatsResponse` (total, problems, ideas, byStatus, byCategory), `UserStatsResponse`
+- `PaginatedRequestResponse` — `items` + `total` for opt-in `limit`/`offset` pagination
+- `NotificationResponse`, `NotificationReadResponse`
 - `ErrorResponse` — consistent Persian error format
 
 ### Auth Logic

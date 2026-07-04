@@ -18,6 +18,9 @@ install-precommit: ## Install pre-commit hooks
 	@echo "  $(GREEN)✓$(RESET) Pre-commit hooks installed"
 
 # ─── Development ──────────────────────────────────────────────────────────────
+dev: ## Run backend + frontend dev servers concurrently
+	@$(MAKE) -j2 dev-backend dev-frontend
+
 dev-backend: ## Start backend server (port 8000)
 	cd backend && uvicorn main:app --reload --port 8000 --host 0.0.0.0
 

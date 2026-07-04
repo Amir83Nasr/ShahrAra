@@ -41,6 +41,7 @@ When the user *does* ask for a commit:
 
 - `/backend/` — FastAPI app with `main.py` entry point
 - `/frontend/` — React app with `src/App.tsx` entry point
+- `make dev` — start both backend and frontend dev servers concurrently
 - `make dev-backend` — start backend on port 8000
 - `make dev-frontend` — start frontend on port 3000
 - Persian‑first: all UI is RTL, errors are in Persian
