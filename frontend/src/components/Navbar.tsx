@@ -323,11 +323,6 @@ export default function Navbar({
         open={confirmLogout}
         onOpenChange={setConfirmLogout}
         onConfirm={onLogout}
-        userName={
-          currentUser
-            ? `${currentUser.firstName} ${currentUser.lastName}`
-            : undefined
-        }
       />
     </nav>
   );

@@ -13,7 +13,6 @@ interface LogoutModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
-  userName?: string;
 }
 
 export default function LogoutModal({
@@ -29,7 +28,7 @@ export default function LogoutModal({
             خروج از حساب
           </AlertDialogTitle>
           <AlertDialogDescription className="text-balance">
-            'آیا مطمئن هستید که می‌خواهید از حساب خود خارج شوید؟'
+            آیا مطمئن هستید که می‌خواهید از حساب خود خارج شوید؟
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="gap-3">
