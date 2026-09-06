@@ -1,8 +1,17 @@
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { User, Notification } from "../types";
-import { Bell, LogIn, LogOut, Shield, UserRound } from "lucide-react";
+import { User } from "../types";
+import {
+  CirclePlus,
+  ClipboardList,
+  House,
+  LogIn,
+  LogOut,
+  Shield,
+  UserRound,
+} from "lucide-react";
 import { toPersianDigits } from "../utils/numberUtils";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -17,24 +26,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import LogoutModal from "@/components/LogoutModal";
 
-// ponytail: logo removed from UI, add when new logo asset provided.
-
 interface NavbarProps {
   currentUser: User | null;
   onLogout: () => void;
   onOpenAuth: () => void;
   theme: "light" | "dark";
   toggleTheme: (theme: "light" | "dark") => void;
-  notifications?: Notification[];
-  unreadCount?: number;
-  onNotificationClick?: (notification: Notification) => void;
 }
-
-const TABS = [
-  { href: "/", label: "خانه" },
-  { href: "/reports", label: "گزارش‌ها و ایده‌ها" },
-  { href: "/submit", label: "ثبت درخواست جدید" },
-] as const;
 
 export default function Navbar({
   currentUser,
@@ -42,9 +40,6 @@ export default function Navbar({
   onOpenAuth,
   theme,
   toggleTheme,
-  notifications = [],
-  unreadCount = 0,
-  onNotificationClick,
 }: NavbarProps) {
   const pathname = usePathname();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -53,250 +48,209 @@ export default function Navbar({
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
+  const navLinks = [
+    { href: "/", label: "خانه", Icon: House },
+    { href: "/reports", label: "گزارش‌ها", Icon: ClipboardList },
+    { href: "/submit", label: "ثبت", Icon: CirclePlus },
+    ...(currentUser
+      ? [{ href: "/profile", label: "پروفایل", Icon: UserRound }]
+      : []),
+    ...(currentUser?.isAdmin
+      ? [{ href: "/admin", label: "ادمین", Icon: Shield }]
+      : []),
+  ];
+
   return (
-    <nav className="border-border bg-background/90 sticky top-0 z-50 border-b backdrop-blur-xl">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          <Button
-            variant="ghost"
-            asChild
-            className="h-auto bg-transparent p-0 hover:bg-transparent focus-visible:bg-transparent active:bg-transparent dark:bg-transparent dark:hover:bg-transparent"
-          >
-            <Link
-              href="/"
-              className="nav-logo flex cursor-pointer items-center gap-3"
+    <>
+      <nav className="border-border bg-background/90 sticky top-0 z-50 border-b backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between">
+            <Button
+              variant="ghost"
+              asChild
+              className="h-auto bg-transparent p-0 hover:bg-transparent focus-visible:bg-transparent active:bg-transparent dark:bg-transparent dark:hover:bg-transparent"
             >
-              <div className="flex flex-col items-start text-right">
-                <span className="text-primary leading-tight font-extrabold tracking-tight">
+              <Link
+                href="/"
+                className="nav-logo flex cursor-pointer items-center gap-3"
+              >
+                <Image
+                  src="/assets/logo.svg"
+                  alt="لوگوی شهرآرا"
+                  width={32}
+                  height={31}
+                  className="h-8 w-auto"
+                />
+                <span className="text-primary text-xl leading-tight font-extrabold tracking-tight">
                   شهرآرا
                 </span>
-                <span className="text-muted-foreground mt-0.5 text-[10px] leading-tight font-bold">
-                  سامانه هوشمند مشارکت مردمی
-                </span>
-              </div>
-            </Link>
-          </Button>
+              </Link>
+            </Button>
 
-          <div className="nav-tabs hidden items-center gap-1 md:flex">
-            {TABS.map((tab) => (
-              <Button
-                key={tab.href}
-                variant="ghost"
-                size="sm"
-                asChild
-                className={cn(
-                  "font-semibold",
-                  isActive(tab.href) && "bg-accent text-primary",
-                )}
-              >
-                <Link href={tab.href}>{tab.label}</Link>
-              </Button>
-            ))}
-
-            {currentUser?.isAdmin && (
-              <Button
-                variant="ghost"
-                size="sm"
-                asChild
-                className={cn(
-                  "flex items-center gap-1.5 font-bold",
-                  isActive("/admin") && "bg-accent text-primary",
-                )}
-              >
-                <Link href="/admin">
-                  <Shield className="h-4 w-4" />
-                  پنل مدیریت شهری
-                </Link>
-              </Button>
-            )}
-            {currentUser && (
-              <Button
-                variant="ghost"
-                size="sm"
-                asChild
-                className={cn(
-                  "flex items-center gap-1.5 font-bold",
-                  isActive("/profile") && "bg-accent text-primary",
-                )}
-              >
-                <Link href="/profile">
-                  <UserRound />
-                  پروفایل من
-                </Link>
-              </Button>
-            )}
-          </div>
-
-          <div className="nav-actions flex items-center gap-3">
-            <ModeToggle theme={theme} onThemeChange={toggleTheme} />
-
-            {currentUser ? (
-              <>
-                {/* Notification bell */}
-                <DropdownMenu dir="rtl">
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost">
-                      <Bell />
-                      {unreadCount > 0 && (
-                        <span className="bg-destructive text-destructive-foreground absolute -top-1 -right-1 flex min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] leading-tight font-bold">
-                          {toPersianDigits(Math.min(unreadCount, 99))}
-                        </span>
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-80 border">
-                    <DropdownMenuLabel>اعلان‌ها</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {notifications.length > 0 ? (
-                      notifications.slice(0, 5).map((n) => (
-                        <DropdownMenuItem
-                          key={n.id}
-                          onClick={() => onNotificationClick?.(n)}
-                          className={cn(
-                            "flex flex-col items-start gap-1 py-3",
-                            !n.isRead && "bg-accent/50",
-                          )}
-                        >
-                          <span className="text-xs font-semibold">
-                            {n.message}
-                          </span>
-                          {n.requestTitle && (
-                            <span className="text-muted-foreground text-[10px]">
-                              {n.requestTitle}
-                            </span>
-                          )}
-                        </DropdownMenuItem>
-                      ))
-                    ) : (
-                      <div className="text-muted-foreground px-4 py-6 text-center text-xs">
-                        هیچ اعلان جدیدی ندارید.
-                      </div>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <DropdownMenu
-                  dir="rtl"
-                  open={dropdownOpen}
-                  onOpenChange={setDropdownOpen}
+            {/* لینک‌ها — فقط دسکتاپ */}
+            <div className="nav-links hidden items-center gap-2 md:flex">
+              {navLinks.map(({ href, label, Icon }) => (
+                <Button
+                  key={href}
+                  variant="ghost"
+                  asChild
+                  className={cn(
+                    "gap-2 font-bold",
+                    isActive(href)
+                      ? "text-primary bg-primary/10"
+                      : "text-muted-foreground",
+                  )}
                 >
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost">
-                      <UserRound />
-                      <span className="hidden max-w-[120px] truncate font-extrabold md:inline lg:max-w-none">
-                        {currentUser.firstName} {currentUser.lastName}
-                      </span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56 border">
-                    <DropdownMenuLabel>
-                      <div className="flex flex-col gap-1">
-                        <span className="font-extrabold">
+                  <Link href={href}>
+                    <Icon className="h-4 w-4" />
+                    <span>{label}</span>
+                  </Link>
+                </Button>
+              ))}
+            </div>
+
+            <div className="nav-actions flex items-center gap-3">
+              <ModeToggle theme={theme} onThemeChange={toggleTheme} />
+
+              {currentUser ? (
+                <>
+                  <DropdownMenu
+                    dir="rtl"
+                    open={dropdownOpen}
+                    onOpenChange={setDropdownOpen}
+                  >
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost">
+                        <UserRound />
+                        <span className="hidden max-w-[120px] truncate font-extrabold md:inline lg:max-w-none">
                           {currentUser.firstName} {currentUser.lastName}
                         </span>
-                        <span className="text-muted-foreground font-mono text-xs font-normal">
-                          {toPersianDigits(currentUser.phone)}
-                        </span>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setDropdownOpen(false);
-                      }}
-                      className="flex gap-2"
-                      asChild
-                    >
-                      <Link href="/profile">
-                        <UserRound />
-                        <span>پروفایل من</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onClick={() => {
-                        setDropdownOpen(false);
-                        setConfirmLogout(true);
-                      }}
-                      className="flex gap-2"
-                    >
-                      <LogOut />
-                      <span>خروج از حساب</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
-            ) : (
-              <Button variant="default" size="sm" onClick={onOpenAuth}>
-                <LogIn size={14} />
-                <span className="hidden sm:inline">ورود / ثبت‌نام شهروند</span>
-                <span className="sm:hidden">ورود</span>
-              </Button>
-            )}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56 border">
+                      <DropdownMenuLabel>
+                        <div className="flex flex-col gap-1">
+                          <span className="font-extrabold">
+                            {currentUser.firstName} {currentUser.lastName}
+                          </span>
+                          <span className="text-muted-foreground font-mono text-xs font-normal">
+                            {toPersianDigits(currentUser.phone)}
+                          </span>
+                        </div>
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setDropdownOpen(false);
+                        }}
+                        className="flex gap-2"
+                        asChild
+                      >
+                        <Link href="/profile">
+                          <UserRound />
+                          <span>پروفایل من</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          setConfirmLogout(true);
+                        }}
+                        className="flex gap-2"
+                      >
+                        <LogOut />
+                        <span>خروج از حساب</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
+              ) : (
+                <Button variant="default" size="sm" onClick={onOpenAuth}>
+                  <LogIn size={14} />
+                  <span className="hidden sm:inline">
+                    ورود / ثبت‌نام شهروند
+                  </span>
+                  <span className="sm:hidden">ورود</span>
+                </Button>
+              )}
+            </div>
           </div>
         </div>
+      </nav>
 
-        <div className="border-border flex items-center justify-around border-t py-2 md:hidden">
-          <Button
-            variant="ghost"
-            size="sm"
-            asChild
-            className={cn(
-              "flex-1 text-xs font-bold",
-              isActive("/") && "bg-accent text-primary",
-            )}
-          >
-            <Link href="/">خانه</Link>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            asChild
-            className={cn(
-              "flex-1 text-xs font-bold",
-              isActive("/reports") && "bg-accent text-primary",
-            )}
-          >
-            <Link href="/reports">گزارش‌ها</Link>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            asChild
-            className={cn(
-              "flex-1 text-xs font-bold",
-              isActive("/submit") && "bg-accent text-primary",
-            )}
-          >
-            <Link href="/submit">ثبت درخواست</Link>
-          </Button>
+      {/* نوار پایین — فقط موبایل */}
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden">
+        <div className="flex items-stretch justify-around">
+          {[
+            { href: "/", label: "خانه", Icon: House },
+            { href: "/reports", label: "گزارش‌ها", Icon: ClipboardList },
+            { href: "/submit", label: "ثبت", Icon: CirclePlus },
+          ].map(({ href, label, Icon }) => (
+            <Button
+              key={href}
+              variant="ghost"
+              asChild
+              className={cn(
+                "h-auto flex-1 flex-col gap-1 rounded-none py-2 font-bold",
+                isActive(href) ? "text-primary" : "text-muted-foreground",
+              )}
+            >
+              <Link href={href}>
+                <span
+                  className={cn(
+                    "flex h-9 w-9 items-center justify-center rounded-xl transition-colors",
+                    isActive(href) && "bg-primary/10",
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span className="text-[10px]">{label}</span>
+              </Link>
+            </Button>
+          ))}
           {currentUser && (
             <Button
               variant="ghost"
-              size="sm"
               asChild
               className={cn(
-                "flex-1 text-xs font-bold",
-                isActive("/profile") && "bg-accent text-primary",
+                "h-auto flex-1 flex-col gap-1 rounded-none py-2 font-bold",
+                isActive("/profile") ? "text-primary" : "text-muted-foreground",
               )}
             >
-              <Link href="/profile">پروفایل</Link>
+              <Link href="/profile">
+                <span
+                  className={cn(
+                    "flex h-9 w-9 items-center justify-center rounded-xl transition-colors",
+                    isActive("/profile") && "bg-primary/10",
+                  )}
+                >
+                  <UserRound className="h-5 w-5" />
+                </span>
+                <span className="text-[10px]">پروفایل</span>
+              </Link>
             </Button>
           )}
           {currentUser?.isAdmin && (
             <Button
               variant="ghost"
-              size="sm"
               asChild
               className={cn(
-                "flex flex-1 items-center gap-1 text-xs font-bold",
-                isActive("/admin") && "bg-accent text-primary",
+                "h-auto flex-1 flex-col gap-1 rounded-none py-2 font-bold",
+                isActive("/admin") ? "text-primary" : "text-muted-foreground",
               )}
             >
               <Link href="/admin">
-                <Shield className="h-3.5 w-3.5" />
-                ادمین
+                <span
+                  className={cn(
+                    "flex h-9 w-9 items-center justify-center rounded-xl transition-colors",
+                    isActive("/admin") && "bg-primary/10",
+                  )}
+                >
+                  <Shield className="h-5 w-5" />
+                </span>
+                <span className="text-[10px]">ادمین</span>
               </Link>
             </Button>
           )}
@@ -308,6 +262,6 @@ export default function Navbar({
         onOpenChange={setConfirmLogout}
         onConfirm={onLogout}
       />
-    </nav>
+    </>
   );
 }

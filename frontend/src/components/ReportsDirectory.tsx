@@ -52,12 +52,12 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogFooter,
+} from "@/components/ui/responsive-dialog";
 
 interface ReportsDirectoryProps {
   items: RequestItem[];
@@ -435,13 +435,13 @@ export default function ReportsDirectory({
       </div>
 
       {/* Details Dialog */}
-      <Dialog
+      <ResponsiveDialog
         open={!!selectedDetails}
         onOpenChange={(open) => !open && setSelectedDetails(null)}
       >
-        <DialogContent className="max-sm:p-4 sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+        <ResponsiveDialogContent className="max-sm:p-4 sm:max-w-xl">
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle className="flex items-center gap-2">
               {selectedDetails && (
                 <Badge
                   variant="outline"
@@ -453,8 +453,8 @@ export default function ReportsDirectory({
               <Badge variant="outline" className="font-mono">
                 {selectedDetails?.category}
               </Badge>
-            </DialogTitle>
-          </DialogHeader>
+            </ResponsiveDialogTitle>
+          </ResponsiveDialogHeader>
 
           <div className="space-y-6">
             <div>
@@ -507,7 +507,7 @@ export default function ReportsDirectory({
 
           <Separator />
 
-          <DialogFooter className="flex items-center justify-between sm:justify-between">
+          <ResponsiveDialogFooter className="flex items-center justify-between sm:justify-between">
             <span className="text-muted-foreground font-mono text-[10px] font-bold">
               کد رهگیری: {toPersianDigits(selectedDetails?.id ?? "")}
             </span>
@@ -536,9 +536,9 @@ export default function ReportsDirectory({
                 شهروندی
               </span>
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
     </div>
   );
 }

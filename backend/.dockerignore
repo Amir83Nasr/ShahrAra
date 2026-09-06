@@ -1,0 +1,32 @@
+# ─── PATHS TO EXCLUDE FROM DOCKER CONTEXT ──────────────
+# (For Docker build; not for compose volume mounts)
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+env/
+venv/
+.venv/
+*.sqlite3
+*.db
+.env*
+!/.env.example
+.git/
+.gitignore
+.DS_Store
+tests/
+scripts/
+*.log
+*.pid
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/

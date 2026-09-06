@@ -40,12 +40,12 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogFooter,
+} from "@/components/ui/responsive-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -68,6 +68,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import dynamic from "next/dynamic";
 
 // leaflet touches `window` at import time; skip prerendering
@@ -259,16 +260,20 @@ export default function UserProfile({
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       {/* Success / Error banners */}
       {success && (
-        <div className="border-status-resolved/20 bg-status-resolved/10 text-status-resolved mb-4 flex items-center gap-2 rounded-lg border p-3 text-sm">
-          <CheckCircle className="h-4 w-4 shrink-0" />
-          <span className="font-bold">{success}</span>
-        </div>
+        <Alert className="border-status-resolved/20 bg-status-resolved/10 text-status-resolved mb-4 text-sm">
+          <CheckCircle />
+          <AlertTitle>موفق</AlertTitle>
+          <AlertDescription className="text-status-resolved/90 font-bold">
+            {success}
+          </AlertDescription>
+        </Alert>
       )}
       {error && (
-        <div className="border-destructive/20 bg-destructive/10 text-destructive mb-4 flex items-start gap-2.5 rounded-lg border p-3 text-sm">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-          <span className="font-bold">{error}</span>
-        </div>
+        <Alert variant="destructive" className="mb-4 text-sm">
+          <AlertCircle />
+          <AlertTitle>خطا</AlertTitle>
+          <AlertDescription className="font-bold">{error}</AlertDescription>
+        </Alert>
       )}
 
       {/* Tabs */}
@@ -294,74 +299,76 @@ export default function UserProfile({
         </TabsList>
 
         {/* Search & Filter bar */}
-        <div className="bg-card mt-3 mb-6 flex items-center gap-3 rounded-xl border p-4">
-          <div className="relative w-full">
+        <div className="bg-card mt-3 mb-6 flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center">
+          <div className="relative w-full sm:flex-1">
             <Search className="text-muted-foreground absolute top-1/2 right-3 size-4 -translate-y-1/2" />
             <Input
               type="text"
               placeholder="جستجوی عنوان، توضیحات..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-background\ pr-10"
+              className="bg-background pr-10"
             />
           </div>
-          <Select
-            dir="rtl"
-            value={filterType}
-            onValueChange={(v) => setFilterType(v)}
-          >
-            <SelectTrigger size="sm" className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent position="popper" dir="rtl">
-              <SelectGroup>
-                <SelectLabel>نوع درخواست</SelectLabel>
-                <SelectItem value="all">همه</SelectItem>
-                <SelectItem value="problem">مشکل شهری</SelectItem>
-                <SelectItem value="idea">ایده شهری</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-          <Select
-            dir="rtl"
-            value={filterStatus}
-            onValueChange={(v) => setFilterStatus(v)}
-          >
-            <SelectTrigger size="sm" className="w-36">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent position="popper" align="end">
-              <SelectGroup>
-                <SelectLabel>وضعیت</SelectLabel>
-                <SelectItem value="all">همه وضعیت‌ها</SelectItem>
-                <SelectItem value="submitted">ثبت شده</SelectItem>
-                <SelectItem value="under_review">در حال بررسی</SelectItem>
-                <SelectItem value="in_progress">در حال انجام</SelectItem>
-                <SelectItem value="resolved">حل شده</SelectItem>
-                <SelectItem value="archived">بایگانی شده</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-          <Select
-            dir="rtl"
-            value={filterRegion}
-            onValueChange={setFilterRegion}
-          >
-            <SelectTrigger size="sm" className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent position="popper" align="end">
-              <SelectGroup>
-                <SelectLabel>منطقه</SelectLabel>
-                <SelectItem value="all">همه مناطق</SelectItem>
-                {REGIONS.map((r) => (
-                  <SelectItem key={r} value={r}>
-                    {r}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          <div className="grid grid-cols-3 gap-3 sm:flex sm:gap-3">
+            <Select
+              dir="rtl"
+              value={filterType}
+              onValueChange={(v) => setFilterType(v)}
+            >
+              <SelectTrigger size="sm" className="w-full sm:w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent position="popper" dir="rtl">
+                <SelectGroup>
+                  <SelectLabel>نوع درخواست</SelectLabel>
+                  <SelectItem value="all">همه</SelectItem>
+                  <SelectItem value="problem">مشکل شهری</SelectItem>
+                  <SelectItem value="idea">ایده شهری</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <Select
+              dir="rtl"
+              value={filterStatus}
+              onValueChange={(v) => setFilterStatus(v)}
+            >
+              <SelectTrigger size="sm" className="w-full sm:w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent position="popper" align="end">
+                <SelectGroup>
+                  <SelectLabel>وضعیت</SelectLabel>
+                  <SelectItem value="all">همه وضعیت‌ها</SelectItem>
+                  <SelectItem value="submitted">ثبت شده</SelectItem>
+                  <SelectItem value="under_review">در حال بررسی</SelectItem>
+                  <SelectItem value="in_progress">در حال انجام</SelectItem>
+                  <SelectItem value="resolved">حل شده</SelectItem>
+                  <SelectItem value="archived">بایگانی شده</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <Select
+              dir="rtl"
+              value={filterRegion}
+              onValueChange={setFilterRegion}
+            >
+              <SelectTrigger size="sm" className="w-full sm:w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent position="popper" align="end">
+                <SelectGroup>
+                  <SelectLabel>منطقه</SelectLabel>
+                  <SelectItem value="all">همه مناطق</SelectItem>
+                  {REGIONS.map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {r}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <TabsContent value="my" className="mt-0">
@@ -394,16 +401,16 @@ export default function UserProfile({
       </Tabs>
 
       {/* Edit Dialog */}
-      <Dialog
+      <ResponsiveDialog
         open={!!editingRequest}
         onOpenChange={(o) => !o && setEditingRequest(null)}
       >
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-extrabold">
+        <ResponsiveDialogContent className="max-w-lg">
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle className="text-lg font-extrabold">
               ویرایش درخواست
-            </DialogTitle>
-          </DialogHeader>
+            </ResponsiveDialogTitle>
+          </ResponsiveDialogHeader>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-foreground text-xs font-extrabold">
@@ -445,7 +452,7 @@ export default function UserProfile({
               </p>
             )}
           </div>
-          <DialogFooter className="gap-2">
+          <ResponsiveDialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setEditingRequest(null)}>
               انصراف
             </Button>
@@ -456,18 +463,18 @@ export default function UserProfile({
                 "ذخیره تغییرات"
               )}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
 
       {/* Details Dialog */}
-      <Dialog
+      <ResponsiveDialog
         open={!!selectedDetails}
         onOpenChange={(open) => !open && setSelectedDetails(null)}
       >
-        <DialogContent className="max-sm:p-4 sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+        <ResponsiveDialogContent className="max-sm:p-4 sm:max-w-xl">
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle className="flex items-center gap-2">
               <Badge
                 variant="outline"
                 className={
@@ -479,8 +486,8 @@ export default function UserProfile({
               <Badge variant="outline" className="font-mono">
                 {syncedDetails?.category}
               </Badge>
-            </DialogTitle>
-          </DialogHeader>
+            </ResponsiveDialogTitle>
+          </ResponsiveDialogHeader>
 
           <div className="space-y-6">
             <div>
@@ -535,8 +542,8 @@ export default function UserProfile({
 
           <Separator />
 
-          <DialogFooter className="flex items-center justify-between sm:justify-between">
-            <span className="text-muted-foreground font-mono text-[10px] font-bold">
+          <ResponsiveDialogFooter className="flex flex-col-reverse items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <span className="text-muted-foreground order-last text-center font-mono text-[10px] font-bold sm:order-first">
               کد رهگیری: {toPersianDigits(syncedDetails?.id ?? "")}
             </span>
 
@@ -547,6 +554,7 @@ export default function UserProfile({
                   : "outline"
               }
               size="sm"
+              className="w-full sm:w-auto"
               onClick={(e) =>
                 syncedDetails && handleLikeClick(e, syncedDetails.id)
               }
@@ -564,9 +572,9 @@ export default function UserProfile({
                 شهروندی
               </span>
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
     </div>
   );
 }

@@ -7,15 +7,16 @@
 
 import React, { useState } from "react";
 import { AlertCircle, CheckCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { User } from "../types";
 import { toPersianDigits, toEnglishDigits } from "../utils/numberUtils";
 import { cn } from "@/lib/utils";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { XIcon } from "lucide-react";
@@ -124,36 +125,43 @@ export default function AuthModal({
   };
 
   return (
-    <Dialog
+    <ResponsiveDialog
       open={open}
       key={String(open)}
       onOpenChange={(o) => !o && onClose()}
     >
-      <DialogContent className="max-w-md gap-0 p-0" showCloseButton={false}>
-        <DialogHeader className="bg-muted/30 flex flex-row items-center justify-between p-5">
-          <DialogTitle className="text-foreground text-lg font-extrabold">
+      <ResponsiveDialogContent
+        className="max-w-md gap-0 p-0"
+        showCloseButton={false}
+      >
+        <ResponsiveDialogHeader className="bg-muted/30 flex flex-row items-center justify-between p-5">
+          <ResponsiveDialogTitle className="text-foreground text-lg font-extrabold">
             {isSignUp
               ? "ثبت‌نام شهروند جدید شهرآرا"
               : "ورود شهروندان به شهرآرا"}
-          </DialogTitle>
+          </ResponsiveDialogTitle>
           <Button variant="ghost" size="icon-sm" onClick={onClose}>
             <XIcon />
           </Button>
-        </DialogHeader>
+        </ResponsiveDialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-5 pt-6">
           {error && (
-            <div className="border-destructive/20 bg-destructive/10 text-destructive flex items-start gap-2.5 rounded-lg border p-3 text-xs">
-              <AlertCircle className="text-destructive mt-0.5 h-4 w-4 shrink-0" />
-              <span>{error}</span>
-            </div>
+            <Alert variant="destructive" className="text-xs">
+              <AlertCircle />
+              <AlertTitle>خطا</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
           {success && (
-            <div className="border-status-resolved/20 bg-status-resolved/10 text-status-resolved flex items-center gap-2 rounded-lg border p-3 text-xs">
-              <CheckCircle className="text-status-resolved h-4 w-4 shrink-0" />
-              <span>{success}</span>
-            </div>
+            <Alert className="border-status-resolved/20 bg-status-resolved/10 text-status-resolved text-xs">
+              <CheckCircle />
+              <AlertTitle>موفق</AlertTitle>
+              <AlertDescription className="text-status-resolved/90">
+                {success}
+              </AlertDescription>
+            </Alert>
           )}
 
           {isSignUp && (
@@ -322,7 +330,7 @@ export default function AuthModal({
             )}
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

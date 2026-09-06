@@ -13,7 +13,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { User, RequestItem, RequestStatus, Stats, Notification } from "@/types";
+import { User, RequestItem, RequestStatus, Stats } from "@/types";
 import {
   getCachedData,
   setCachedData,
@@ -60,9 +60,6 @@ interface AppContextValue {
     adminResponse: string,
   ) => Promise<void>;
   submitSuccess: () => void;
-  notifications: Notification[];
-  unreadCount: number;
-  markNotificationRead: (notificationId: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -76,56 +73,38 @@ export function useApp(): AppContextValue {
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  // Restore theme + session from localStorage (client-only). Lazy
+  // initializers run during first render; no effect/state cascade.
+  const [theme, setThemeState] = useState<"light" | "dark">(() => {
+    if (typeof window === "undefined") return "light";
+    const saved = localStorage.getItem("shahr_ara_theme");
+    return saved === "dark" || saved === "light" ? saved : "light";
+  });
+
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      return JSON.parse(localStorage.getItem("shahr_ara_user") ?? "null") as
+        | User
+        | null;
+    } catch {
+      localStorage.removeItem("shahr_ara_user");
+      return null;
+    }
+  });
   // Avoid rendering auth-gated UI until localStorage session restored
   const [authReady, setAuthReady] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  const [theme, setThemeState] = useState<"light" | "dark">("light");
-
   const [requests, setRequests] = useState<RequestItem[]>([]);
   const [stats, setStats] = useState<Stats>(INITIAL_STATS);
   const [loading, setLoading] = useState(true);
 
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  // Restore theme from localStorage on mount (client-only)
+  // Mark session as ready after hydration; theme/user restored via lazy
+  // initializers above. authReady gates auth-dependent UI and effects.
   useEffect(() => {
-    const saved = localStorage.getItem("shahr_ara_theme");
-    if (saved === "dark" || saved === "light") {
-      setThemeState(saved);
-    }
-  }, []);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    if (theme === "dark") {
-      root.classList.add("dark");
-      document.body.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-      document.body.classList.remove("dark");
-    }
-    localStorage.setItem("shahr_ara_theme", theme);
-  }, [theme]);
-
-  const setTheme = useCallback((next: "light" | "dark") => {
-    setThemeState(next);
-  }, []);
-
-  // Restore session from localStorage (client-only)
-  useEffect(() => {
-    const saved = localStorage.getItem("shahr_ara_user");
-    if (saved) {
-      try {
-        setCurrentUser(JSON.parse(saved));
-      } catch {
-        localStorage.removeItem("shahr_ara_user");
-      }
-    }
-    setAuthReady(true);
+    queueMicrotask(() => setAuthReady(true));
   }, []);
 
   const loginSuccess = useCallback((user: User) => {
@@ -142,8 +121,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("shahr_ara_user");
     localStorage.removeItem("shahr_ara_token");
     invalidateCache();
-    setNotifications([]);
-    setUnreadCount(0);
+  }, []);
+
+  const setTheme = useCallback((next: "light" | "dark") => {
+    setThemeState(next);
   }, []);
 
   const refresh = useCallback(
@@ -205,58 +186,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!authReady) return;
-    refresh();
+    // Fire-and-forget initial load; refresh handles its own errors.
+    // setState calls are async (after await), not sync in effect body.
+    const t = setTimeout(() => void refresh(), 0);
+    return () => clearTimeout(t);
   }, [authReady, refresh]);
-
-  // Notification polling
-  useEffect(() => {
-    if (!currentUser) return;
-
-    const pollNotifications = async () => {
-      const token =
-        currentUser.token ?? localStorage.getItem("shahr_ara_token");
-      if (!token) return;
-      try {
-        const res = await fetch("/api/v1/notifications", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const data: Notification[] = await res.json();
-          setNotifications(data);
-          setUnreadCount(data.filter((n) => !n.isRead).length);
-        }
-      } catch {
-        // silent fail — polling is best-effort
-      }
-    };
-
-    pollNotifications();
-    const interval = setInterval(pollNotifications, 30000);
-    return () => clearInterval(interval);
-  }, [currentUser]);
-
-  const markNotificationRead = useCallback(
-    async (notificationId: string) => {
-      const token =
-        currentUser?.token ?? localStorage.getItem("shahr_ara_token");
-      if (!token) return;
-      try {
-        await fetch(`/api/v1/notifications/${notificationId}/read`, {
-          method: "PUT",
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setNotifications((prev) =>
-          prev.map((n) =>
-            n.id === notificationId ? { ...n, isRead: true } : n,
-          ),
-        );
-        setUnreadCount((prev) => Math.max(0, prev - 1));
-      } catch {
-        // silent fail
-      }
-    },
-    [currentUser],
-  );
 
   const like = useCallback(
     async (id: string) => {
@@ -333,9 +267,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
         invalidateCache();
         refresh({ silent: true });
       },
-      notifications,
-      unreadCount,
-      markNotificationRead,
     }),
     [
       currentUser,
@@ -352,9 +283,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
       refresh,
       like,
       updateStatus,
-      notifications,
-      unreadCount,
-      markNotificationRead,
     ],
   );
 

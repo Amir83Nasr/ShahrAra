@@ -1,0 +1,17 @@
+# ─── PATHS TO EXCLUDE FROM DOCKER CONTEXT ──────────────
+
+node_modules/
+.next/
+dist/
+build/
+*.log
+.env*
+!/.env.example
+.git/
+.gitignore
+.DS_Store
+tsconfig.tsbuildinfo
+coverage/
+.idea/
+.vscode/
+*.swp

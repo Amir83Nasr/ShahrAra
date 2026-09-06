@@ -46,16 +46,6 @@ export interface Stats {
   byCategory: Record<string, number>;
 }
 
-export interface Notification {
-  id: string;
-  userPhone: string;
-  message: string;
-  requestId: string | null;
-  requestTitle: string | null;
-  createdAt: string;
-  isRead: boolean;
-}
-
 export interface PaginatedResponse<T> {
   items: T[];
   total: number;

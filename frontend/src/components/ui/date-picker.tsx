@@ -110,7 +110,7 @@ export function DatePicker({
           variant="outline"
           dir="rtl"
           className={cn(
-            "border-input hover:bg-accent hover:text-accent-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-expanded:bg-accent h-9 w-full justify-between gap-1.5 rounded-md border bg-transparent px-2.5 text-right text-sm font-normal transition-[color,box-shadow] focus-visible:ring-3",
+            "border-input hover:bg-accent hover:text-accent-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-expanded:bg-accent h-10 w-full justify-between gap-1.5 rounded-md border bg-transparent px-2.5 text-right text-sm font-normal transition-[color,box-shadow] focus-visible:ring-3",
             !parsed && "text-muted-foreground",
             className,
           )}
@@ -132,7 +132,7 @@ export function DatePicker({
               value={String(yr)}
               onValueChange={(v) => setYr(parseInt(v, 10))}
             >
-              <SelectTrigger className="h-9 w-24">
+              <SelectTrigger className="h-10 w-24">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent position="popper">
@@ -148,7 +148,7 @@ export function DatePicker({
               value={String(mo)}
               onValueChange={(v) => setMo(parseInt(v, 10))}
             >
-              <SelectTrigger className="h-9 w-28">
+              <SelectTrigger className="h-10 w-28">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent position="popper">
@@ -162,7 +162,7 @@ export function DatePicker({
           </div>
           {/* Day select */}
           <Select dir="rtl" onValueChange={handleDaySelect}>
-            <SelectTrigger className="h-9 w-full">
+            <SelectTrigger className="h-10 w-full">
               <SelectValue placeholder="روز" />
             </SelectTrigger>
             <SelectContent position="popper">

@@ -3,6 +3,7 @@
 import { Component, ErrorInfo, ReactNode } from "react";
 import { AlertTriangle, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface Props {
   children: ReactNode;
@@ -38,23 +39,21 @@ export default class ErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="mx-auto flex max-w-md flex-col items-center justify-center gap-6 px-4 py-24 text-center">
-          <div className="border-destructive/20 bg-destructive/10 flex h-16 w-16 items-center justify-center rounded-full border">
-            <AlertTriangle className="text-destructive h-8 w-8" />
-          </div>
-          <div className="space-y-2">
-            <h2 className="text-foreground text-xl font-extrabold">
+          <Alert variant="destructive" className="text-start">
+            <AlertTriangle />
+            <AlertTitle className="text-base font-extrabold">
               خطایی رخ داده است
-            </h2>
-            <p className="text-muted-foreground text-sm leading-relaxed font-medium">
+            </AlertTitle>
+            <AlertDescription className="leading-relaxed font-medium">
               متأسفانه در اجرای برنامه مشکلی پیش آمد. لطفاً مجدداً تلاش کنید یا
               صفحه را بازنشانی نمایید.
-            </p>
+            </AlertDescription>
             {process.env.NODE_ENV === "development" && this.state.error && (
-              <p className="mt-3 rounded-md bg-black/5 p-2 font-mono text-[11px] text-red-600 dark:bg-white/5 dark:text-red-400">
+              <AlertDescription className="mt-3 rounded-md bg-black/5 p-2 font-mono text-[11px] text-red-600 dark:bg-white/5 dark:text-red-400">
                 {this.state.error.name}: {this.state.error.message}
-              </p>
+              </AlertDescription>
             )}
-          </div>
+          </Alert>
           <Button onClick={this.handleRetry} className="font-bold">
             <RefreshCcw className="h-4 w-4" />
             تلاش مجدد

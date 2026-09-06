@@ -35,6 +35,7 @@ import {
   TYPE_BADGE_CLASS,
 } from "../utils/requestBadges";
 import { cn } from "@/lib/utils";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -86,6 +87,7 @@ export default function AdminPanel({
 
   const [submitting, setSubmitting] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const [visibleCount, setVisibleCount] = useState(12);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -149,6 +151,7 @@ export default function AdminPanel({
 
     setSubmitting(true);
     setSaveSuccess(false);
+    setSaveError(null);
 
     try {
       await onUpdateStatus(selectedItem.id, statusVal, adminResponse.trim());
@@ -166,7 +169,9 @@ export default function AdminPanel({
       }, 2000);
     } catch (err) {
       console.error(err);
-      alert(err instanceof Error ? err.message : "خطا در بروزرسانی وضعیت.");
+      setSaveError(
+        err instanceof Error ? err.message : "خطا در بروزرسانی وضعیت.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -222,7 +227,7 @@ export default function AdminPanel({
             </div>
 
             {/* Quick Filters Group */}
-            <div className="flex justify-between">
+            <div className="grid grid-cols-2 gap-4 md:flex md:justify-between">
               {/* Type selector */}
               <div className="flex flex-col gap-1.5 text-right">
                 <span className="text-muted-foreground flex items-center gap-1 text-[10px] font-bold">
@@ -236,7 +241,7 @@ export default function AdminPanel({
                     setSelectedType(v as "all" | "problem" | "idea")
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full md:w-40">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent position="popper">
@@ -267,7 +272,7 @@ export default function AdminPanel({
                   value={selectedCategory}
                   onValueChange={setSelectedCategory}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full md:w-40">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent position="popper" align="end">
@@ -295,7 +300,7 @@ export default function AdminPanel({
                   value={selectedStatus}
                   onValueChange={(v) => setSelectedStatus(v as RequestStatus)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full md:w-40">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent position="popper" align="end">
@@ -331,7 +336,7 @@ export default function AdminPanel({
                   value={selectedRegion}
                   onValueChange={setSelectedRegion}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full md:w-40">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent position="popper" align="end">
@@ -541,6 +546,14 @@ export default function AdminPanel({
                 onSubmit={handleUpdate}
                 className="space-y-3 px-(--card-spacing)"
               >
+                {saveError && (
+                  <Alert variant="destructive" className="text-xs">
+                    <X />
+                    <AlertTitle>خطا در بروزرسانی</AlertTitle>
+                    <AlertDescription>{saveError}</AlertDescription>
+                  </Alert>
+                )}
+
                 {saveSuccess && (
                   <div className="border-type-idea/20 bg-type-idea/10 text-type-idea flex items-center gap-2 rounded-lg border p-2.5 text-xs">
                     <CheckCircle className="h-4 w-4 shrink-0" />

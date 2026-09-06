@@ -4,7 +4,7 @@ import { Providers } from "./providers";
 import AppShell from "./app-shell";
 
 export const metadata: Metadata = {
-  title: "شهرآرا | سامانه مشارکت شهروندی",
+  title: "شهرآرا",
   description: "سامانه هوشمند ثبت و ارتقای مطالبات و ایده‌های مردمی",
 };
 

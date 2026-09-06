@@ -33,6 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface RequestFormProps {
   currentUser: User | null;
@@ -222,19 +223,21 @@ export default function RequestForm({
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="border-destructive/20 bg-destructive/10 text-destructive flex items-start gap-2.5 rounded-lg border p-3 text-xs">
-                <AlertCircleIcon className="text-destructive mt-0.5 h-4 w-4 shrink-0" />
-                <span>{error}</span>
-              </div>
+              <Alert variant="destructive" className="text-xs">
+                <AlertCircleIcon />
+                <AlertTitle>خطا در ثبت درخواست</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
 
             {success && (
-              <div className="border-type-idea/20 bg-type-idea/10 text-type-idea flex items-center gap-2 rounded-lg border p-3.5 text-sm">
-                <CheckCircle className="text-type-idea h-5 w-5 shrink-0" />
-                <span>
+              <Alert className="border-type-idea/20 bg-type-idea/10 text-type-idea">
+                <CheckCircle className="text-type-idea" />
+                <AlertTitle>درخواست ثبت شد</AlertTitle>
+                <AlertDescription className="text-type-idea/90">
                   درخواست شما با موفقیت ثبت گردید و در اسرع وقت رسیدگی خواهد شد!
-                </span>
-              </div>
+                </AlertDescription>
+              </Alert>
             )}
 
             {/* Request Type Selector */}
