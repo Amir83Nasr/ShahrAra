@@ -84,9 +84,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     if (typeof window === "undefined") return null;
     try {
-      return JSON.parse(localStorage.getItem("shahr_ara_user") ?? "null") as
-        | User
-        | null;
+      return JSON.parse(
+        localStorage.getItem("shahr_ara_user") ?? "null",
+      ) as User | null;
     } catch {
       localStorage.removeItem("shahr_ara_user");
       return null;
