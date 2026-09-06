@@ -1,6 +1,8 @@
-import { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertTriangle, RefreshCcw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+"use client";
+
+import { Component, ErrorInfo, ReactNode } from "react";
+import { AlertTriangle, RefreshCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   children: ReactNode;
@@ -23,7 +25,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error('ErrorBoundary caught:', error, info);
+    console.error("ErrorBoundary caught:", error, info);
   }
 
   handleRetry = () => {
@@ -47,7 +49,7 @@ export default class ErrorBoundary extends Component<Props, State> {
               متأسفانه در اجرای برنامه مشکلی پیش آمد. لطفاً مجدداً تلاش کنید یا
               صفحه را بازنشانی نمایید.
             </p>
-            {import.meta.env.DEV && this.state.error && (
+            {process.env.NODE_ENV === "development" && this.state.error && (
               <p className="mt-3 rounded-md bg-black/5 p-2 font-mono text-[11px] text-red-600 dark:bg-white/5 dark:text-red-400">
                 {this.state.error.name}: {this.state.error.message}
               </p>

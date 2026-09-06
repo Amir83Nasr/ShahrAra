@@ -1,9 +1,11 @@
-import * as React from 'react';
-import { Dialog as DialogPrimitive } from 'radix-ui';
+"use client";
 
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { XIcon } from 'lucide-react';
+import * as React from "react";
+import { Dialog as DialogPrimitive } from "radix-ui";
+
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { XIcon } from "lucide-react";
 
 function Dialog({
   ...props
@@ -37,7 +39,7 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        'data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs',
+        "data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs",
         className,
       )}
       {...props}
@@ -59,15 +61,15 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          'bg-popover text-popover-foreground ring-foreground/10 fixed z-50 grid w-full gap-6 p-6 text-sm ring-1 duration-100 outline-none',
+          "bg-popover text-popover-foreground ring-foreground/10 fixed z-50 grid w-full gap-6 p-6 text-sm ring-1 duration-100 outline-none",
           // Mobile: bottom sheet
-          'max-sm:right-0 max-sm:bottom-0 max-sm:left-0 max-sm:max-w-full max-sm:rounded-t-xl',
-          'max-sm:data-open:animate-in max-sm:data-open:slide-in-from-bottom max-sm:data-open:fade-in-0',
-          'max-sm:data-closed:animate-out max-sm:data-closed:slide-out-to-bottom max-sm:data-closed:fade-out-0',
+          "max-sm:right-0 max-sm:bottom-0 max-sm:left-0 max-sm:max-w-full max-sm:rounded-t-xl",
+          "max-sm:data-open:animate-in max-sm:data-open:slide-in-from-bottom max-sm:data-open:fade-in-0",
+          "max-sm:data-closed:animate-out max-sm:data-closed:slide-out-to-bottom max-sm:data-closed:fade-out-0",
           // Desktop: centered modal
-          'sm:start-1/2 sm:top-1/2 sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:rtl:translate-x-1/2',
-          'sm:data-open:animate-in sm:data-open:fade-in-0 sm:data-open:zoom-in-95',
-          'sm:data-closed:animate-out sm:data-closed:fade-out-0 sm:data-closed:zoom-out-95',
+          "sm:start-1/2 sm:top-1/2 sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:rtl:translate-x-1/2",
+          "sm:data-open:animate-in sm:data-open:fade-in-0 sm:data-open:zoom-in-95",
+          "sm:data-closed:animate-out sm:data-closed:fade-out-0 sm:data-closed:zoom-out-95",
           className,
         )}
         {...props}
@@ -90,11 +92,11 @@ function DialogContent({
   );
 }
 
-function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
+function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn('flex flex-col gap-2', className)}
+      className={cn("flex flex-col gap-2", className)}
       {...props}
     />
   );
@@ -105,14 +107,14 @@ function DialogFooter({
   showCloseButton = false,
   children,
   ...props
-}: React.ComponentProps<'div'> & {
+}: React.ComponentProps<"div"> & {
   showCloseButton?: boolean;
 }) {
   return (
     <div
       data-slot="dialog-footer"
       className={cn(
-        'flex flex-col-reverse gap-2 sm:flex-row sm:justify-end',
+        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
         className,
       )}
       {...props}
@@ -134,7 +136,7 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn('font-heading leading-none font-medium', className)}
+      className={cn("font-heading leading-none font-medium", className)}
       {...props}
     />
   );
@@ -148,7 +150,7 @@ function DialogDescription({
     <DialogPrimitive.Description
       data-slot="dialog-description"
       className={cn(
-        'text-muted-foreground *:[a]:hover:text-foreground text-sm *:[a]:underline *:[a]:underline-offset-3',
+        "text-muted-foreground *:[a]:hover:text-foreground text-sm *:[a]:underline *:[a]:underline-offset-3",
         className,
       )}
       {...props}

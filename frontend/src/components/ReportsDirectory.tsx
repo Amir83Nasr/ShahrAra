@@ -1,11 +1,16 @@
+"use client";
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
-import { RequestItem, User } from '../types';
-import MapComponent from './MapComponent';
+import React, { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
+import { RequestItem, User } from "../types";
+
+// leaflet touches `window` at import time; skip prerendering
+const MapComponent = dynamic(() => import("./MapComponent"), { ssr: false });
 import {
   Heart,
   MapPin,
@@ -14,19 +19,19 @@ import {
   Search,
   ArrowUpDown,
   RefreshCcw,
-} from 'lucide-react';
-import { toPersianDigits } from '../utils/numberUtils';
-import { REGIONS } from '../utils/regionUtils';
-import { CATEGORIES } from '../utils/categoryUtils';
-import { filterRequests, sortRequests } from '../utils/requestFilters';
+} from "lucide-react";
+import { toPersianDigits } from "../utils/numberUtils";
+import { REGIONS } from "../utils/regionUtils";
+import { CATEGORIES } from "../utils/categoryUtils";
+import { filterRequests, sortRequests } from "../utils/requestFilters";
 import {
   STATUS_LABELS,
   STATUS_BADGE_CLASS,
   TYPE_LABELS,
   TYPE_BADGE_CLASS,
-} from '../utils/requestBadges';
-import { cn } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
+} from "../utils/requestBadges";
+import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -35,24 +40,24 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { DatePicker } from '@/components/ui/date-picker';
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Card,
   CardContent,
   CardTitle,
   CardDescription,
-} from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 
 interface ReportsDirectoryProps {
   items: RequestItem[];
@@ -60,7 +65,8 @@ interface ReportsDirectoryProps {
   onLike: (id: string) => Promise<void>;
   onOpenAuth: () => void;
   onRefresh: () => void;
-  theme?: 'light' | 'dark';
+  theme?: "light" | "dark";
+  initialCategory?: string;
 }
 
 export default function ReportsDirectory({
@@ -69,28 +75,29 @@ export default function ReportsDirectory({
   onLike,
   onOpenAuth,
   onRefresh,
-  theme = 'light',
+  theme = "light",
+  initialCategory = "all",
 }: ReportsDirectoryProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [activeType, setActiveType] = useState<'all' | 'problem' | 'idea'>(
-    'all',
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeCategory, setActiveCategory] = useState<string>(initialCategory);
+  const [activeType, setActiveType] = useState<"all" | "problem" | "idea">(
+    "all",
   );
   const [showMap, setShowMap] = useState<boolean>(true);
   const [sortBy, setSortBy] = useState<
-    'newest' | 'oldest' | 'most_liked' | 'least_liked'
-  >('newest');
+    "newest" | "oldest" | "most_liked" | "least_liked"
+  >("newest");
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [selectedDetails, setSelectedDetails] = useState<RequestItem | null>(
     null,
   );
   const [visibleCount, setVisibleCount] = useState(12);
-  const [filterRegion, setFilterRegion] = useState<string>('all');
+  const [filterRegion, setFilterRegion] = useState<string>("all");
 
   const filtered = filterRequests(items, {
     searchTerm,
-    searchFields: ['title', 'description', 'region'],
+    searchFields: ["title", "description", "region"],
     category: activeCategory,
     type: activeType,
     region: filterRegion,
@@ -165,13 +172,13 @@ export default function ReportsDirectory({
             />
           </div>
           <Button
-            variant={showMap ? 'default' : 'outline'}
+            variant={showMap ? "default" : "outline"}
             size="sm"
             onClick={() => setShowMap(!showMap)}
             className="gap-1.5 rounded-lg whitespace-nowrap"
           >
             <Map className="h-3.5 w-3.5" />
-            <span>{showMap ? 'مخفی‌سازی نقشه' : 'نمایش نقشه'}</span>
+            <span>{showMap ? "مخفی‌سازی نقشه" : "نمایش نقشه"}</span>
           </Button>
           <Button
             variant="outline"
@@ -192,7 +199,7 @@ export default function ReportsDirectory({
               value={sortBy}
               onValueChange={(v) =>
                 setSortBy(
-                  v as 'newest' | 'oldest' | 'most_liked' | 'least_liked',
+                  v as "newest" | "oldest" | "most_liked" | "least_liked",
                 )
               }
             >
@@ -214,7 +221,7 @@ export default function ReportsDirectory({
               dir="rtl"
               value={activeType}
               onValueChange={(v) =>
-                setActiveType(v as 'all' | 'problem' | 'idea')
+                setActiveType(v as "all" | "problem" | "idea")
               }
             >
               <SelectTrigger size="sm" className="w-32">
@@ -271,9 +278,9 @@ export default function ReportsDirectory({
       {/* Category filter */}
       <div className="-mx-4 mb-8 flex scrollbar-thin gap-2 overflow-x-auto px-4 pb-4">
         <Button
-          variant={activeCategory === 'all' ? 'default' : 'outline'}
+          variant={activeCategory === "all" ? "default" : "outline"}
           size="sm"
-          onClick={() => setActiveCategory('all')}
+          onClick={() => setActiveCategory("all")}
           className="shrink-0 rounded-full"
         >
           همه دسته‌ها
@@ -281,7 +288,7 @@ export default function ReportsDirectory({
         {CATEGORIES.map((cat, idx) => (
           <Button
             key={idx}
-            variant={activeCategory === cat ? 'default' : 'outline'}
+            variant={activeCategory === cat ? "default" : "outline"}
             size="sm"
             onClick={() => setActiveCategory(cat)}
             className="shrink-0 rounded-full"
@@ -293,14 +300,14 @@ export default function ReportsDirectory({
 
       {/* Display Directory Main Arena */}
       <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
-        <div className={`${showMap ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
+        <div className={`${showMap ? "lg:col-span-7" : "lg:col-span-12"}`}>
           <div className="max-h-[600px] overflow-y-auto p-0.5 max-lg:max-h-none max-lg:overflow-visible">
             <div
               className={cn(
-                'grid grid-cols-1 gap-5',
+                "grid grid-cols-1 gap-5",
                 showMap
-                  ? 'sm:grid-cols-2'
-                  : 'sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
+                  ? "sm:grid-cols-2"
+                  : "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
               )}
             >
               {sorted.length > 0 ? (
@@ -313,9 +320,9 @@ export default function ReportsDirectory({
                     <Card
                       key={item.id}
                       className={cn(
-                        'report-card cursor-pointer overflow-hidden transition-all duration-300',
-                        'hover:shadow-sm',
-                        'border-border bg-card',
+                        "report-card cursor-pointer overflow-hidden transition-all duration-300",
+                        "hover:shadow-sm",
+                        "border-border bg-card",
                       )}
                       onClick={() => setSelectedDetails(item)}
                     >
@@ -325,7 +332,7 @@ export default function ReportsDirectory({
                           <Badge
                             variant="outline"
                             className={cn(
-                              'font-semibold',
+                              "font-semibold",
                               TYPE_BADGE_CLASS[item.type],
                             )}
                           >
@@ -335,7 +342,7 @@ export default function ReportsDirectory({
                           <Badge
                             variant="outline"
                             className={cn(
-                              'text-xs font-semibold',
+                              "text-xs font-semibold",
                               STATUS_BADGE_CLASS[item.status],
                             )}
                           >
@@ -359,20 +366,20 @@ export default function ReportsDirectory({
                           </span>
 
                           <Button
-                            variant={hasLikedStatus ? 'destructive' : 'outline'}
+                            variant={hasLikedStatus ? "destructive" : "outline"}
                             size="sm"
                             onClick={(e) => handleLikeClick(e, item.id)}
                             className="gap-1"
                             title={
                               currentUser
-                                ? 'ثبت لایک'
-                                : 'برای لایک ثبت‌نام کنید'
+                                ? "ثبت لایک"
+                                : "برای لایک ثبت‌نام کنید"
                             }
                           >
                             <Heart
                               className={cn(
-                                'h-3.5 w-3.5',
-                                hasLikedStatus && 'fill-current',
+                                "h-3.5 w-3.5",
+                                hasLikedStatus && "fill-current",
                               )}
                             />
                             <span className="font-bold">
@@ -455,7 +462,7 @@ export default function ReportsDirectory({
                 {selectedDetails?.title}
               </h3>
               <span className="text-muted-foreground mt-1.5 block font-mono text-xs font-bold">
-                منطقه: {toPersianDigits(selectedDetails?.region ?? '')} |
+                منطقه: {toPersianDigits(selectedDetails?.region ?? "")} |
                 ثبت‌کننده: {selectedDetails?.userName}
               </span>
             </div>
@@ -502,14 +509,14 @@ export default function ReportsDirectory({
 
           <DialogFooter className="flex items-center justify-between sm:justify-between">
             <span className="text-muted-foreground font-mono text-[10px] font-bold">
-              کد رهگیری: {toPersianDigits(selectedDetails?.id ?? '')}
+              کد رهگیری: {toPersianDigits(selectedDetails?.id ?? "")}
             </span>
 
             <Button
               variant={
                 currentUser && selectedDetails?.likedByCurrentUser
-                  ? 'destructive'
-                  : 'outline'
+                  ? "destructive"
+                  : "outline"
               }
               size="sm"
               onClick={(e) =>
@@ -518,10 +525,10 @@ export default function ReportsDirectory({
             >
               <Heart
                 className={cn(
-                  'h-3.5 w-3.5',
+                  "h-3.5 w-3.5",
                   currentUser &&
                     selectedDetails?.likedByCurrentUser &&
-                    'fill-current',
+                    "fill-current",
                 )}
               />
               <span>

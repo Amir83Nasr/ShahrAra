@@ -1,15 +1,19 @@
-import { Map, ArrowLeft } from 'lucide-react';
-import { User, Stats } from '../types';
+"use client";
 
-import { Button } from '@/components/ui/button';
-interface HeroProps {
-  setTab: (tab: string) => void;
-  currentUser: User | null;
-  onOpenAuth: () => void;
-  stats: Stats;
-}
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-export default function Hero({ setTab }: HeroProps) {
+import Link from "next/link";
+import { Map, ArrowLeft } from "lucide-react";
+
+import { useApp } from "@/app/providers";
+import { Button } from "@/components/ui/button";
+
+export default function Hero() {
+  const { stats } = useApp();
+
   return (
     <div
       className="relative overflow-hidden py-16 md:py-24"
@@ -40,8 +44,8 @@ export default function Hero({ setTab }: HeroProps) {
             </h1>
 
             <p className="text-muted-foreground max-w-2xl text-xs leading-relaxed font-bold sm:text-base sm:leading-8">
-              سامانه هوشمند{' '}
-              <strong className="text-primary font-extrabold">شهرآرا</strong>{' '}
+              سامانه هوشمند{" "}
+              <strong className="text-primary font-extrabold">شهرآرا</strong>{" "}
               پلی ارتباطی و دوسویه برای ارسال فوری گزارش مشکلات شهری (خرابی
               معابر، سد معابر، نارسایی روشنایی و پسماند) و همفکری پیرامون
               ایده‌های نوین زیباسازی محله‌ها است. ایده بدهید، مشکلات را ثبت کنید
@@ -50,21 +54,22 @@ export default function Hero({ setTab }: HeroProps) {
 
             {/* Quick Action Buttons */}
             <div className="flex flex-col gap-3 pt-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-5">
-              <Button
-                onClick={() => setTab('submit')}
-                className="w-full px-3 font-semibold sm:w-auto"
-              >
-                <span>شروع مشارکت فردی و ثبت گزارش</span>
-                <ArrowLeft className="h-4 w-4 shrink-0" />
+              <Button asChild className="w-full px-3 font-semibold sm:w-auto">
+                <Link href="/submit">
+                  <span>شروع مشارکت فردی و ثبت گزارش</span>
+                  <ArrowLeft className="h-4 w-4 shrink-0" />
+                </Link>
               </Button>
 
               <Button
                 variant="outline"
-                onClick={() => setTab('reports')}
+                asChild
                 className="w-full px-3 font-semibold sm:w-auto"
               >
-                <Map className="h-4 w-4 shrink-0" />
-                <span>پایش زنده گزارش‌های قم</span>
+                <Link href="/reports">
+                  <Map className="h-4 w-4 shrink-0" />
+                  <span>پایش زنده گزارش‌های قم</span>
+                </Link>
               </Button>
             </div>
           </div>

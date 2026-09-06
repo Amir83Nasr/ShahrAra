@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
@@ -52,12 +54,12 @@ def get_requests(
     offset: int = Query(0, ge=0, description="Number of results to skip"),
     sort_by: str = Query("created_at", description="Sort field: created_at or likes"),
     sort_order: str = Query("desc", description="Sort order: asc or desc"),
-    start_date: str | None = Query(
+    start_date: datetime | None = Query(
         None,
         alias="startDate",
         description="Filter by created_at >= this ISO date (e.g. 2025-06-01)",
     ),
-    end_date: str | None = Query(
+    end_date: datetime | None = Query(
         None, alias="endDate", description="Filter by created_at <= this ISO date (e.g. 2025-06-23)"
     ),
     db: Session = Depends(get_db),
@@ -86,7 +88,7 @@ def get_requests(
     if start_date:
         query = query.filter(Request.created_at >= start_date)
     if end_date:
-        query = query.filter(Request.created_at <= f"{end_date}T23:59:59")
+        query = query.filter(Request.created_at <= end_date.replace(hour=23, minute=59, second=59))
 
     total = query.count()
 

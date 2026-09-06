@@ -1,9 +1,11 @@
+"use client";
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo } from "react";
 import {
   AlertCircle,
   CheckCircle,
@@ -14,36 +16,36 @@ import {
   MapPin,
   Search,
   Trash2,
-} from 'lucide-react';
-import { User, RequestItem, RequestUpdateData } from '../types';
-import { toPersianDigits } from '../utils/numberUtils';
-import { REGIONS } from '../utils/regionUtils';
-import { filterRequests } from '../utils/requestFilters';
+} from "lucide-react";
+import { User, RequestItem, RequestUpdateData } from "../types";
+import { toPersianDigits } from "../utils/numberUtils";
+import { REGIONS } from "../utils/regionUtils";
+import { filterRequests } from "../utils/requestFilters";
 import {
   STATUS_LABELS,
   STATUS_BADGE_CLASS,
   TYPE_LABELS,
   TYPE_BADGE_CLASS,
-} from '../utils/requestBadges';
-import { cn } from '@/lib/utils';
-import { invalidateCache } from '@/utils/apiCache';
-import { Button } from '@/components/ui/button';
+} from "../utils/requestBadges";
+import { cn } from "@/lib/utils";
+import { invalidateCache } from "@/utils/apiCache";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardTitle,
   CardDescription,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,7 +56,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -63,17 +65,20 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
-import MapComponent from './MapComponent';
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import dynamic from "next/dynamic";
+
+// leaflet touches `window` at import time; skip prerendering
+const MapComponent = dynamic(() => import("./MapComponent"), { ssr: false });
 
 interface UserProfileProps {
   currentUser: User;
   requests: RequestItem[];
   onLike: (id: string) => Promise<void>;
   onRefresh: () => void;
-  theme?: 'light' | 'dark';
+  theme?: "light" | "dark";
 }
 
 export default function UserProfile({
@@ -82,11 +87,11 @@ export default function UserProfile({
   onLike,
   onRefresh,
 }: UserProfileProps) {
-  const [activeSubTab, setActiveSubTab] = useState<string>('my');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [filterRegion, setFilterRegion] = useState<string>('all');
+  const [activeSubTab, setActiveSubTab] = useState<string>("my");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterRegion, setFilterRegion] = useState<string>("all");
   const [editingRequest, setEditingRequest] = useState<RequestItem | null>(
     null,
   );
@@ -101,9 +106,9 @@ export default function UserProfile({
   );
 
   // Edit form state
-  const [editTitle, setEditTitle] = useState('');
-  const [editDescription, setEditDescription] = useState('');
-  const [editCategory, setEditCategory] = useState('');
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editCategory, setEditCategory] = useState("");
 
   const myRequests = useMemo(
     () => requests.filter((r) => r.userPhone === currentUser.phone),
@@ -116,7 +121,7 @@ export default function UserProfile({
 
   // Filtered list based on active tab + search/filter
   const filteredRequests = useMemo(() => {
-    const source = activeSubTab === 'my' ? myRequests : likedRequests;
+    const source = activeSubTab === "my" ? myRequests : likedRequests;
     return filterRequests(source, {
       searchTerm,
       type: filterType,
@@ -152,10 +157,10 @@ export default function UserProfile({
 
     try {
       const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       };
       if (currentUser.token) {
-        headers['Authorization'] = `Bearer ${currentUser.token}`;
+        headers["Authorization"] = `Bearer ${currentUser.token}`;
       }
 
       const body: RequestUpdateData = {};
@@ -171,7 +176,7 @@ export default function UserProfile({
       }
 
       const res = await fetch(`/api/v1/requests/${editingRequest.id}`, {
-        method: 'PUT',
+        method: "PUT",
         headers,
         body: JSON.stringify(body),
       });
@@ -179,14 +184,14 @@ export default function UserProfile({
       if (res.ok) {
         invalidateCache();
         onRefresh();
-        setSuccess('درخواست با موفقیت ویرایش شد.');
+        setSuccess("درخواست با موفقیت ویرایش شد.");
         setTimeout(() => setEditingRequest(null), 800);
       } else {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail || 'خطا در ویرایش درخواست.');
+        throw new Error(data.detail || "خطا در ویرایش درخواست.");
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'خطا در ویرایش درخواست.');
+      setError(err instanceof Error ? err.message : "خطا در ویرایش درخواست.");
     } finally {
       setSaving(false);
     }
@@ -225,11 +230,11 @@ export default function UserProfile({
     try {
       const headers: Record<string, string> = {};
       if (currentUser.token) {
-        headers['Authorization'] = `Bearer ${currentUser.token}`;
+        headers["Authorization"] = `Bearer ${currentUser.token}`;
       }
 
       const res = await fetch(`/api/v1/requests/${deletingRequest.id}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers,
       });
 
@@ -237,14 +242,14 @@ export default function UserProfile({
         invalidateCache();
         onRefresh();
         setDeletingRequest(null);
-        setSuccess('درخواست با موفقیت حذف شد.');
+        setSuccess("درخواست با موفقیت حذف شد.");
         setTimeout(() => setSuccess(null), 3000);
       } else {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail || 'خطا در حذف درخواست.');
+        throw new Error(data.detail || "خطا در حذف درخواست.");
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'خطا در حذف درخواست.');
+      setError(err instanceof Error ? err.message : "خطا در حذف درخواست.");
     } finally {
       setSaving(false);
     }
@@ -272,9 +277,9 @@ export default function UserProfile({
         value={activeSubTab}
         onValueChange={(v) => {
           setActiveSubTab(v);
-          setSearchTerm('');
-          setFilterType('all');
-          setFilterStatus('all');
+          setSearchTerm("");
+          setFilterType("all");
+          setFilterStatus("all");
         }}
       >
         <TabsList className="gap-x-2">
@@ -448,7 +453,7 @@ export default function UserProfile({
               {saving ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                'ذخیره تغییرات'
+                "ذخیره تغییرات"
               )}
             </Button>
           </DialogFooter>
@@ -466,10 +471,10 @@ export default function UserProfile({
               <Badge
                 variant="outline"
                 className={
-                  syncedDetails ? TYPE_BADGE_CLASS[syncedDetails.type] : ''
+                  syncedDetails ? TYPE_BADGE_CLASS[syncedDetails.type] : ""
                 }
               >
-                {syncedDetails ? TYPE_LABELS[syncedDetails.type] : ''}
+                {syncedDetails ? TYPE_LABELS[syncedDetails.type] : ""}
               </Badge>
               <Badge variant="outline" className="font-mono">
                 {syncedDetails?.category}
@@ -483,11 +488,11 @@ export default function UserProfile({
                 {syncedDetails?.title}
               </h3>
               <span className="text-muted-foreground mt-1.5 block font-mono text-xs font-bold">
-                منطقه: {toPersianDigits(syncedDetails?.region ?? '')} | وضعیت:{' '}
+                منطقه: {toPersianDigits(syncedDetails?.region ?? "")} | وضعیت:{" "}
                 {syncedDetails
                   ? (STATUS_LABELS[syncedDetails.status] ??
                     syncedDetails.status)
-                  : ''}
+                  : ""}
               </span>
             </div>
 
@@ -532,14 +537,14 @@ export default function UserProfile({
 
           <DialogFooter className="flex items-center justify-between sm:justify-between">
             <span className="text-muted-foreground font-mono text-[10px] font-bold">
-              کد رهگیری: {toPersianDigits(syncedDetails?.id ?? '')}
+              کد رهگیری: {toPersianDigits(syncedDetails?.id ?? "")}
             </span>
 
             <Button
               variant={
                 currentUser && syncedDetails?.likedByCurrentUser
-                  ? 'destructive'
-                  : 'outline'
+                  ? "destructive"
+                  : "outline"
               }
               size="sm"
               onClick={(e) =>
@@ -548,10 +553,10 @@ export default function UserProfile({
             >
               <Heart
                 className={cn(
-                  'h-3.5 w-3.5',
+                  "h-3.5 w-3.5",
                   currentUser &&
                     syncedDetails?.likedByCurrentUser &&
-                    'fill-current',
+                    "fill-current",
                 )}
               />
               <span>
@@ -603,11 +608,11 @@ function RequestGrid({
         <Card
           key={req.id}
           className={cn(
-            'report-card cursor-pointer overflow-hidden transition-all duration-300',
-            'hover:shadow-sm',
-            'border-border bg-card',
+            "report-card cursor-pointer overflow-hidden transition-all duration-300",
+            "hover:shadow-sm",
+            "border-border bg-card",
             selectedDetailsId === req.id &&
-              'border-primary ring-primary/40 ring-2',
+              "border-primary ring-primary/40 ring-2",
           )}
           onClick={() => setSelectedDetails(req)}
         >
@@ -617,7 +622,7 @@ function RequestGrid({
               <Badge
                 variant="outline"
                 className={cn(
-                  'border text-[10px] font-bold',
+                  "border text-[10px] font-bold",
                   TYPE_BADGE_CLASS[req.type],
                 )}
               >
@@ -626,7 +631,7 @@ function RequestGrid({
               <Badge
                 variant="outline"
                 className={cn(
-                  'border text-[10px] font-bold',
+                  "border text-[10px] font-bold",
                   STATUS_BADGE_CLASS[req.status],
                 )}
               >
@@ -648,13 +653,13 @@ function RequestGrid({
             <div className="text-muted-foreground flex items-center justify-between text-[10px]">
               <span className="font-bold">
                 {toPersianDigits(
-                  new Date(req.createdAt).toLocaleDateString('fa-IR'),
+                  new Date(req.createdAt).toLocaleDateString("fa-IR"),
                 )}
               </span>
               <div className="flex items-center gap-1">
-                {activeSubTab === 'my' &&
-                  (req.status === 'submitted' ||
-                    req.status === 'under_review') && (
+                {activeSubTab === "my" &&
+                  (req.status === "submitted" ||
+                    req.status === "under_review") && (
                     <>
                       <Button
                         variant="ghost"
@@ -664,7 +669,7 @@ function RequestGrid({
                       >
                         <Edit className="h-3.5 w-3.5" />
                       </Button>
-                      {req.status === 'submitted' && (
+                      {req.status === "submitted" && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
@@ -698,7 +703,7 @@ function RequestGrid({
                                 {saving ? (
                                   <Loader2 className="h-4 w-4 animate-spin" />
                                 ) : (
-                                  'حذف شود'
+                                  "حذف شود"
                                 )}
                               </AlertDialogAction>
                             </AlertDialogFooter>

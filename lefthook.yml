@@ -1,0 +1,64 @@
+# ────────────────────────────────────────────────────────────────
+# ShahrAra — Git Hooks (Lefthook)
+# ────────────────────────────────────────────────────────────────
+# Install:  lefthook install
+# Run all:  lefthook run pre-commit --all-files
+# ────────────────────────────────────────────────────────────────
+
+pre-commit:
+  commands:
+    # ── General cleanup ──────────────────────────────────
+    trailing-whitespace:
+      glob: "*.{js,jsx,ts,tsx,css,scss,json,md,mdx,mjs,mts,py,yml,yaml,html,toml,sh,txt}"
+      run: sed -i '' -e 's/[[:space:]]*$//' {staged_files}
+      skip: [merge, rebase]
+
+    end-of-file-fixer:
+      glob: "*.{js,jsx,ts,tsx,css,scss,json,md,mdx,mjs,mts,py,yml,yaml,html,toml,sh,txt}"
+      run: |
+        for f in {staged_files}; do
+          tail -c 1 "$f" | read -r _ || echo >> "$f"
+        done
+      skip: [merge, rebase]
+
+    # ── Python: format + lint ────────────────────────────
+    ruff-format:
+      glob: "backend/*.py"
+      root: backend/
+      run: uv run ruff format {staged_files}
+      skip: [merge, rebase]
+
+    ruff-lint:
+      glob: "backend/*.py"
+      root: backend/
+      run: uv run ruff check --fix {staged_files}
+      skip: [merge, rebase]
+
+    # ── Frontend: format ─────────────────────────────────
+    prettier:
+      glob: "frontend/**/*.{js,jsx,ts,tsx,css,json,md,mjs,mts}"
+      root: frontend/
+      run: npx prettier --write {staged_files}
+      skip: [merge, rebase]
+
+    eslint:
+      glob: "frontend/**/*.{ts,tsx,js,jsx}"
+      root: frontend/
+      run: npx eslint --fix {staged_files}
+      skip: [merge, rebase]
+
+pre-push:
+  commands:
+    # ── Backend: lint + test ─────────────────────────────
+    backend-lint:
+      run: cd backend && uv run ruff check .
+      skip: [merge, rebase]
+
+    backend-test:
+      run: cd backend && uv run pytest tests/
+      skip: [merge, rebase]
+
+    # ── Frontend: lint + typecheck ───────────────────────
+    frontend-lint:
+      run: cd frontend && npx eslint . && npx tsc --noEmit
+      skip: [merge, rebase]

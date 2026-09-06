@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 import os
-import tempfile
 from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
 
-_test_db = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
-os.environ["DATABASE_URL"] = f"sqlite:///{_test_db.name}"
+# Tests run against the same Postgres instance used in dev (docker compose `db`).
+# Requires `make db-up` (or a running Postgres at localhost:5432).
+os.environ.setdefault(
+    "DATABASE_URL", "postgresql+psycopg://postgres:postgres@localhost:5432/shahr_ara"
+)
 os.environ["ADMIN_PHONE"] = "09120000000"
 os.environ["ADMIN_NATIONAL_ID"] = "1234567890"
 
@@ -20,15 +22,6 @@ def _setup_db():
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
-
-
-@pytest.fixture(scope="session", autouse=True)
-def _cleanup_db_file():
-    yield
-    try:
-        os.unlink(_test_db.name)
-    except OSError:
-        pass
 
 
 @pytest.fixture(autouse=True)

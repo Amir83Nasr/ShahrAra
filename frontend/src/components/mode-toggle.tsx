@@ -1,25 +1,25 @@
-import * as React from 'react';
-import { Moon, Sun } from 'lucide-react';
+import * as React from "react";
+import { Moon, Sun } from "lucide-react";
 
-import { Button } from './ui/button';
+import { Button } from "./ui/button";
 
 export function ModeToggle({
   theme,
   onThemeChange,
 }: {
-  theme: 'light' | 'dark';
-  onThemeChange: (theme: 'light' | 'dark') => void;
+  theme: "light" | "dark";
+  onThemeChange: (theme: "light" | "dark") => void;
 }) {
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = (rect.left + rect.width / 2).toFixed(0);
     const y = (rect.top + rect.height / 2).toFixed(0);
-    document.documentElement.style.setProperty('--theme-x', `${x}px`);
-    document.documentElement.style.setProperty('--theme-y', `${y}px`);
+    document.documentElement.style.setProperty("--theme-x", `${x}px`);
+    document.documentElement.style.setProperty("--theme-y", `${y}px`);
 
-    const next = theme === 'light' ? 'dark' : 'light';
+    const next = theme === "light" ? "dark" : "light";
 
-    if ('startViewTransition' in document) {
+    if ("startViewTransition" in document) {
       (
         document as unknown as { startViewTransition: (cb: () => void) => void }
       ).startViewTransition(() => onThemeChange(next));
@@ -31,9 +31,9 @@ export function ModeToggle({
   return (
     <Button
       variant="ghost"
-      aria-pressed={theme === 'dark'}
+      aria-pressed={theme === "dark"}
       onClick={handleClick}
-      title={theme === 'light' ? 'فعال‌سازی تم تاریک' : 'فعال‌سازی تم روشن'}
+      title={theme === "light" ? "فعال‌سازی تم تاریک" : "فعال‌سازی تم روشن"}
     >
       <Sun className="h-4 w-4 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
       <Moon className="absolute h-4 w-4 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />

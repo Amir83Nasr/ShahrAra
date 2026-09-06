@@ -14,12 +14,8 @@ export interface User {
 }
 
 export type RequestStatus =
-  | 'submitted'
-  | 'under_review'
-  | 'in_progress'
-  | 'resolved'
-  | 'archived';
-export type RequestType = 'problem' | 'idea';
+  "submitted" | "under_review" | "in_progress" | "resolved" | "archived";
+export type RequestType = "problem" | "idea";
 
 export interface RequestItem {
   id: string;

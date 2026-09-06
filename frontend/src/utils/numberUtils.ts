@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-const PERSIAN_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-const ARABIC_DIGITS = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+const PERSIAN_DIGITS = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"];
+const ARABIC_DIGITS = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
 
 /**
  * Converts English numbers in any string or number to Persian digits.
@@ -13,7 +13,7 @@ export function toPersianDigits(
   val: string | number | null | undefined,
 ): string {
   if (val === null || val === undefined) {
-    return '';
+    return "";
   }
   const str = String(val);
   return str.replace(/[0-9]/g, (char) => PERSIAN_DIGITS[parseInt(char, 10)]);
@@ -24,7 +24,7 @@ export function toPersianDigits(
  */
 export function toEnglishDigits(str: string | null | undefined): string {
   if (!str) {
-    return '';
+    return "";
   }
   return str
     .replace(/[۰-۹]/g, (char) => {

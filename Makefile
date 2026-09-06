@@ -1,116 +1,123 @@
+SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
-.PHONY: install install-backend install-frontend dev dev-backend dev-frontend \
-        build lint lint-backend lint-frontend format format-backend format-frontend \
-        clean clean-backend clean-frontend test test-backend db-reset seed help
+# ─── CONFIG ───────────────────────────────────────────────────
 
-# ─── Install ──────────────────────────────────────────────────────────────────
+BACKEND_DIR := backend
+FRONTEND_DIR := frontend
+
+# ─── HELP ─────────────────────────────────────────────────────
+
+# Self-updating help: sections come from `# ─── NAME ───` separators and
+# entries from `target: ## description` lines. Add a target below and it
+# shows up here automatically. Sections CONFIG/HELP are skipped.
+
+.PHONY: help
+help: ## Show available targets
+	@if [ -t 1 ] && [ -z "$$NO_COLOR" ]; then \
+		HDR=$$'\033[1;32m'; CMD=$$'\033[1;34m'; DIM=$$'\033[2m'; END=$$'\033[0m'; \
+	else \
+		HDR=""; CMD=""; DIM=""; END=""; \
+	fi; \
+	echo "ShahrAra — Municipal Engagement System"; \
+	echo ""; \
+	echo "$${DIM}Usage: make <target>$${END}"; \
+	echo ""; \
+	awk -v hdr="$$HDR" -v cmd="$$CMD" -v end="$$END" ' \
+		/^# ─── .* ───/ { \
+			s = $$0; sub(/^# ─── /, "", s); sub(/ ───.*$$/, "", s); \
+			if (s != "CONFIG" && s != "HELP") { \
+				if (body) printf "\n"; \
+				printf "%s%s:%s\n", hdr, s, end; \
+				pending = 1; body = 0; \
+			} \
+			next; \
+		} \
+		/^[a-zA-Z][a-zA-Z0-9_-]*:.*## / { \
+			if (!pending) next; \
+			name = $$1; sub(/:.*$$/, "", name); \
+			if (name == "help") next; \
+			desc = $$0; sub(/^[^#]*## /, "", desc); \
+			printf "  %s%-18s%s %s\n", cmd, name, end, desc; \
+			body = 1; \
+		} \
+	' $(firstword $(MAKEFILE_LIST)); \
+	echo ""; \
+	echo "$${DIM}Use \`make help\` to show this message$${END}"
+
+# ─── INSTALL ──────────────────────────────────────────────────
+
+.PHONY: install
 install: install-backend install-frontend ## Install all dependencies
 
-install-backend: ## Install backend Python dependencies
-	cd backend && pip3 install -r requirements.txt
+.PHONY: install-backend
+install-backend: ## Install backend dependencies (uv)
+	cd $(BACKEND_DIR) && uv sync
 
-install-frontend: ## Install frontend npm dependencies
-	cd frontend && npm install
+.PHONY: install-frontend
+install-frontend: ## Install frontend dependencies (pnpm)
+	cd $(FRONTEND_DIR) && pnpm install
 
-install-precommit: ## Install pre-commit hooks
-	@pip3 install pre-commit -q 2>/dev/null && pre-commit install
-	@echo "  $(GREEN)✓$(RESET) Pre-commit hooks installed"
+# ─── RUN ──────────────────────────────────────────────────────
 
-# ─── Development ──────────────────────────────────────────────────────────────
-dev: ## Run backend + frontend dev servers concurrently
-	@$(MAKE) -j2 dev-backend dev-frontend
+.PHONY: dev-backend
+dev-backend: ## Run backend dev server
+	cd $(BACKEND_DIR) && uv run uvicorn main:app --reload
 
-dev-backend: ## Start backend server (port 8000)
-	cd backend && uvicorn main:app --reload --port 8000 --host 0.0.0.0
+.PHONY: dev-frontend
+dev-frontend: ## Run frontend dev server
+	cd $(FRONTEND_DIR) && pnpm dev
 
-dev-frontend: ## Start frontend dev server (port 3000)
-	cd frontend && npm run dev
+# ─── DATABASE ─────────────────────────────────────────────────
 
-# ─── Build ────────────────────────────────────────────────────────────────────
-build: ## Build frontend for production
-	cd frontend && npm run build
+.PHONY: db-up
+db-up: ## Start database container
+	docker compose up -d db
 
-# ─── Lint ─────────────────────────────────────────────────────────────────────
-lint: lint-backend lint-frontend ## Run all linters
+.PHONY: db-down
+db-down: ## Stop database container
+	docker compose down
 
-lint-backend: ## Lint backend with Ruff
-	cd backend && ruff check --fix .
+.PHONY: db-logs
+db-logs: ## Follow database container logs
+	docker compose logs -f db
 
-lint-frontend: ## Lint frontend with ESLint + TS
-	cd frontend && npx eslint . && npx tsc --noEmit
-
-# ─── Format ───────────────────────────────────────────────────────────────────
-format: format-backend format-frontend ## Format all code
-
-format-backend: ## Format backend with Ruff
-	cd backend && ruff format .
-
-format-frontend: ## Format frontend with Prettier
-	cd frontend && npx prettier --write "src/**/*.{ts,tsx,css}"
-
-# ─── Test ─────────────────────────────────────────────────────────────────────
-test: test-backend ## Run all tests
-
-test-backend: ## Run backend API tests
-	cd backend && python3 -m pytest tests/ -v
-
-# ─── Database ────────────────────────────────────────────────────────────────
-db-reset: ## Reset and seed database
-	rm -f backend/shahr_ara.db
-	cd backend && python3 -c "from app.db.session import Base, engine; Base.metadata.create_all(bind=engine)"
-	cd backend && python3 -m seed
-
+.PHONY: seed
 seed: ## Seed database with sample data
-	cd backend && python3 -m seed
+	cd $(BACKEND_DIR) && uv run python scripts/seed.py
 
-# ─── Clean ────────────────────────────────────────────────────────────────────
-clean: clean-backend clean-frontend ## Remove all artifacts
+# ─── TEST ─────────────────────────────────────────────────────
 
-clean-db: ## Delete SQLite database
-	rm -f backend/shahr_ara.db
+.PHONY: test
+test: ## Run backend tests
+	cd $(BACKEND_DIR) && uv run pytest
 
-clean-backend: ## Remove backend cache & artifacts
-	find backend -type d \( -name __pycache__ -o -name .pytest_cache -o -name .ruff_cache -o -name .mypy_cache -o -name .egg-info \) -exec rm -rf {} + 2>/dev/null || true
-	find backend -type f -name '*.pyc' -delete
+# ─── LINT / FORMAT ────────────────────────────────────────────
 
-clean-frontend: ## Remove frontend dist
-	rm -rf frontend/dist
+.PHONY: lint
+lint: lint-backend lint-frontend ## Lint backend and frontend
 
-clean-frontend-full: ## Remove frontend dist + node_modules
-	rm -rf frontend/dist frontend/node_modules
+.PHONY: lint-backend
+lint-backend: ## Lint backend (ruff)
+	cd $(BACKEND_DIR) && uv run ruff check .
 
+.PHONY: lint-frontend
+lint-frontend: ## Lint frontend (eslint)
+	cd $(FRONTEND_DIR) && pnpm lint
 
-# ─── Pre-commit ──────────────────────────────────────────────────
-precommit: ## Run pre-commit on all files
-	@pre-commit run --all-files
+.PHONY: format
+format: format-backend format-frontend ## Format backend and frontend
 
-# ─── Project Variables ──────────────────────────────────────────────────────────
-PROJECT_NAME := SHAR ARA
-PROJECT_NAME_ASCII := $(shell python3 scripts/ascii_logo.py $(PROJECT_NAME))
+.PHONY: format-backend
+format-backend: ## Format backend (ruff)
+	cd $(BACKEND_DIR) && uv run ruff format .
 
-# ─── Help ──────────────────────────────────────────────────────────────────────
-help: ## Show this help message
-	@printf "\n\n\n\n"
-	@printf "\033[1;36m"
-	@printf "%s\n" "$$(python3 scripts/ascii_logo.py $(PROJECT_NAME))"
-	@printf "\033[0m\n"
-	@printf "\n"
-	@awk 'BEGIN {FS = ":.*##"; section = ""; last = ""; line = "──────────────────────────────────────────────────────────────────────"} \
-	/^# ─── / { \
-		s=$$0; gsub(/^# ──+ /,"",s); gsub(/ ──+.*$$/,"",s); section=s; \
-	} \
-	/^[a-zA-Z_-]+:.*##/ { \
-		t=$$1; d=$$2; \
-		if (section != last) { \
-			if (last != "") printf "\033[2;37m└" line "┘\033[0m\n\n"; \
-			printf "\033[2;37m┌──────────────────────────────────────────────────────────────────────┐\033[0m\n"; \
-			printf "\033[2;37m│ \033[1;37m%-60s\033[0m \033[2;37m        │\033[0m\n", section; \
-			printf "\033[2;37m├──────────────────────────────────────────────────────────────────────┤\033[0m\n"; \
-			last = section; \
-		} \
-		printf "\033[2;37m│ \033[1;36m%-28s\033[0m \033[2;37m%-39s\033[0m \033[2;37m│\033[0m\n", t, d; \
-	} END {printf "\033[2;37m└" line "┘\033[0m\n\n";}' Makefile
-	@printf "\033[2;37m────────────────────────────────────────────────────────────────────────\033[0m\n"
-	@printf "\033[2;37m→\033[0m \033[1;37mmake\033[0m \033[1;36m<command>\033[0m\n"
-	@printf "\n"
+.PHONY: format-frontend
+format-frontend: ## Format frontend (prettier)
+	cd $(FRONTEND_DIR) && pnpm exec prettier --write .
+
+# ─── HOOKS ────────────────────────────────────────────────────
+
+.PHONY: hooks
+hooks: ## Install lefthook git hooks
+	lefthook install

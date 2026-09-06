@@ -1,8 +1,13 @@
-import React, { useState } from 'react';
-import { RequestType, User } from '../types';
-import MapComponent from './MapComponent';
-import { determineRegion, REGIONS } from '../utils/regionUtils';
-import { CATEGORIES } from '../utils/categoryUtils';
+"use client";
+
+import React, { useState } from "react";
+import dynamic from "next/dynamic";
+import { RequestType, User } from "../types";
+
+// leaflet touches `window` at import time; skip prerendering
+const MapComponent = dynamic(() => import("./MapComponent"), { ssr: false });
+import { determineRegion, REGIONS } from "../utils/regionUtils";
+import { CATEGORIES } from "../utils/categoryUtils";
 import {
   AlertCircleIcon,
   AlertTriangle,
@@ -13,11 +18,11 @@ import {
   MessageSquare,
   Send,
   Tag,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -26,25 +31,25 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+} from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface RequestFormProps {
   currentUser: User | null;
   onOpenAuth: () => void;
   onSubmitSuccess: () => void;
-  theme?: 'light' | 'dark';
+  theme?: "light" | "dark";
 }
 
 export default function RequestForm({
   currentUser,
   onOpenAuth,
   onSubmitSuccess,
-  theme = 'light',
+  theme = "light",
 }: RequestFormProps) {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [type, setType] = useState<RequestType>('problem');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [type, setType] = useState<RequestType>("problem");
   const [category, setCategory] = useState<string>(CATEGORIES[0]);
 
   const defaultCoords = { lat: 34.641, lng: 50.88 };
@@ -76,7 +81,7 @@ export default function RequestForm({
     setSuccess(false);
 
     if (!title.trim() || !description.trim()) {
-      setError('لطفا تمامی فیلدهای الزامی را پر کنید.');
+      setError("لطفا تمامی فیلدهای الزامی را پر کنید.");
       return;
     }
 
@@ -84,14 +89,14 @@ export default function RequestForm({
 
     try {
       const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       };
       if (currentUser.token) {
-        headers['Authorization'] = `Bearer ${currentUser.token}`;
+        headers["Authorization"] = `Bearer ${currentUser.token}`;
       }
 
-      const response = await fetch('/api/v1/requests', {
-        method: 'POST',
+      const response = await fetch("/api/v1/requests", {
+        method: "POST",
         headers,
         body: JSON.stringify({
           title: title.trim(),
@@ -99,26 +104,26 @@ export default function RequestForm({
           type,
           category,
           coordinates: coords,
-          region: region || 'منطقه ۲ (مرکز قم)',
+          region: region || "منطقه ۲ (مرکز قم)",
         }),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'خطا در ثبت درخواست شهری.');
+        throw new Error(result.error || "خطا در ثبت درخواست شهری.");
       }
 
       setSuccess(true);
-      setTitle('');
-      setDescription('');
+      setTitle("");
+      setDescription("");
 
       setTimeout(() => {
         onSubmitSuccess();
       }, 1500);
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : 'خطا در برقراری ارتباط با سرور.',
+        err instanceof Error ? err.message : "خطا در برقراری ارتباط با سرور.",
       );
     } finally {
       setLoading(false);
@@ -244,10 +249,10 @@ export default function RequestForm({
               >
                 <label
                   className={cn(
-                    'flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-semibold transition-all duration-200 sm:gap-2.5 sm:px-4 sm:py-3 sm:text-sm',
-                    type === 'problem'
-                      ? 'border-destructive/50 bg-destructive/10 text-destructive ring-destructive/10 ring-1'
-                      : 'border-border text-muted-foreground hover:border-muted-foreground',
+                    "flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-semibold transition-all duration-200 sm:gap-2.5 sm:px-4 sm:py-3 sm:text-sm",
+                    type === "problem"
+                      ? "border-destructive/50 bg-destructive/10 text-destructive ring-destructive/10 ring-1"
+                      : "border-border text-muted-foreground hover:border-muted-foreground",
                   )}
                 >
                   <RadioGroupItem value="problem" className="sr-only" />
@@ -256,10 +261,10 @@ export default function RequestForm({
                 </label>
                 <label
                   className={cn(
-                    'flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-semibold transition-all duration-200 sm:gap-2.5 sm:px-4 sm:py-3 sm:text-sm',
-                    type === 'idea'
-                      ? 'border-type-idea/50 bg-type-idea/10 text-type-idea ring-type-idea/10 ring-1'
-                      : 'border-border text-muted-foreground hover:border-muted-foreground',
+                    "flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-semibold transition-all duration-200 sm:gap-2.5 sm:px-4 sm:py-3 sm:text-sm",
+                    type === "idea"
+                      ? "border-type-idea/50 bg-type-idea/10 text-type-idea ring-type-idea/10 ring-1"
+                      : "border-border text-muted-foreground hover:border-muted-foreground",
                   )}
                 >
                   <RadioGroupItem value="idea" className="sr-only" />
@@ -327,7 +332,7 @@ export default function RequestForm({
             <div className="form-main-section flex flex-col gap-2">
               <label className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
                 <MapPin className="text-primary h-4 w-4" />
-                موقعیت جغرافیایی روی نقشه{' '}
+                موقعیت جغرافیایی روی نقشه{" "}
                 <span className="text-destructive">*</span>
               </label>
 
@@ -374,8 +379,8 @@ export default function RequestForm({
               <Send className="h-4 w-4 shrink-0" />
               <span>
                 {loading
-                  ? 'در حال ثبت درخواست...'
-                  : 'ارسال نهایی گزارش به شهرداری'}
+                  ? "در حال ثبت درخواست..."
+                  : "ارسال نهایی گزارش به شهرداری"}
               </span>
             </Button>
           </form>

@@ -5,12 +5,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./shahr_ara.db")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL", "postgresql+psycopg://postgres:postgres@localhost:5432/shahr_ara"
+)
 
-ADMIN_PHONE = os.getenv("ADMIN_PHONE", "09000000000")
-ADMIN_NATIONAL_ID = os.getenv("ADMIN_NATIONAL_ID", "037000000")
-ADMIN_FIRST_NAME = os.getenv("ADMIN_FIRST_NAME", "Admin")
-ADMIN_LAST_NAME = os.getenv("ADMIN_LAST_NAME", "Admin")
+ADMIN_PHONE = os.getenv("ADMIN_PHONE", "09306853363")
+ADMIN_NATIONAL_ID = os.getenv("ADMIN_NATIONAL_ID", "0372660673")
+ADMIN_FIRST_NAME = os.getenv("ADMIN_FIRST_NAME", "امیرحسین")
+ADMIN_LAST_NAME = os.getenv("ADMIN_LAST_NAME", "نصراللهی")
 
 _JWT_SECRET_DEFAULT = "shahr-ara-dev-secret-change-in-production"
 JWT_SECRET = os.getenv("JWT_SECRET", _JWT_SECRET_DEFAULT)

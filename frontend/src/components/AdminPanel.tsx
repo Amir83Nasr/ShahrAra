@@ -1,11 +1,16 @@
+"use client";
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useRef } from 'react';
-import { RequestItem, RequestStatus, RequestType } from '../types';
-import MapComponent from './MapComponent';
+import React, { useState, useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
+import { RequestItem, RequestStatus, RequestType } from "../types";
+
+// leaflet touches `window` at import time; skip prerendering
+const MapComponent = dynamic(() => import("./MapComponent"), { ssr: false });
 import {
   Shield,
   Search,
@@ -18,28 +23,28 @@ import {
   X,
   RefreshCcw,
   Layers,
-} from 'lucide-react';
-import { toPersianDigits } from '../utils/numberUtils';
-import { REGIONS } from '../utils/regionUtils';
-import { CATEGORIES } from '../utils/categoryUtils';
-import { filterRequests } from '../utils/requestFilters';
+} from "lucide-react";
+import { toPersianDigits } from "../utils/numberUtils";
+import { REGIONS } from "../utils/regionUtils";
+import { CATEGORIES } from "../utils/categoryUtils";
+import { filterRequests } from "../utils/requestFilters";
 import {
   STATUS_LABELS,
   STATUS_BADGE_CLASS,
   TYPE_LABELS,
   TYPE_BADGE_CLASS,
-} from '../utils/requestBadges';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+} from "../utils/requestBadges";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
   CardDescription,
   CardTitle,
-} from '@/components/ui/card';
+} from "@/components/ui/card";
 import {
   Select,
   SelectTrigger,
@@ -48,7 +53,7 @@ import {
   SelectGroup,
   SelectItem,
   SelectLabel,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 
 interface AdminPanelProps {
   requests: RequestItem[];
@@ -58,26 +63,26 @@ interface AdminPanelProps {
     adminResponse: string,
   ) => Promise<void>;
   onRefresh: () => void;
-  theme?: 'light' | 'dark';
+  theme?: "light" | "dark";
 }
 
 export default function AdminPanel({
   requests,
   onUpdateStatus,
   onRefresh,
-  theme = 'light',
+  theme = "light",
 }: AdminPanelProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedType, setSelectedType] = useState<RequestType | 'all'>('all');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedRegion, setSelectedRegion] = useState<string>('all');
-  const [selectedStatus, setSelectedStatus] = useState<RequestStatus | 'all'>(
-    'all',
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedType, setSelectedType] = useState<RequestType | "all">("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedRegion, setSelectedRegion] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<RequestStatus | "all">(
+    "all",
   );
 
   const [selectedItem, setSelectedItem] = useState<RequestItem | null>(null);
-  const [adminResponse, setAdminResponse] = useState('');
-  const [statusVal, setStatusVal] = useState<RequestStatus>('submitted');
+  const [adminResponse, setAdminResponse] = useState("");
+  const [statusVal, setStatusVal] = useState<RequestStatus>("submitted");
 
   const [submitting, setSubmitting] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -90,7 +95,7 @@ export default function AdminPanel({
   useEffect(() => {
     if (selectedItem) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setAdminResponse(selectedItem.adminResponse || '');
+      setAdminResponse(selectedItem.adminResponse || "");
 
       setStatusVal(selectedItem.status);
     }
@@ -99,7 +104,7 @@ export default function AdminPanel({
   // Filter list
   const filteredItems = filterRequests(requests, {
     searchTerm,
-    searchFields: ['title', 'description', 'userName', 'userPhone'],
+    searchFields: ["title", "description", "userName", "userPhone"],
     type: selectedType,
     category: selectedCategory,
     status: selectedStatus,
@@ -131,7 +136,7 @@ export default function AdminPanel({
       },
       {
         root: scrollContainer,
-        rootMargin: scrollContainer ? '0px' : '100px',
+        rootMargin: scrollContainer ? "0px" : "100px",
       },
     );
     observer.observe(sentinel);
@@ -161,7 +166,7 @@ export default function AdminPanel({
       }, 2000);
     } catch (err) {
       console.error(err);
-      alert(err instanceof Error ? err.message : 'خطا در بروزرسانی وضعیت.');
+      alert(err instanceof Error ? err.message : "خطا در بروزرسانی وضعیت.");
     } finally {
       setSubmitting(false);
     }
@@ -228,7 +233,7 @@ export default function AdminPanel({
                   dir="rtl"
                   value={selectedType}
                   onValueChange={(v) =>
-                    setSelectedType(v as 'all' | 'problem' | 'idea')
+                    setSelectedType(v as "all" | "problem" | "idea")
                   }
                 >
                   <SelectTrigger>
@@ -354,7 +359,7 @@ export default function AdminPanel({
               filteredItems.slice(0, visibleCount).map((item) => {
                 const isSelected = selectedItem?.id === item.id;
                 const dateString = new Date(item.createdAt).toLocaleDateString(
-                  'fa-IR',
+                  "fa-IR",
                 );
 
                 return (
@@ -362,10 +367,10 @@ export default function AdminPanel({
                     key={item.id}
                     size="sm"
                     className={cn(
-                      'admin-card cursor-pointer transition-all',
+                      "admin-card cursor-pointer transition-all",
                       isSelected
-                        ? 'border-primary ring-primary/40 ring-2'
-                        : 'border-border bg-card hover:shadow-sm',
+                        ? "border-primary ring-primary/40 ring-2"
+                        : "border-border bg-card hover:shadow-sm",
                     )}
                     onClick={() => setSelectedItem(item)}
                   >
@@ -477,7 +482,7 @@ export default function AdminPanel({
                 <Badge
                   variant="outline"
                   className={cn(
-                    'px-3 py-1 text-[10px]',
+                    "px-3 py-1 text-[10px]",
                     STATUS_BADGE_CLASS[selectedItem.status],
                   )}
                 >
@@ -593,7 +598,7 @@ export default function AdminPanel({
                   className="w-full"
                   disabled={submitting}
                 >
-                  {submitting ? 'در حال انتشار...' : 'ثبت و انتشار پاسخ'}
+                  {submitting ? "در حال انتشار..." : "ثبت و انتشار پاسخ"}
                 </Button>
               </form>
             </Card>

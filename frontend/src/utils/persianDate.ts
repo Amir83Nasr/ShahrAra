@@ -1,4 +1,4 @@
-import { format as jalaliFormat, parseISO } from 'date-fns-jalali';
+import { format as jalaliFormat, parseISO } from "date-fns-jalali";
 
 /**
  * Format a date to Persian (Jalali) date string.
@@ -10,14 +10,14 @@ import { format as jalaliFormat, parseISO } from 'date-fns-jalali';
  */
 export function formatPersian(
   date: Date | string | undefined | null,
-  formatStr = 'yyyy/MM/dd',
+  formatStr = "yyyy/MM/dd",
 ): string {
-  if (!date) return '';
-  const d = typeof date === 'string' ? parseISO(date) : date;
+  if (!date) return "";
+  const d = typeof date === "string" ? parseISO(date) : date;
   try {
     return jalaliFormat(d, formatStr);
   } catch {
-    return '';
+    return "";
   }
 }
 

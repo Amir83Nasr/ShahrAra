@@ -1,22 +1,24 @@
+"use client";
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
-import { AlertCircle, CheckCircle } from 'lucide-react';
-import { User } from '../types';
-import { toPersianDigits, toEnglishDigits } from '../utils/numberUtils';
-import { cn } from '@/lib/utils';
+import React, { useState } from "react";
+import { AlertCircle, CheckCircle } from "lucide-react";
+import { User } from "../types";
+import { toPersianDigits, toEnglishDigits } from "../utils/numberUtils";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { XIcon } from 'lucide-react';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { XIcon } from "lucide-react";
 
 interface AuthModalProps {
   open: boolean;
@@ -30,10 +32,10 @@ export default function AuthModal({
   onLoginSuccess,
 }: AuthModalProps) {
   const [isSignUp, setIsSignUp] = useState(false);
-  const [phone, setPhone] = useState('');
-  const [nationalId, setNationalId] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [phone, setPhone] = useState("");
+  const [nationalId, setNationalId] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +43,7 @@ export default function AuthModal({
 
   const isPhoneDirty = phone.length > 0;
   const isPhoneValid = /^09\d{9}$/.test(phone);
-  const startsWith09 = phone.startsWith('09');
+  const startsWith09 = phone.startsWith("09");
 
   const isNationalIdDirty = nationalId.length > 0;
   const isNationalIdValid = /^\d{10}$/.test(nationalId);
@@ -53,30 +55,30 @@ export default function AuthModal({
 
     if (!/^09\d{9}$/.test(phone)) {
       setError(
-        'شماره موبایل وارد شده نامعتبر است. نمونه صحیح: ' +
-          toPersianDigits('09123456789'),
+        "شماره موبایل وارد شده نامعتبر است. نمونه صحیح: " +
+          toPersianDigits("09123456789"),
       );
       return;
     }
 
     if (!/^\d{10}$/.test(nationalId)) {
       setError(
-        'کد ملی باید دقیقاً ' + toPersianDigits('10') + ' رقم عددی باشد.',
+        "کد ملی باید دقیقاً " + toPersianDigits("10") + " رقم عددی باشد.",
       );
       return;
     }
 
     if (isSignUp && (!firstName.trim() || !lastName.trim())) {
-      setError('لطفا نام و نام خانوادگی خود را کامل وارد کنید.');
+      setError("لطفا نام و نام خانوادگی خود را کامل وارد کنید.");
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await fetch('/api/v1/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/v1/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phone,
           nationalId,
@@ -90,22 +92,22 @@ export default function AuthModal({
         result = await response.json();
       } catch {
         throw new Error(
-          'خطا در برقراری ارتباط با سرور. لطفا از روشن بودن سرور اطمینان حاصل کنید.',
+          "خطا در برقراری ارتباط با سرور. لطفا از روشن بودن سرور اطمینان حاصل کنید.",
         );
       }
 
       if (!response.ok) {
         throw new Error(
-          (result.detail as string) || 'خطایی در ورود/ثبت‌نام رخ داد.',
+          (result.detail as string) || "خطایی در ورود/ثبت‌نام رخ داد.",
         );
       }
 
-      setSuccess('ورود با موفقیت انجام شد!');
+      setSuccess("ورود با موفقیت انجام شد!");
       setTimeout(() => {
         const user = result.user as User;
         const tokenObj = result.token as Record<string, unknown> | undefined;
         const tokenStr =
-          typeof tokenObj === 'string'
+          typeof tokenObj === "string"
             ? tokenObj
             : (tokenObj?.accessToken as string | undefined);
         if (tokenStr) user.token = tokenStr;
@@ -114,7 +116,7 @@ export default function AuthModal({
       }, 1000);
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : 'خطا در برقراری ارتباط با سرور.',
+        err instanceof Error ? err.message : "خطا در برقراری ارتباط با سرور.",
       );
     } finally {
       setLoading(false);
@@ -131,8 +133,8 @@ export default function AuthModal({
         <DialogHeader className="bg-muted/30 flex flex-row items-center justify-between p-5">
           <DialogTitle className="text-foreground text-lg font-extrabold">
             {isSignUp
-              ? 'ثبت‌نام شهروند جدید شهرآرا'
-              : 'ورود شهروندان به شهرآرا'}
+              ? "ثبت‌نام شهروند جدید شهرآرا"
+              : "ورود شهروندان به شهرآرا"}
           </DialogTitle>
           <Button variant="ghost" size="icon-sm" onClick={onClose}>
             <XIcon />
@@ -198,27 +200,27 @@ export default function AuthModal({
               value={toPersianDigits(phone)}
               onChange={(e) => {
                 const rawVal = toEnglishDigits(e.target.value);
-                const numbersOnly = rawVal.replace(/\D/g, '');
+                const numbersOnly = rawVal.replace(/\D/g, "");
                 setPhone(numbersOnly);
-                setNationalId('');
+                setNationalId("");
               }}
-              placeholder={toPersianDigits('09123456789')}
+              placeholder={toPersianDigits("09123456789")}
               dir="rtl"
               autoComplete="tel"
               className={cn(
                 !isPhoneDirty
-                  ? ''
+                  ? ""
                   : isPhoneValid
-                    ? 'border-status-resolved ring-status-resolved/10 focus-visible:border-status-resolved focus-visible:ring-status-resolved/20 ring-2'
-                    : 'border-destructive ring-destructive/10 focus-visible:border-destructive focus-visible:ring-destructive/20 ring-2',
+                    ? "border-status-resolved ring-status-resolved/10 focus-visible:border-status-resolved focus-visible:ring-status-resolved/20 ring-2"
+                    : "border-destructive ring-destructive/10 focus-visible:border-destructive focus-visible:ring-destructive/20 ring-2",
               )}
               aria-invalid={isPhoneDirty && !isPhoneValid ? true : undefined}
             />
             <div className="flex flex-col gap-0.5 text-right">
               {!isPhoneDirty ? (
                 <span className="bg-muted text-muted-foreground rounded-md px-2.5 py-1 text-[10.5px] font-bold">
-                  طول ۱۱ رقم با شروع از ۰۹ (مانند:{' '}
-                  {toPersianDigits('09123456789')})
+                  طول ۱۱ رقم با شروع از ۰۹ (مانند:{" "}
+                  {toPersianDigits("09123456789")})
                 </span>
               ) : isPhoneValid ? (
                 <span className="border-status-resolved/10 bg-status-resolved/5 text-status-resolved flex items-center gap-1 rounded-md border px-2.5 py-1 text-[10.5px] font-bold">
@@ -248,18 +250,18 @@ export default function AuthModal({
               value={toPersianDigits(nationalId)}
               onChange={(e) => {
                 const rawVal = toEnglishDigits(e.target.value);
-                const numbersOnly = rawVal.replace(/\D/g, '');
+                const numbersOnly = rawVal.replace(/\D/g, "");
                 setNationalId(numbersOnly);
               }}
-              placeholder={toPersianDigits('037000000')}
+              placeholder={toPersianDigits("037000000")}
               dir="rtl"
               autoComplete="off"
               className={cn(
                 !isNationalIdDirty
-                  ? ''
+                  ? ""
                   : isNationalIdValid
-                    ? 'border-status-resolved ring-status-resolved/10 focus-visible:border-status-resolved focus-visible:ring-status-resolved/20 ring-2'
-                    : 'border-destructive ring-destructive/10 focus-visible:border-destructive focus-visible:ring-destructive/20 ring-2',
+                    ? "border-status-resolved ring-status-resolved/10 focus-visible:border-status-resolved focus-visible:ring-status-resolved/20 ring-2"
+                    : "border-destructive ring-destructive/10 focus-visible:border-destructive focus-visible:ring-destructive/20 ring-2",
               )}
               aria-invalid={
                 isNationalIdDirty && !isNationalIdValid ? true : undefined
@@ -268,8 +270,8 @@ export default function AuthModal({
             <div className="flex flex-col gap-0.5 text-right">
               {!isNationalIdDirty ? (
                 <span className="bg-muted text-muted-foreground rounded-md px-2.5 py-1 text-[10.5px] font-bold">
-                  ۱۰ رقم عددی معتبر بدون خط تیره (مانند:{' '}
-                  {toPersianDigits('037000000')})
+                  ۱۰ رقم عددی معتبر بدون خط تیره (مانند:{" "}
+                  {toPersianDigits("037000000")})
                 </span>
               ) : isNationalIdValid ? (
                 <span className="border-status-resolved/10 bg-status-resolved/5 text-status-resolved flex items-center gap-1 rounded-md border px-2.5 py-1 text-[10.5px] font-bold">
@@ -277,7 +279,7 @@ export default function AuthModal({
                 </span>
               ) : (
                 <span className="border-destructive/10 bg-destructive/5 text-destructive rounded-md border px-2.5 py-1 text-[10.5px] font-bold">
-                  کد ملی ۱۰ رقمی ناقص است (در حال حاضر:{' '}
+                  کد ملی ۱۰ رقمی ناقص است (در حال حاضر:{" "}
                   {toPersianDigits(nationalId.length)} رقم)
                 </span>
               )}
@@ -286,16 +288,16 @@ export default function AuthModal({
 
           <Button type="submit" disabled={loading}>
             {loading
-              ? 'در حال ورود به سامانه...'
+              ? "در حال ورود به سامانه..."
               : isSignUp
-                ? 'ثبت‌نام و ورود'
-                : 'ورود مستقیم'}
+                ? "ثبت‌نام و ورود"
+                : "ورود مستقیم"}
           </Button>
 
           <div className="text-muted-foreground mt-1 text-center text-xs font-bold">
             {isSignUp ? (
               <p>
-                قبلاً ثبت‌نام کرده‌اید؟{' '}
+                قبلاً ثبت‌نام کرده‌اید؟{" "}
                 <Button
                   type="button"
                   variant="link"
@@ -307,7 +309,7 @@ export default function AuthModal({
               </p>
             ) : (
               <p>
-                شهروند جدید هستید؟{' '}
+                شهروند جدید هستید؟{" "}
                 <Button
                   type="button"
                   variant="link"

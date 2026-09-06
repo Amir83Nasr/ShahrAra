@@ -1,16 +1,18 @@
+"use client";
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useRef } from 'react';
-import L from 'leaflet';
-import { RequestItem } from '../types';
-import { MapPin } from 'lucide-react';
-import { toPersianDigits } from '../utils/numberUtils';
-import { determineRegion } from '../utils/regionUtils';
-import { escapeHtml } from '../utils/stringUtils';
-import { STATUS_LABELS, TYPE_LABELS } from '../utils/requestBadges';
+import React, { useEffect, useRef } from "react";
+import L from "leaflet";
+import { RequestItem } from "../types";
+import { MapPin } from "lucide-react";
+import { toPersianDigits } from "../utils/numberUtils";
+import { determineRegion } from "../utils/regionUtils";
+import { escapeHtml } from "../utils/stringUtils";
+import { STATUS_LABELS, TYPE_LABELS } from "../utils/requestBadges";
 
 interface MapComponentProps {
   pickerMode?: boolean;
@@ -21,13 +23,13 @@ interface MapComponentProps {
   ) => void;
   items?: RequestItem[];
   onSelectItem?: (item: RequestItem) => void;
-  theme?: 'light' | 'dark';
+  theme?: "light" | "dark";
 }
 
 // Function to generate dynamic inline SVG markers to bypass standard Leaflet asset link breaks
-const createMarkerIcon = (type: 'problem' | 'idea' | 'picker') => {
+const createMarkerIcon = (type: "problem" | "idea" | "picker") => {
   const color =
-    type === 'problem' ? '#f87171' : type === 'idea' ? '#10b981' : '#3b82f6'; // red-500, emerald-500, blue-500
+    type === "problem" ? "#f87171" : type === "idea" ? "#10b981" : "#3b82f6"; // red-500, emerald-500, blue-500
   return L.divIcon({
     html: `
       <div class="relative flex items-center justify-center transition-transform hover:scale-110">
@@ -35,13 +37,13 @@ const createMarkerIcon = (type: 'problem' | 'idea' | 'picker') => {
           <path d="M18 0C8.06 0 0 8.06 0 18C0 29.5 16.2 41.1 16.9 41.5C17.6 42.1 18.4 42.1 19.1 41.5C19.8 41.1 36 29.5 36 18C36 8.06 27.94 0 18 0Z" fill="${color}" stroke="#ffffff" stroke-width="2"/>
           <circle cx="18" cy="18" r="6.5" fill="#ffffff" />
         </svg>
-        <span class="absolute top-2.5 w-2.5 h-2.5 rounded-full ${type === 'problem' ? 'bg-red-500' : type === 'idea' ? 'bg-emerald-500' : 'bg-blue-500'}"></span>
+        <span class="absolute top-2.5 w-2.5 h-2.5 rounded-full ${type === "problem" ? "bg-red-500" : type === "idea" ? "bg-emerald-500" : "bg-blue-500"}"></span>
       </div>
     `,
     iconSize: [36, 42],
     iconAnchor: [18, 42],
     popupAnchor: [0, -36],
-    className: 'custom-svg-marker',
+    className: "custom-svg-marker",
   });
 };
 
@@ -51,7 +53,7 @@ export default function MapComponent({
   onCoordinatesChange,
   items = [],
   onSelectItem,
-  theme = 'light',
+  theme = "light",
 }: MapComponentProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -84,15 +86,15 @@ export default function MapComponent({
 
     // 2. Add Adaptive Mode Street Tiles (Voyager theme for Light Mode, Dark theme for Dark Mode)
     const isDarkGlobal =
-      document.documentElement.classList.contains('dark') || theme === 'dark';
+      document.documentElement.classList.contains("dark") || theme === "dark";
     const tileUrlTemplate = isDarkGlobal
-      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+      ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+      : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
 
     L.tileLayer(tileUrlTemplate, {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: 'abcd',
+      subdomains: "abcd",
       maxZoom: 20,
     }).addTo(map);
 
@@ -102,11 +104,11 @@ export default function MapComponent({
       if (selectedCoordinates) {
         pickerMarkerRef.current = L.marker(
           [selectedCoordinates.lat, selectedCoordinates.lng],
-          { icon: createMarkerIcon('picker'), draggable: true },
+          { icon: createMarkerIcon("picker"), draggable: true },
         ).addTo(map);
 
         // Bind drag events
-        pickerMarkerRef.current.on('dragend', () => {
+        pickerMarkerRef.current.on("dragend", () => {
           if (!pickerMarkerRef.current) return;
           const position = pickerMarkerRef.current.getLatLng();
           const computedRegion = determineRegion(position.lat, position.lng);
@@ -128,7 +130,7 @@ export default function MapComponent({
       }
 
       // Click to pin location
-      map.on('click', (e: L.LeafletMouseEvent) => {
+      map.on("click", (e: L.LeafletMouseEvent) => {
         const { lat, lng } = e.latlng;
         const computedRegion = determineRegion(lat, lng);
 
@@ -136,12 +138,12 @@ export default function MapComponent({
           pickerMarkerRef.current.setLatLng(e.latlng);
         } else {
           pickerMarkerRef.current = L.marker(e.latlng, {
-            icon: createMarkerIcon('picker'),
+            icon: createMarkerIcon("picker"),
             draggable: true,
           }).addTo(map);
 
           // Add dragend to newly created marker
-          pickerMarkerRef.current.on('dragend', () => {
+          pickerMarkerRef.current.on("dragend", () => {
             if (!pickerMarkerRef.current) return;
             const position = pickerMarkerRef.current.getLatLng();
             const regObj = determineRegion(position.lat, position.lng);
@@ -184,9 +186,9 @@ export default function MapComponent({
 
       // Customize elegant light/dark themed popup
       const typeColor =
-        item.type === 'problem'
-          ? 'text-[var(--type-problem)] font-bold'
-          : 'text-[var(--type-idea)] font-bold';
+        item.type === "problem"
+          ? "text-[var(--type-problem)] font-bold"
+          : "text-[var(--type-idea)] font-bold";
 
       const popupHtml = `
         <div class="text-right font-sans p-1 min-w-[210px]" dir="rtl" style="color: var(--foreground)">
@@ -206,7 +208,7 @@ export default function MapComponent({
       marker.bindPopup(popupHtml);
 
       // Listen for popup interactions
-      marker.on('popupopen', () => {
+      marker.on("popupopen", () => {
         const btn = document.getElementById(`marker-btn-${item.id}`);
         if (btn) {
           btn.onclick = (e) => {
@@ -235,7 +237,7 @@ export default function MapComponent({
     } else {
       pickerMarkerRef.current = L.marker(
         [selectedCoordinates.lat, selectedCoordinates.lng],
-        { icon: createMarkerIcon('picker'), draggable: true },
+        { icon: createMarkerIcon("picker"), draggable: true },
       ).addTo(map);
     }
 

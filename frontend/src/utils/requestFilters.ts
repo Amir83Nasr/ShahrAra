@@ -3,17 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { RequestItem } from '../types';
+import { RequestItem } from "../types";
 
 export type RequestSortOption =
-  | 'newest'
-  | 'oldest'
-  | 'most_liked'
-  | 'least_liked';
+  "newest" | "oldest" | "most_liked" | "least_liked";
 
-type SearchableField = 'title' | 'description' | 'region' | 'userName';
+type SearchableField = "title" | "description" | "region" | "userName";
 
-export type RequestSearchField = SearchableField | 'userPhone';
+export type RequestSearchField = SearchableField | "userPhone";
 
 export interface RequestFilterOptions {
   /** Free-text search term, matched against searchFields. */
@@ -31,7 +28,7 @@ export interface RequestFilterOptions {
   endDate?: Date;
 }
 
-const DEFAULT_SEARCH_FIELDS: RequestSearchField[] = ['title', 'description'];
+const DEFAULT_SEARCH_FIELDS: RequestSearchField[] = ["title", "description"];
 
 /**
  * Applies the search/category/type/status/region/date-range filters shared by
@@ -53,23 +50,23 @@ export function filterRequests(
     endDate,
   } = options;
 
-  const term = searchTerm?.toLowerCase() ?? '';
+  const term = searchTerm?.toLowerCase() ?? "";
 
   return items.filter((item) => {
     const matchesSearch =
       !term ||
       searchFields.some((field) =>
-        field === 'userPhone'
-          ? item.userPhone.includes(searchTerm ?? '')
+        field === "userPhone"
+          ? item.userPhone.includes(searchTerm ?? "")
           : item[field].toLowerCase().includes(term),
       );
 
-    const matchesType = !type || type === 'all' || item.type === type;
+    const matchesType = !type || type === "all" || item.type === type;
     const matchesCategory =
-      !category || category === 'all' || item.category === category;
-    const matchesStatus = !status || status === 'all' || item.status === status;
+      !category || category === "all" || item.category === category;
+    const matchesStatus = !status || status === "all" || item.status === status;
     const matchesRegion =
-      !region || region === 'all' || item.region.startsWith(region);
+      !region || region === "all" || item.region.startsWith(region);
 
     let matchesDate = true;
     if (startDate || endDate) {
@@ -104,13 +101,13 @@ export function sortRequests(
 ): RequestItem[] {
   return [...items].sort((a, b) => {
     switch (sortBy) {
-      case 'oldest':
+      case "oldest":
         return (
           new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
         );
-      case 'most_liked':
+      case "most_liked":
         return b.likes - a.likes;
-      case 'least_liked':
+      case "least_liked":
         return a.likes - b.likes;
       default: // newest
         return (

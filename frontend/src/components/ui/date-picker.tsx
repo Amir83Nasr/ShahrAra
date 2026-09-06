@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import * as React from 'react';
+import * as React from "react";
 import {
   format,
   getDaysInMonth,
@@ -9,39 +9,39 @@ import {
   setDate,
   setMonth,
   setYear,
-} from 'date-fns-jalali';
-import { faIR } from 'date-fns-jalali/locale';
+} from "date-fns-jalali";
+import { faIR } from "date-fns-jalali/locale";
 
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
-import { toPersianDigits } from '@/utils/numberUtils';
+} from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { toPersianDigits } from "@/utils/numberUtils";
 
 const PERSIAN_MONTHS = [
-  'فروردین',
-  'اردیبهشت',
-  'خرداد',
-  'تیر',
-  'مرداد',
-  'شهریور',
-  'مهر',
-  'آبان',
-  'آذر',
-  'دی',
-  'بهمن',
-  'اسفند',
+  "فروردین",
+  "اردیبهشت",
+  "خرداد",
+  "تیر",
+  "مرداد",
+  "شهریور",
+  "مهر",
+  "آبان",
+  "آذر",
+  "دی",
+  "بهمن",
+  "اسفند",
 ];
 
 interface DatePickerProps {
@@ -61,7 +61,7 @@ function parseInput(d: Date | string | undefined | null): Date | undefined {
 export function DatePicker({
   date,
   onSelect,
-  placeholder = 'تاریخ را انتخاب کنید',
+  placeholder = "تاریخ را انتخاب کنید",
   className,
   disabled,
 }: DatePickerProps) {
@@ -110,14 +110,14 @@ export function DatePicker({
           variant="outline"
           dir="rtl"
           className={cn(
-            'border-input hover:bg-accent hover:text-accent-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-expanded:bg-accent h-9 w-full justify-between gap-1.5 rounded-md border bg-transparent px-2.5 text-right text-sm font-normal transition-[color,box-shadow] focus-visible:ring-3',
-            !parsed && 'text-muted-foreground',
+            "border-input hover:bg-accent hover:text-accent-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-expanded:bg-accent h-9 w-full justify-between gap-1.5 rounded-md border bg-transparent px-2.5 text-right text-sm font-normal transition-[color,box-shadow] focus-visible:ring-3",
+            !parsed && "text-muted-foreground",
             className,
           )}
         >
           <span className="truncate">
             {parsed
-              ? toPersianDigits(format(parsed, 'yyyy/MM/dd', { locale: faIR }))
+              ? toPersianDigits(format(parsed, "yyyy/MM/dd", { locale: faIR }))
               : placeholder}
           </span>
           <CalendarIcon className="size-4 shrink-0 opacity-50" />
