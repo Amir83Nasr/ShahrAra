@@ -32,6 +32,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   // صفحات بدون هدر/فوتر (مثل لاگین) — فقط محتوا
   const isChromeless = pathname.startsWith("/login");
+  const hideFooterOnMobile =
+    pathname.startsWith("/reports") ||
+    pathname.startsWith("/submit") ||
+    pathname.startsWith("/profile") ||
+    pathname.startsWith("/admin");
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -55,7 +60,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </main>
 
         {!isChromeless && (
-          <footer className="bg-background/90 text-muted-foreground border-t text-xs backdrop-blur-xl">
+          <footer
+            className={`bg-background/90 text-muted-foreground border-t text-xs backdrop-blur-xl ${hideFooterOnMobile ? "hidden md:block" : ""}`}
+          >
             <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
               <div className="grid grid-cols-1 items-stretch gap-8 sm:grid-cols-2 lg:grid-cols-4">
                 {/* Brand */}

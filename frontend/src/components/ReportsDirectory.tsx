@@ -180,18 +180,18 @@ export default function ReportsDirectory({
             variant={showMap ? "default" : "outline"}
             size="sm"
             onClick={() => setShowMap(!showMap)}
-            className="gap-1.5 rounded-lg whitespace-nowrap"
+            className="whitespace-nowrap"
           >
-            <Map className="h-3.5 w-3.5" />
+            <Map />
             <span>{showMap ? "مخفی‌سازی نقشه" : "نمایش نقشه"}</span>
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={onRefresh}
-            className="gap-1.5 rounded-lg whitespace-nowrap"
+            className="whitespace-nowrap"
           >
-            <RefreshCcw className="h-3.5 w-3.5" />
+            <RefreshCcw />
             <span>بروزرسانی</span>
           </Button>
         </div>
@@ -378,11 +378,9 @@ export default function ReportsDirectory({
                                 }
                                 size="sm"
                                 onClick={(e) => handleLikeClick(e, item.id)}
-                                className="gap-1"
                               >
                                 <Heart
                                   className={cn(
-                                    "h-3.5 w-3.5",
                                     hasLikedStatus && "fill-current",
                                   )}
                                 />
@@ -417,12 +415,7 @@ export default function ReportsDirectory({
               {/* Load More button */}
               {sorted.length > 0 && sorted.length > visibleCount && (
                 <div className="col-span-full flex justify-center pt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleLoadMore}
-                    className="gap-2 font-bold"
-                  >
+                  <Button variant="outline" size="sm" onClick={handleLoadMore}>
                     بارگذاری بیشتر (
                     {toPersianDigits(sorted.length - visibleCount)} مورد)
                   </Button>
@@ -536,7 +529,6 @@ export default function ReportsDirectory({
             >
               <Heart
                 className={cn(
-                  "h-3.5 w-3.5",
                   currentUser &&
                     selectedDetails?.likedByCurrentUser &&
                     "fill-current",

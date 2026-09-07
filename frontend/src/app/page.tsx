@@ -170,7 +170,7 @@ function CtaSection() {
         <Button
           size="lg"
           asChild
-          className="w-full px-4 font-semibold sm:w-auto"
+          className="text-base h-12 w-full font-semibold sm:w-auto"
         >
           <Link href="/submit">
             <span>ثبت گزارش یا ایده</span>
@@ -181,7 +181,7 @@ function CtaSection() {
           size="lg"
           variant="outline"
           asChild
-          className="w-full px-4 font-semibold sm:w-auto"
+          className="text-base h-12 w-full font-semibold sm:w-auto"
         >
           <Link href="/reports">
             <span>مشاهده گزارش‌ها</span>

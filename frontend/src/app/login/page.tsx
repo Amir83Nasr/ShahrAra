@@ -1,16 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  AlertCircle,
-  ArrowRight,
-  CheckCircle,
-  KeyRound,
-  MessageSquare,
-} from "lucide-react";
+import { AlertCircle, ArrowRight, KeyRound, MessageSquare } from "lucide-react";
 import { useApp } from "../providers";
 import { User } from "../../types";
 import { toPersianDigits, toEnglishDigits } from "@/utils/numberUtils";
@@ -64,7 +58,24 @@ export default function LoginPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+
+  // شمارش معکوس اعتبار کد یک‌بارمصرف (ثانیه)
+  const [remaining, setRemaining] = useState(0);
+  const expiryRef = useRef<number | null>(null);
+
+  // تایمر شمارش معکوس
+  useEffect(() => {
+    if (step !== "otp" || expiryRef.current === null) return;
+    const timer = setInterval(() => {
+      const left = Math.max(
+        0,
+        Math.ceil((expiryRef.current! - Date.now()) / 1000),
+      );
+      setRemaining(left);
+      if (left <= 0) clearInterval(timer);
+    }, 500);
+    return () => clearInterval(timer);
+  }, [step]);
 
   // Already logged in → home
   useEffect(() => {
@@ -109,7 +120,6 @@ export default function LoginPage() {
 
   const requestOtp = async () => {
     setError(null);
-    setSuccess(null);
     setLoading(true);
     try {
       const res = await fetch("/api/v1/auth/otp/request", {
@@ -121,7 +131,11 @@ export default function LoginPage() {
         throw new Error(FETCH_ERROR);
       });
       if (!res.ok) throwApiError(res, result);
-      setOtpInfo(result as OtpInfo);
+      const info = result as OtpInfo;
+      setOtpInfo(info);
+      // راه‌اندازی تایمر
+      expiryRef.current = Date.now() + info.expiresInSeconds * 1000;
+      setRemaining(info.expiresInSeconds);
       setCode("");
       setStep("otp");
     } catch (err: unknown) {
@@ -137,7 +151,6 @@ export default function LoginPage() {
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
 
     if (!isPhoneValid) {
       setError(
@@ -181,7 +194,6 @@ export default function LoginPage() {
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
     setLoading(true);
 
     try {
@@ -195,11 +207,8 @@ export default function LoginPage() {
       });
       if (!res.ok) throwApiError(res, result);
 
-      setSuccess("ورود با موفقیت انجام شد!");
-      setTimeout(() => {
-        loginSuccess(extractUser(result));
-        router.replace("/");
-      }, 800);
+      loginSuccess(extractUser(result));
+      router.replace("/");
     } catch (err: unknown) {
       setError(
         err instanceof Error ? err.message : "خطا در برقراری ارتباط با سرور.",
@@ -213,10 +222,14 @@ export default function LoginPage() {
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
 
     if (code.length !== 6) {
       setError("کد تأیید باید دقیقاً " + toPersianDigits("6") + " رقم باشد.");
+      return;
+    }
+
+    if (remaining <= 0) {
+      setError("کد تأیید منقضی شده است. لطفا کد جدید درخواست کنید.");
       return;
     }
 
@@ -251,11 +264,8 @@ export default function LoginPage() {
       });
       if (!res.ok) throwApiError(res, result);
 
-      setSuccess("ورود با موفقیت انجام شد!");
-      setTimeout(() => {
-        loginSuccess(extractUser(result));
-        router.replace("/");
-      }, 800);
+      loginSuccess(extractUser(result));
+      router.replace("/");
     } catch (err: unknown) {
       setError(
         err instanceof Error ? err.message : "خطا در برقراری ارتباط با سرور.",
@@ -272,7 +282,6 @@ export default function LoginPage() {
     setCode("");
     setOtpInfo(null);
     setError(null);
-    setSuccess(null);
   };
 
   const phoneHint = !isPhoneDirty ? null : isPhoneValid ? (
@@ -316,8 +325,8 @@ export default function LoginPage() {
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
       {/* ── فرم ──────────────────────────────────────────── */}
-      <div className="flex flex-col gap-4 p-6 md:p-10">
-        <div className="flex justify-center gap-2 md:justify-start">
+      <div className="relative flex flex-col p-6 md:p-10">
+        <div className="absolute inset-e-4 top-4 hidden gap-2 md:static md:flex md:justify-start">
           <Button asChild variant="outline" size="sm">
             <Link href="/">
               <ArrowRight className="h-4 w-4" />
@@ -348,24 +357,12 @@ export default function LoginPage() {
                 </Alert>
               )}
 
-              {success && (
-                <Alert className="border-status-resolved/20 bg-status-resolved/10 text-status-resolved text-xs">
-                  <CheckCircle />
-                  <AlertTitle>موفق</AlertTitle>
-                  <AlertDescription className="text-status-resolved/90">
-                    {success}
-                  </AlertDescription>
-                </Alert>
-              )}
-
               {/* ── مرحله ۱: شماره همراه ────────────────────── */}
               {step === "phone" && (
                 <form onSubmit={handlePhoneSubmit}>
                   <FieldGroup>
                     <Field>
-                      <FieldLabel htmlFor="phone">
-                        شماره همراه <span className="text-destructive">*</span>
-                      </FieldLabel>
+                      <FieldLabel htmlFor="phone">شماره همراه</FieldLabel>
                       <Input
                         id="phone"
                         type="text"
@@ -445,14 +442,16 @@ export default function LoginPage() {
                         <MessageSquare />
                         ورود با کد پیامکی
                       </Button>
-                      <FieldDescription className="text-center">
-                        <button
+                      <FieldDescription className="pt-2 text-center">
+                        <Button
                           type="button"
+                          variant="link"
+                          size="sm"
                           onClick={backToPhone}
-                          className="underline underline-offset-4"
+                          className="font-medium"
                         >
                           تغییر شماره
-                        </button>
+                        </Button>
                       </FieldDescription>
                     </Field>
                   </FieldGroup>
@@ -478,6 +477,54 @@ export default function LoginPage() {
                         </AlertDescription>
                       </Alert>
                     )}
+
+                    {/* ── بخش مستقل کد تأیید ───────────────────── */}
+                    <section className="bg-muted/30 mb-2 rounded-lg border p-4">
+                      <Field className="items-center">
+                        <FieldLabel htmlFor="otp-code">کد تأیید</FieldLabel>
+                        {/* dir=ltr: ترتیب خانه‌ها و فیلد مخفی باید یکسان باشد وگرنه کد برعکس ذخیره می‌شود */}
+                        <div dir="ltr" className="flex w-full justify-center">
+                          <InputOTP
+                            maxLength={6}
+                            value={toPersianDigits(code)}
+                            onChange={(v) =>
+                              setCode(toEnglishDigits(v).replace(/\D/g, ""))
+                            }
+                          >
+                            <InputOTPGroup>
+                              {[0, 1, 2, 3, 4, 5].map((i) => (
+                                <InputOTPSlot
+                                  key={i}
+                                  index={i}
+                                  className="bg-background h-11 w-10 text-lg"
+                                  renderChar={(ch) => toPersianDigits(ch)}
+                                />
+                              ))}
+                            </InputOTPGroup>
+                          </InputOTP>
+                        </div>
+                      </Field>
+                      <div className="mt-3 flex items-center justify-between gap-2 text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground font-bold">
+                            اعتبار کد:
+                          </span>
+                          <span className="font-mono font-bold tabular-nums">
+                            {toPersianDigits(remaining)} ثانیه
+                          </span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="link"
+                          size="sm"
+                          onClick={() => requestOtp()}
+                          disabled={loading || remaining > 0}
+                          className="font-medium"
+                        >
+                          ارسال مجدد کد
+                        </Button>
+                      </div>
+                    </section>
 
                     {isNewUser && (
                       <>
@@ -551,59 +598,13 @@ export default function LoginPage() {
                       </>
                     )}
 
-                    <Field className="items-center">
-                      <FieldLabel htmlFor="otp-code">
-                        کد تأیید <span className="text-destructive">*</span>
-                      </FieldLabel>
-                      {/* dir=ltr: ترتیب خانه‌ها و فیلد مخفی باید یکسان باشد وگرنه کد برعکس ذخیره می‌شود */}
-                      <div dir="ltr">
-                        <InputOTP
-                          maxLength={6}
-                          value={toPersianDigits(code)}
-                          onChange={(v) =>
-                            setCode(toEnglishDigits(v).replace(/\D/g, ""))
-                          }
-                        >
-                          <InputOTPGroup>
-                            {[0, 1, 2, 3, 4, 5].map((i) => (
-                              <InputOTPSlot
-                                key={i}
-                                index={i}
-                                className="h-11 w-10 text-lg"
-                                renderChar={(ch) => toPersianDigits(ch)}
-                              />
-                            ))}
-                          </InputOTPGroup>
-                        </InputOTP>
-                      </div>
-                      <FieldDescription>
-                        <span className="flex items-center gap-2 font-bold">
-                          <span className="text-muted-foreground">
-                            اعتبار کد:{" "}
-                            {toPersianDigits(
-                              Math.ceil(
-                                (otpInfo?.expiresInSeconds ?? 300) / 60,
-                              ),
-                            )}{" "}
-                            دقیقه
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => requestOtp()}
-                            disabled={loading}
-                            className="font-extrabold underline underline-offset-4 disabled:opacity-50"
-                          >
-                            ارسال مجدد کد
-                          </button>
-                        </span>
-                      </FieldDescription>
-                    </Field>
-
                     <Field>
                       <Button
                         type="submit"
                         className="w-full"
-                        disabled={loading || code.length !== 6}
+                        disabled={
+                          loading || code.length !== 6 || remaining <= 0
+                        }
                       >
                         {loading
                           ? "در حال بررسی کد..."
@@ -611,16 +612,18 @@ export default function LoginPage() {
                             ? "تأیید و تکمیل ثبت‌نام"
                             : "ورود"}
                       </Button>
+                      <FieldDescription className="pt-2 text-center">
+                        <Button
+                          type="button"
+                          variant="link"
+                          size="sm"
+                          onClick={backToPhone}
+                          className="font-medium"
+                        >
+                          تغییر شماره
+                        </Button>
+                      </FieldDescription>
                     </Field>
-                    <FieldDescription className="text-center">
-                      <button
-                        type="button"
-                        onClick={backToPhone}
-                        className="underline underline-offset-4"
-                      >
-                        تغییر شماره
-                      </button>
-                    </FieldDescription>
                   </FieldGroup>
                 </form>
               )}
@@ -635,6 +638,7 @@ export default function LoginPage() {
           src="/assets/login.jpg"
           alt="نمای شهری"
           fill
+          sizes="(max-width: 1024px) 0px, 50vw"
           priority
           className="object-cover dark:opacity-80"
         />

@@ -35,7 +35,7 @@ JWT_EXPIRATION_MINUTES = int(os.getenv("JWT_EXPIRATION_MINUTES", "1440"))
 # ── OTP ────────────────────────────────────────────────────
 # DEV MODE returns the code in the API response instead of sending SMS.
 # NEVER set OTP_DEV_MODE=true in production.
-OTP_EXPIRATION_MINUTES = int(os.getenv("OTP_EXPIRATION_MINUTES", "5"))
+OTP_EXPIRATION_MINUTES = int(os.getenv("OTP_EXPIRATION_MINUTES", "2"))
 OTP_MAX_ATTEMPTS = int(os.getenv("OTP_MAX_ATTEMPTS", "5"))
 OTP_DEV_MODE = os.getenv("OTP_DEV_MODE", "true").lower() == "true"
 

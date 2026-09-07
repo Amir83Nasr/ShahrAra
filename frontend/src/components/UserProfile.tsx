@@ -11,6 +11,7 @@ import {
   AlertCircle,
   CheckCircle,
   ChevronLeft,
+  ChevronRight,
   ClipboardList,
   Edit,
   Heart,
@@ -86,12 +87,20 @@ import dynamic from "next/dynamic";
 // leaflet touches `window` at import time; skip prerendering
 const MapComponent = dynamic(() => import("./MapComponent"), { ssr: false });
 
+const SECTION_TITLES: Record<string, string> = {
+  my: "درخواست‌های من",
+  liked: "لایک کرده‌ام",
+  security: "امنیت و رمز عبور",
+};
+
 interface UserProfileProps {
   currentUser: User;
   requests: RequestItem[];
   onLike: (id: string) => Promise<void>;
   onRefresh: () => void;
   theme?: "light" | "dark";
+  /** Active section when rendered on a dedicated /profile/[section] page. */
+  section?: "my" | "liked" | "security";
 }
 
 export default function UserProfile({
@@ -99,10 +108,11 @@ export default function UserProfile({
   requests,
   onLike,
   onRefresh,
+  section,
 }: UserProfileProps) {
   const { loginSuccess, logout } = useApp();
   const [confirmLogout, setConfirmLogout] = useState(false);
-  const [activeSubTab, setActiveSubTab] = useState<string>("my");
+  const [activeSubTab, setActiveSubTab] = useState<string>(section ?? "my");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -330,114 +340,109 @@ export default function UserProfile({
     }
   };
 
-  const selectTab = (value: string) => {
-    setActiveSubTab(value);
-    setSearchTerm("");
-    setFilterType("all");
-    setFilterStatus("all");
-    setFilterRegion("all");
-    document
-      .getElementById("profile-tabs")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+  // Dedicated section page: back link + heading instead of the mobile menu.
+  const isSectionPage = section !== undefined;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      {/* منوی حساب — فقط موبایل */}
-      <div className="flex flex-col gap-4 md:hidden">
-        {/* کارت کاربر */}
-        <div className="bg-muted/60 flex items-center justify-between rounded-3xl px-5 py-4">
-          <span className="bg-card flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full">
-            <UserRound
-              className="text-muted-foreground h-8 w-8"
-              strokeWidth={1.5}
-            />
-          </span>
-          <span className="flex flex-col items-start gap-1.5">
-            <span className="flex items-center gap-2">
-              <span className="text-foreground text-lg font-extrabold">
-                {currentUser.firstName} {currentUser.lastName}
+      {/* بخش‌های پروفایل — فقط موبایل (در صفحه /profile) */}
+      {!isSectionPage && (
+        <div className="flex flex-col gap-3 md:hidden">
+          {/* کارت کاربر */}
+          <div className="bg-card overflow-hidden rounded-3xl border shadow-sm">
+            <div className="flex items-center gap-3 px-4 py-2.5">
+              <span className="bg-muted flex h-9 w-9 shrink-0 items-center justify-center rounded-xl">
+                <UserRound
+                  className="text-muted-foreground h-4.5 w-4.5"
+                  strokeWidth={1.75}
+                />
               </span>
-              {currentUser.isAdmin && (
-                <Badge className="bg-primary/15 text-primary hover:bg-primary/15 rounded-full px-2.5 py-0.5 text-[11px] font-bold">
-                  ادمین
-                </Badge>
-              )}
+              <span className="flex flex-1 flex-col items-start gap-0.5">
+                <span className="text-foreground flex items-center gap-2 text-sm font-semibold">
+                  {currentUser.firstName} {currentUser.lastName}
+                  {currentUser.isAdmin && (
+                    <Badge className="bg-primary/15 text-primary hover:bg-primary/15 rounded-full px-2.5 py-0.5 text-[11px] font-semibold">
+                      ادمین
+                    </Badge>
+                  )}
+                </span>
+                <span className="text-muted-foreground font-mono text-[11px] font-semibold">
+                  {toPersianDigits(currentUser.phone)}
+                </span>
+              </span>
+            </div>
+          </div>
+
+          {/* مطالبات من */}
+          <ProfileMenuCard
+            title="مطالبات من"
+            items={[
+              {
+                key: "my",
+                label: "درخواست‌های من",
+                Icon: ClipboardList,
+                href: "/profile/my",
+              },
+              {
+                key: "liked",
+                label: "لایک کرده‌ام",
+                Icon: Heart,
+                href: "/profile/liked",
+              },
+            ]}
+          />
+
+          {/* حساب کاربری */}
+          <ProfileMenuCard
+            title="حساب کاربری"
+            items={[
+              {
+                key: "security",
+                label: "امنیت و رمز عبور",
+                Icon: KeyRound,
+                href: "/profile/security",
+              },
+              ...(currentUser.isAdmin
+                ? [
+                    {
+                      key: "admin",
+                      label: "پنل مدیریت",
+                      Icon: Shield,
+                      href: "/admin",
+                    },
+                  ]
+                : []),
+            ]}
+          />
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.currentTarget.blur();
+              setConfirmLogout(true);
+            }}
+            className="border-destructive/15 bg-card flex w-full cursor-pointer items-center gap-3 rounded-2xl border px-4 py-2.5 shadow-sm"
+          >
+            <span className="bg-destructive/10 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl">
+              <LogOut
+                className="text-destructive h-4.5 w-4.5"
+                strokeWidth={1.75}
+              />
             </span>
-            <span className="text-muted-foreground font-mono text-sm">
-              {toPersianDigits(currentUser.phone)}
+            <span className="text-destructive flex-1 text-start text-sm font-semibold">
+              خروج از حساب
             </span>
-          </span>
+            <ChevronLeft className="text-muted-foreground/40 h-4 w-4 shrink-0" />
+          </button>
         </div>
-
-        {/* مطالبات من */}
-        <ProfileMenuCard
-          title="مطالبات من"
-          items={[
-            {
-              key: "my",
-              label: "درخواست‌های من",
-              sub: toPersianDigits(myRequests.length.toString()) + " درخواست",
-              Icon: ClipboardList,
-              active: activeSubTab === "my",
-              onClick: () => selectTab("my"),
-            },
-            {
-              key: "liked",
-              label: "لایک کرده‌ام",
-              sub:
-                toPersianDigits(likedRequests.length.toString()) + " درخواست",
-              Icon: Heart,
-              active: activeSubTab === "liked",
-              onClick: () => selectTab("liked"),
-            },
-          ]}
-        />
-
-        {/* حساب کاربری */}
-        <ProfileMenuCard
-          title="حساب کاربری"
-          items={[
-            {
-              key: "security",
-              label: "امنیت و رمز عبور",
-              Icon: KeyRound,
-              active: activeSubTab === "security",
-              onClick: () => selectTab("security"),
-            },
-            ...(currentUser.isAdmin
-              ? [
-                  {
-                    key: "admin",
-                    label: "پنل مدیریت",
-                    Icon: Shield,
-                    href: "/admin" as const,
-                  },
-                ]
-              : []),
-          ]}
-        />
-
-        <button
-          type="button"
-          onClick={() => setConfirmLogout(true)}
-          className="border-destructive/15 bg-card flex w-full cursor-pointer items-center justify-between rounded-3xl border px-5 py-3 shadow-sm"
-        >
-          <span className="text-destructive text-[15px] font-extrabold">
-            خروج از حساب
-          </span>
-          <span className="bg-destructive/10 flex h-11 w-11 items-center justify-center rounded-2xl">
-            <LogOut className="text-destructive h-5 w-5" strokeWidth={1.75} />
-          </span>
-        </button>
-      </div>
+      )}
 
       {/* Success / Error banners */}
       {success && (
         <Alert className="border-status-resolved/20 bg-status-resolved/10 text-status-resolved mb-4 text-sm">
           <CheckCircle />
           <AlertTitle>موفق</AlertTitle>
-          <AlertDescription className="text-status-resolved/90 font-bold">
+          <AlertDescription className="text-status-resolved/90 font-semibold">
             {success}
           </AlertDescription>
         </Alert>
@@ -446,7 +451,7 @@ export default function UserProfile({
         <Alert variant="destructive" className="mb-4 text-sm">
           <AlertCircle />
           <AlertTitle>خطا</AlertTitle>
-          <AlertDescription className="font-bold">{error}</AlertDescription>
+          <AlertDescription className="font-semibold">{error}</AlertDescription>
         </Alert>
       )}
 
@@ -463,95 +468,117 @@ export default function UserProfile({
           setFilterStatus("all");
         }}
       >
-        <TabsList className="gap-x-2">
-          <TabsTrigger value="my" className="flex-1 px-4 font-extrabold">
+        {isSectionPage && (
+          <div className="mb-4 flex items-center gap-3">
+            <Button asChild variant="outline" size="icon" aria-label="بازگشت">
+              <Link href="/profile">
+                <ChevronRight />
+              </Link>
+            </Button>
+            <h2 className="text-foreground text-lg font-bold">
+              {SECTION_TITLES[section]}
+            </h2>
+          </div>
+        )}
+        <TabsList className="hidden gap-x-2 md:flex">
+          <TabsTrigger value="my" className="flex-1 px-4 font-bold">
             <ClipboardList className="ml-1.5 h-4 w-4" />
             درخواست‌های من
           </TabsTrigger>
-          <TabsTrigger value="liked" className="flex-1 px-4 font-extrabold">
+          <TabsTrigger value="liked" className="flex-1 px-4 font-bold">
             <Heart className="ml-1.5 h-4 w-4" />
             لایک کرده‌ام
           </TabsTrigger>
-          <TabsTrigger value="security" className="flex-1 px-4 font-extrabold">
+          <TabsTrigger value="security" className="flex-1 px-4 font-bold">
             <KeyRound className="ml-1.5 h-4 w-4" />
             امنیت
           </TabsTrigger>
         </TabsList>
 
-        {/* Search & Filter bar */}
-        <div className="bg-card mt-3 mb-6 flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center">
-          <div className="relative w-full sm:flex-1">
-            <Search className="text-muted-foreground absolute top-1/2 right-3 size-4 -translate-y-1/2" />
-            <Input
-              type="text"
-              placeholder="جستجوی عنوان، توضیحات..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-background pr-10"
-            />
+        {/* Search & Filter bar — visible only on my/liked tabs */}
+        {activeSubTab !== "security" && (
+          <div
+            className={cn(
+              "bg-card mt-3 mb-6 flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center",
+              !isSectionPage && "hidden md:flex",
+            )}
+          >
+            <div className="relative w-full sm:flex-1">
+              <Search className="text-muted-foreground absolute top-1/2 right-3 size-4 -translate-y-1/2" />
+              <Input
+                type="text"
+                placeholder="جستجوی عنوان، توضیحات..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="bg-background pr-10"
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-3 sm:flex sm:gap-3">
+              <Select
+                dir="rtl"
+                value={filterType}
+                onValueChange={(v) => setFilterType(v)}
+              >
+                <SelectTrigger size="sm" className="w-full sm:w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent position="popper" dir="rtl">
+                  <SelectGroup>
+                    <SelectLabel>نوع درخواست</SelectLabel>
+                    <SelectItem value="all">همه</SelectItem>
+                    <SelectItem value="problem">مشکل شهری</SelectItem>
+                    <SelectItem value="idea">ایده شهری</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <Select
+                dir="rtl"
+                value={filterStatus}
+                onValueChange={(v) => setFilterStatus(v)}
+              >
+                <SelectTrigger size="sm" className="w-full sm:w-36">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent position="popper" align="end">
+                  <SelectGroup>
+                    <SelectLabel>وضعیت</SelectLabel>
+                    <SelectItem value="all">همه وضعیت‌ها</SelectItem>
+                    <SelectItem value="submitted">ثبت شده</SelectItem>
+                    <SelectItem value="under_review">در حال بررسی</SelectItem>
+                    <SelectItem value="in_progress">در حال انجام</SelectItem>
+                    <SelectItem value="resolved">حل شده</SelectItem>
+                    <SelectItem value="archived">بایگانی شده</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <Select
+                dir="rtl"
+                value={filterRegion}
+                onValueChange={setFilterRegion}
+              >
+                <SelectTrigger size="sm" className="w-full sm:w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent position="popper" align="end">
+                  <SelectGroup>
+                    <SelectLabel>منطقه</SelectLabel>
+                    <SelectItem value="all">همه مناطق</SelectItem>
+                    {REGIONS.map((r) => (
+                      <SelectItem key={r} value={r}>
+                        {r}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="grid grid-cols-3 gap-3 sm:flex sm:gap-3">
-            <Select
-              dir="rtl"
-              value={filterType}
-              onValueChange={(v) => setFilterType(v)}
-            >
-              <SelectTrigger size="sm" className="w-full sm:w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent position="popper" dir="rtl">
-                <SelectGroup>
-                  <SelectLabel>نوع درخواست</SelectLabel>
-                  <SelectItem value="all">همه</SelectItem>
-                  <SelectItem value="problem">مشکل شهری</SelectItem>
-                  <SelectItem value="idea">ایده شهری</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            <Select
-              dir="rtl"
-              value={filterStatus}
-              onValueChange={(v) => setFilterStatus(v)}
-            >
-              <SelectTrigger size="sm" className="w-full sm:w-36">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent position="popper" align="end">
-                <SelectGroup>
-                  <SelectLabel>وضعیت</SelectLabel>
-                  <SelectItem value="all">همه وضعیت‌ها</SelectItem>
-                  <SelectItem value="submitted">ثبت شده</SelectItem>
-                  <SelectItem value="under_review">در حال بررسی</SelectItem>
-                  <SelectItem value="in_progress">در حال انجام</SelectItem>
-                  <SelectItem value="resolved">حل شده</SelectItem>
-                  <SelectItem value="archived">بایگانی شده</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            <Select
-              dir="rtl"
-              value={filterRegion}
-              onValueChange={setFilterRegion}
-            >
-              <SelectTrigger size="sm" className="w-full sm:w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent position="popper" align="end">
-                <SelectGroup>
-                  <SelectLabel>منطقه</SelectLabel>
-                  <SelectItem value="all">همه مناطق</SelectItem>
-                  {REGIONS.map((r) => (
-                    <SelectItem key={r} value={r}>
-                      {r}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        )}
 
-        <TabsContent value="my" className="mt-0">
+        <TabsContent
+          value="my"
+          className={cn("mt-0", !isSectionPage && "hidden md:block")}
+        >
           <RequestGrid
             requests={filteredRequests}
             emptyMessage="هنوز درخواستی ثبت نکرده‌اید."
@@ -565,7 +592,10 @@ export default function UserProfile({
           />
         </TabsContent>
 
-        <TabsContent value="liked" className="mt-0">
+        <TabsContent
+          value="liked"
+          className={cn("mt-0", !isSectionPage && "hidden md:block")}
+        >
           <RequestGrid
             requests={filteredRequests}
             emptyMessage="هنوز درخواستی را لایک نکرده‌اید."
@@ -579,11 +609,14 @@ export default function UserProfile({
           />
         </TabsContent>
 
-        <TabsContent value="security" className="mt-0">
+        <TabsContent
+          value="security"
+          className={cn("mt-0", !isSectionPage && "hidden md:block")}
+        >
           <Card className="mx-auto max-w-md">
             <CardContent className="flex flex-col gap-4">
               <div>
-                <CardTitle className="flex items-center gap-2 text-sm font-extrabold">
+                <CardTitle className="flex items-center gap-2 text-sm font-bold">
                   <KeyRound className="text-primary h-4 w-4" />
                   رمز عبور حساب
                 </CardTitle>
@@ -618,7 +651,7 @@ export default function UserProfile({
               >
                 {currentUser.hasPassword && (
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-foreground text-xs font-extrabold">
+                    <label className="text-foreground text-xs font-bold">
                       رمز عبور فعلی <span className="text-destructive">*</span>
                     </label>
                     <Input
@@ -633,7 +666,7 @@ export default function UserProfile({
                 )}
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-foreground text-xs font-extrabold">
+                  <label className="text-foreground text-xs font-bold">
                     رمز عبور جدید <span className="text-destructive">*</span>
                   </label>
                   <Input
@@ -645,13 +678,13 @@ export default function UserProfile({
                     dir="ltr"
                     autoComplete="new-password"
                   />
-                  <span className="text-muted-foreground text-[10.5px] font-bold">
+                  <span className="text-muted-foreground text-[10.5px] font-semibold">
                     حداقل ۸ کاراکتر
                   </span>
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-foreground text-xs font-extrabold">
+                  <label className="text-foreground text-xs font-bold">
                     تکرار رمز عبور جدید{" "}
                     <span className="text-destructive">*</span>
                   </label>
@@ -681,15 +714,13 @@ export default function UserProfile({
       >
         <ResponsiveDialogContent className="max-w-lg">
           <ResponsiveDialogHeader>
-            <ResponsiveDialogTitle className="text-lg font-extrabold">
+            <ResponsiveDialogTitle className="text-lg font-bold">
               ویرایش درخواست
             </ResponsiveDialogTitle>
           </ResponsiveDialogHeader>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-foreground text-xs font-extrabold">
-                عنوان
-              </label>
+              <label className="text-foreground text-xs font-bold">عنوان</label>
               <Input
                 type="text"
                 value={editTitle}
@@ -698,7 +729,7 @@ export default function UserProfile({
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-foreground text-xs font-extrabold">
+              <label className="text-foreground text-xs font-bold">
                 توضیحات
               </label>
               <Textarea
@@ -709,7 +740,7 @@ export default function UserProfile({
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-foreground text-xs font-extrabold">
+              <label className="text-foreground text-xs font-bold">
                 دسته‌بندی
               </label>
               <Input
@@ -731,11 +762,7 @@ export default function UserProfile({
               انصراف
             </Button>
             <Button onClick={handleEditSave} disabled={saving}>
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                "ذخیره تغییرات"
-              )}
+              {saving ? <Loader2 className="animate-spin" /> : "ذخیره تغییرات"}
             </Button>
           </ResponsiveDialogFooter>
         </ResponsiveDialogContent>
@@ -765,10 +792,10 @@ export default function UserProfile({
 
           <div className="space-y-6">
             <div>
-              <h3 className="text-foreground text-lg leading-snug font-extrabold">
+              <h3 className="text-foreground text-lg leading-snug font-bold">
                 {syncedDetails?.title}
               </h3>
-              <span className="text-muted-foreground mt-1.5 block font-mono text-xs font-bold">
+              <span className="text-muted-foreground mt-1.5 block font-mono text-xs font-semibold">
                 منطقه: {toPersianDigits(syncedDetails?.region ?? "")} | وضعیت:{" "}
                 {syncedDetails
                   ? (STATUS_LABELS[syncedDetails.status] ??
@@ -783,10 +810,10 @@ export default function UserProfile({
 
             {syncedDetails?.adminResponse ? (
               <div className="border-primary/30 from-primary/10 to-primary/5 relative rounded-xl border bg-linear-to-br p-4">
-                <div className="border-primary/20 bg-primary/10 text-primary absolute top-3 left-3 rounded border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase">
+                <div className="border-primary/20 bg-primary/10 text-primary absolute top-3 left-3 rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase">
                   پاسخ رسمی
                 </div>
-                <span className="text-primary mb-1 block text-xs font-extrabold">
+                <span className="text-primary mb-1 block text-xs font-bold">
                   پاسخ رسمی شهرداری منطقه:
                 </span>
                 <p className="text-foreground/70 text-xs leading-relaxed font-medium whitespace-pre-line">
@@ -794,14 +821,14 @@ export default function UserProfile({
                 </p>
               </div>
             ) : (
-              <div className="bg-muted text-muted-foreground/70 rounded-xl border p-3.5 text-center text-xs font-bold">
+              <div className="bg-muted text-muted-foreground/70 rounded-xl border p-3.5 text-center text-xs font-semibold">
                 این گزارش برای اعزام اکیپ آماده‌سازی در صف رسیدگی واحد روابط
                 عمومی شهرداری منطقه است.
               </div>
             )}
 
             <div className="space-y-1.5">
-              <span className="text-foreground/70 flex items-center gap-1 text-xs font-bold">
+              <span className="text-foreground/70 flex items-center gap-1 text-xs font-semibold">
                 <MapPin className="text-primary h-4 w-4" />
                 موقعیت فیزیکی روی نقشه شهر
               </span>
@@ -817,7 +844,7 @@ export default function UserProfile({
           <Separator />
 
           <ResponsiveDialogFooter className="flex flex-col-reverse items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <span className="text-muted-foreground order-last text-center font-mono text-[10px] font-bold sm:order-first">
+            <span className="text-muted-foreground order-last text-center font-mono text-[10px] font-semibold sm:order-first">
               کد رهگیری: {toPersianDigits(syncedDetails?.id ?? "")}
             </span>
 
@@ -835,7 +862,6 @@ export default function UserProfile({
             >
               <Heart
                 className={cn(
-                  "h-3.5 w-3.5",
                   currentUser &&
                     syncedDetails?.likedByCurrentUser &&
                     "fill-current",
@@ -865,11 +891,9 @@ interface ProfileMenuItem {
   key: string;
   label: string;
   sub?: string;
-  // ponytail: no href variant except "/admin"; generalize when second link item arrives.
-  href?: "/admin";
+  href: string;
   Icon: typeof ClipboardList;
   active?: boolean;
-  onClick?: () => void;
 }
 
 function ProfileMenuCard({
@@ -881,50 +905,43 @@ function ProfileMenuCard({
 }) {
   return (
     <div className="bg-card overflow-hidden rounded-3xl border shadow-sm">
-      <div className="text-muted-foreground border-b px-5 py-3 text-start text-[13px]">
+      <div className="text-muted-foreground border-b px-4 py-2.5 text-start text-[13px] font-medium">
         {title}
       </div>
-      <div className="divide-border/60 divide-y">
-        {items.map(({ key, label, sub, href, Icon, active, onClick }) => {
-          const inner = (
-            <>
+      <div>
+        {items.map(({ key, label, sub, href, Icon, active }) => {
+          return (
+            <Link
+              key={key}
+              href={href}
+              className="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5"
+            >
               <span
                 className={cn(
-                  "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl",
+                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
                   active ? "bg-primary/10" : "bg-muted",
                 )}
               >
                 <Icon
                   className={cn(
-                    "h-5 w-5",
+                    "h-4.5 w-4.5",
                     active ? "text-primary" : "text-muted-foreground",
                   )}
                   strokeWidth={1.75}
                 />
               </span>
               <span className="flex flex-1 flex-col items-start gap-0.5">
-                <span className="text-foreground text-[15px] font-extrabold">
+                <span className="text-foreground text-sm font-semibold">
                   {label}
                 </span>
                 {sub && (
-                  <span className="text-muted-foreground text-[11px] font-bold">
+                  <span className="text-muted-foreground text-[11px] font-semibold">
                     {sub}
                   </span>
                 )}
               </span>
               <ChevronLeft className="text-muted-foreground/40 h-4 w-4 shrink-0" />
-            </>
-          );
-          const cls =
-            "flex w-full cursor-pointer items-center gap-3 px-5 py-3.5";
-          return href ? (
-            <Link key={key} href={href} className={cls}>
-              {inner}
             </Link>
-          ) : (
-            <button key={key} type="button" onClick={onClick} className={cls}>
-              {inner}
-            </button>
           );
         })}
       </div>
@@ -960,7 +977,7 @@ function RequestGrid({
   return (
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {requests.length === 0 && (
-        <div className="text-muted-foreground col-span-full py-16 text-center text-sm font-bold">
+        <div className="text-muted-foreground col-span-full py-16 text-center text-sm font-semibold">
           {emptyMessage}
         </div>
       )}
@@ -983,7 +1000,7 @@ function RequestGrid({
               <Badge
                 variant="outline"
                 className={cn(
-                  "border text-[10px] font-bold",
+                  "border text-[10px] font-semibold",
                   TYPE_BADGE_CLASS[req.type],
                 )}
               >
@@ -992,7 +1009,7 @@ function RequestGrid({
               <Badge
                 variant="outline"
                 className={cn(
-                  "border text-[10px] font-bold",
+                  "border text-[10px] font-semibold",
                   STATUS_BADGE_CLASS[req.status],
                 )}
               >
@@ -1001,7 +1018,7 @@ function RequestGrid({
             </div>
 
             {/* Title */}
-            <CardTitle className="text-foreground line-clamp-1 cursor-pointer text-sm font-extrabold">
+            <CardTitle className="text-foreground line-clamp-1 cursor-pointer text-sm font-bold">
               {req.title}
             </CardTitle>
 
@@ -1012,7 +1029,7 @@ function RequestGrid({
 
             {/* Footer */}
             <div className="text-muted-foreground flex items-center justify-between text-[10px]">
-              <span className="font-bold">
+              <span className="font-semibold">
                 {toPersianDigits(
                   new Date(req.createdAt).toLocaleDateString("fa-IR"),
                 )}
@@ -1028,8 +1045,9 @@ function RequestGrid({
                             variant="ghost"
                             size="icon-xs"
                             onClick={() => openEdit(req)}
+                            aria-label="ویرایش"
                           >
-                            <Edit className="h-3.5 w-3.5" />
+                            <Edit />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>ویرایش</TooltipContent>
@@ -1041,10 +1059,10 @@ function RequestGrid({
                               <Button
                                 variant="ghost"
                                 size="icon-xs"
-                                className="text-red-500 hover:text-red-600"
+                                className="text-destructive"
                                 onClick={() => setDeletingRequest(req)}
                               >
-                                <Trash2 className="h-3.5 w-3.5" />
+                                <Trash2 />
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>حذف</TooltipContent>
@@ -1064,11 +1082,11 @@ function RequestGrid({
                                 انصراف
                               </AlertDialogCancel>
                               <AlertDialogAction
+                                variant="destructive"
                                 onClick={handleDeleteConfirm}
-                                className="bg-red-500 hover:bg-red-600"
                               >
                                 {saving ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <Loader2 className="animate-spin" />
                                 ) : (
                                   "حذف شود"
                                 )}

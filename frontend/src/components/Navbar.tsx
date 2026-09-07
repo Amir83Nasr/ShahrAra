@@ -191,7 +191,7 @@ export default function Navbar({
       </nav>
 
       {/* نوار پایین — فقط موبایل */}
-      <div className="bg-background/95 fixed inset-x-0 bottom-0 z-50 border-t pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden">
+      <div className="bg-background/95 fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-50 rounded-2xl border shadow-lg backdrop-blur-xl md:hidden">
         <div className="flex items-stretch justify-around">
           {[
             { href: "/", label: "خانه", Icon: House },
@@ -204,7 +204,7 @@ export default function Navbar({
               variant="ghost"
               asChild
               className={cn(
-                "h-auto flex-1 flex-col gap-1 rounded-none py-1 font-bold",
+                "h-auto flex-1 flex-col gap-1 rounded-none py-2 font-bold active:bg-transparent dark:active:bg-transparent",
                 isActive(href) ? "text-primary" : "text-muted-foreground",
               )}
             >

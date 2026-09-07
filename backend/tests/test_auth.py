@@ -43,7 +43,7 @@ class TestOtp:
         assert r.status_code == 200
         data = r.json()
         assert data["success"] is True
-        assert data["expiresInSeconds"] == 300
+        assert data["expiresInSeconds"] == 120
         assert data["devCode"] and len(data["devCode"]) == 6
 
     def test_verify_new_user_registers(self, client, user_data):

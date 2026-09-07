@@ -198,13 +198,8 @@ export default function AdminPanel({
           </div>
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onRefresh}
-          className="gap-1.5"
-        >
-          <RefreshCcw className="h-3.5 w-3.5" />
+        <Button variant="outline" size="sm" onClick={onRefresh}>
+          <RefreshCcw />
           بروزرسانی لیست کارهای مردمی
         </Button>
       </div>
@@ -453,8 +448,9 @@ export default function AdminPanel({
                   variant="ghost"
                   size="icon-sm"
                   onClick={() => setSelectedItem(null)}
+                  aria-label="بستن"
                 >
-                  <X className="h-4 w-4" />
+                  <X />
                 </Button>
               </div>
 

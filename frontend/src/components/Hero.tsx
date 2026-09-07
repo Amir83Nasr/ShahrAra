@@ -49,20 +49,20 @@ export default function Hero() {
 
           {/* Quick Action Buttons */}
           <div className="flex w-full flex-col gap-3 pt-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-5">
-            <Button asChild className="w-full px-4 sm:w-auto">
+            <Button asChild className="w-full sm:w-auto">
               <Link href="/submit">
                 <span>شروع مشارکت فردی و ثبت گزارش</span>
-                <ArrowLeft className="h-4 w-4 shrink-0" />
+                <ArrowLeft className="shrink-0" />
               </Link>
             </Button>
 
             <Button
               variant="outline"
               asChild
-              className="w-full px-4 font-semibold sm:w-auto"
+              className="w-full font-semibold sm:w-auto"
             >
               <Link href="/reports">
-                <Map className="h-4 w-4 shrink-0" />
+                <Map className="shrink-0" />
                 <span>پایش زنده گزارش‌های قم</span>
               </Link>
             </Button>
