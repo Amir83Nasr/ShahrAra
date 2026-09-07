@@ -6,7 +6,7 @@
  */
 
 import Link from "next/link";
-import { LogIn, UserRound } from "lucide-react";
+import { UserRound } from "lucide-react";
 import { useApp } from "@/app/providers";
 import { Button } from "@/components/ui/button";
 
@@ -47,15 +47,8 @@ export default function ProfileGate({
             برای مشاهده پروفایل و درخواست‌های خود باید وارد حساب کاربری شوید.
           </p>
         </div>
-        <Button
-          asChild
-          size="lg"
-          className="h-12 px-8 text-base font-bold"
-        >
-          <Link href="/login">
-            <LogIn className="h-4 w-4" />
-            ورود به حساب کاربری
-          </Link>
+        <Button asChild className="px-8 text-base">
+          <Link href="/login">ورود به حساب کاربری</Link>
         </Button>
       </div>
     );

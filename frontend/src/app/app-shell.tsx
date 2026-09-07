@@ -182,7 +182,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
         {!isChromeless && (
           <div
-            className="h-[calc(4.25rem+env(safe-area-inset-bottom))] md:hidden"
+            className="h-[calc(5rem+env(safe-area-inset-bottom))] md:hidden"
             aria-hidden
           />
         )}
