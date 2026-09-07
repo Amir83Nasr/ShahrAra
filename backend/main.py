@@ -10,9 +10,6 @@ from app.core.errors import (
     http_exception_handler,
     validation_exception_handler,
 )
-from app.db.session import Base, engine
-
-Base.metadata.create_all(bind=engine)
 
 NAME = "ShahrAra API"
 VERSION: str = "1.1.0"

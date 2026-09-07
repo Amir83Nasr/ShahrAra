@@ -10,13 +10,12 @@ import { useApp } from "../providers";
 import RequestForm from "@/components/RequestForm";
 
 export default function SubmitPage() {
-  const { currentUser, openAuth, submitSuccess } = useApp();
+  const { currentUser, submitSuccess } = useApp();
   const router = useRouter();
 
   return (
     <RequestForm
       currentUser={currentUser}
-      onOpenAuth={openAuth}
       onSubmitSuccess={() => {
         submitSuccess();
         router.push("/reports");

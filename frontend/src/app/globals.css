@@ -235,6 +235,16 @@
   }
   html {
     @apply font-sans;
+    scrollbar-gutter: stable;
+  }
+  /* react-remove-scroll-bar (Radix scroll lock) assumes LTR: on open it
+     sets margin-right/padding-right equal to the hidden scrollbar width.
+     Here the page is RTL (scrollbar on the left) and scrollbar-gutter
+     already reserves that space, so the offset is a pure layout shift.
+     Cancel it. */
+  html[dir="rtl"] body[data-scroll-locked] {
+    margin-right: 0 !important;
+    padding-right: 0 !important;
   }
   ::-webkit-scrollbar {
     width: 6px;
@@ -252,6 +262,12 @@
   }
   .scrollbar-gutter-stable {
     scrollbar-gutter: stable;
+  }
+  /* جلوگیری از درگ تصاویر و لوگوها با موس */
+  img,
+  svg {
+    -webkit-user-drag: none;
+    user-select: none;
   }
 }
 

@@ -29,7 +29,6 @@ import LogoutModal from "@/components/LogoutModal";
 interface NavbarProps {
   currentUser: User | null;
   onLogout: () => void;
-  onOpenAuth: () => void;
   theme: "light" | "dark";
   toggleTheme: (theme: "light" | "dark") => void;
 }
@@ -37,7 +36,6 @@ interface NavbarProps {
 export default function Navbar({
   currentUser,
   onLogout,
-  onOpenAuth,
   theme,
   toggleTheme,
 }: NavbarProps) {
@@ -112,8 +110,9 @@ export default function Navbar({
             <div className="nav-actions flex items-center gap-3">
               <ModeToggle theme={theme} onThemeChange={toggleTheme} />
 
-              {currentUser ? (
-                <>
+              {/* یوزر / ورود — فقط دسکتاپ؛ موبایل از تب «حساب کاربری» نوار پایین میره پروفایل */}
+              <div className="hidden items-center gap-3 md:flex">
+                {currentUser ? (
                   <DropdownMenu
                     dir="rtl"
                     open={dropdownOpen}
@@ -122,7 +121,7 @@ export default function Navbar({
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost">
                         <UserRound />
-                        <span className="hidden max-w-[120px] truncate font-extrabold md:inline lg:max-w-none">
+                        <span className="max-w-30 truncate font-extrabold lg:max-w-none">
                           {currentUser.firstName} {currentUser.lastName}
                         </span>
                       </Button>
@@ -151,6 +150,20 @@ export default function Navbar({
                           <span>پروفایل من</span>
                         </Link>
                       </DropdownMenuItem>
+                      {currentUser.isAdmin && (
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setDropdownOpen(false);
+                          }}
+                          className="flex gap-2"
+                          asChild
+                        >
+                          <Link href="/admin">
+                            <Shield />
+                            <span>پنل مدیریت</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         variant="destructive"
@@ -165,16 +178,14 @@ export default function Navbar({
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                </>
-              ) : (
-                <Button variant="default" size="sm" onClick={onOpenAuth}>
-                  <LogIn size={14} />
-                  <span className="hidden sm:inline">
-                    ورود / ثبت‌نام شهروند
-                  </span>
-                  <span className="sm:hidden">ورود</span>
-                </Button>
-              )}
+                ) : (
+                  <Button variant="default" className="px-4" asChild>
+                    <Link href="/login">
+                      <span>ورود / ثبت‌نام</span>
+                    </Link>
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -187,13 +198,14 @@ export default function Navbar({
             { href: "/", label: "خانه", Icon: House },
             { href: "/reports", label: "گزارش‌ها", Icon: ClipboardList },
             { href: "/submit", label: "ثبت", Icon: CirclePlus },
+            { href: "/profile", label: "حساب کاربری", Icon: UserRound },
           ].map(({ href, label, Icon }) => (
             <Button
               key={href}
               variant="ghost"
               asChild
               className={cn(
-                "h-auto flex-1 flex-col gap-1 rounded-none py-2 font-bold",
+                "h-auto flex-1 flex-col gap-1 rounded-none py-1 font-bold",
                 isActive(href) ? "text-primary" : "text-muted-foreground",
               )}
             >
@@ -204,56 +216,12 @@ export default function Navbar({
                     isActive(href) && "bg-primary/10",
                   )}
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className="size-5" />
                 </span>
                 <span className="text-[10px]">{label}</span>
               </Link>
             </Button>
           ))}
-          {currentUser && (
-            <Button
-              variant="ghost"
-              asChild
-              className={cn(
-                "h-auto flex-1 flex-col gap-1 rounded-none py-2 font-bold",
-                isActive("/profile") ? "text-primary" : "text-muted-foreground",
-              )}
-            >
-              <Link href="/profile">
-                <span
-                  className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-xl transition-colors",
-                    isActive("/profile") && "bg-primary/10",
-                  )}
-                >
-                  <UserRound className="h-5 w-5" />
-                </span>
-                <span className="text-[10px]">پروفایل</span>
-              </Link>
-            </Button>
-          )}
-          {currentUser?.isAdmin && (
-            <Button
-              variant="ghost"
-              asChild
-              className={cn(
-                "h-auto flex-1 flex-col gap-1 rounded-none py-2 font-bold",
-                isActive("/admin") ? "text-primary" : "text-muted-foreground",
-              )}
-            >
-              <Link href="/admin">
-                <span
-                  className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-xl transition-colors",
-                    isActive("/admin") && "bg-primary/10",
-                  )}
-                >
-                  <Shield className="h-5 w-5" />
-                </span>
-                <span className="text-[10px]">ادمین</span>
-              </Link>
-            </Button>
-          )}
         </div>
       </div>
 

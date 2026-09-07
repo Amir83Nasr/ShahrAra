@@ -5,12 +5,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useApp } from "../providers";
 import ReportsDirectory from "@/components/ReportsDirectory";
 
-export default function ReportsPage() {
-  const { requests, currentUser, like, openAuth, refresh, theme } = useApp();
+function ReportsContent() {
+  const { requests, currentUser, like, refresh, theme } = useApp();
   const searchParams = useSearchParams();
   const category = searchParams.get("category") ?? "all";
 
@@ -20,10 +21,17 @@ export default function ReportsPage() {
       items={requests}
       currentUser={currentUser}
       onLike={like}
-      onOpenAuth={openAuth}
       onRefresh={() => refresh({ force: true })}
       theme={theme}
       initialCategory={category}
     />
+  );
+}
+
+export default function ReportsPage() {
+  return (
+    <Suspense>
+      <ReportsContent />
+    </Suspense>
   );
 }

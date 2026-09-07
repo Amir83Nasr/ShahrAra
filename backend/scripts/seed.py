@@ -5,10 +5,8 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 from app.core.config import ADMIN_NATIONAL_ID, ADMIN_PHONE
-from app.db.session import Base, SessionLocal, engine
+from app.db.session import SessionLocal
 from app.models.models import Request, User
-
-Base.metadata.create_all(bind=engine)
 
 USERS = [
     {

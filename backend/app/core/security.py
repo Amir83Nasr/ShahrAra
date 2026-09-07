@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
+import bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
@@ -12,6 +13,18 @@ from app.db.session import get_db
 from app.models.models import User
 
 security_scheme = HTTPBearer(auto_error=False)
+
+
+def hash_secret(raw: str) -> str:
+    """Hash a password or OTP code with bcrypt."""
+    return bcrypt.hashpw(raw.encode(), bcrypt.gensalt()).decode()
+
+
+def verify_secret(raw: str, hashed: str) -> bool:
+    try:
+        return bcrypt.checkpw(raw.encode(), hashed.encode())
+    except ValueError:
+        return False
 
 
 def create_access_token(phone: str, is_admin: bool) -> str:

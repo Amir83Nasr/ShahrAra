@@ -25,13 +25,57 @@ class Coordinates(BaseModel):
     model_config = {"json_schema_extra": {"example": {"lat": 35.7219, "lng": 51.3347}}}
 
 
-class UserCreate(BaseModel):
-    phone: str = Field(examples=["09123456789"])
-    nationalId: str = Field(alias="nationalId", examples=["1234567890"])
-    firstName: str | None = Field(None, alias="firstName", examples=["Ali"])
-    lastName: str | None = Field(None, alias="lastName", examples=["Rezaei"])
+# ── Auth: OTP + Password ────────────────────────────────
+
+PHONE_PATTERN = r"^09\d{9}$"
+
+
+class CheckPhoneRequest(BaseModel):
+    phone: str = Field(pattern=PHONE_PATTERN, examples=["09123456789"])
+
+
+class CheckPhoneResponse(BaseModel):
+    exists: bool
+    hasPassword: bool
+
+
+class OtpRequest(BaseModel):
+    phone: str = Field(pattern=PHONE_PATTERN, examples=["09123456789"])
+
+
+class OtpRequestResponse(BaseModel):
+    success: bool
+    expiresInSeconds: int
+    # Dev mode only: the code is returned in the response instead of sent by SMS.
+    devCode: str | None = None
+
+
+class OtpVerifyRequest(BaseModel):
+    phone: str = Field(pattern=PHONE_PATTERN, examples=["09123456789"])
+    code: str = Field(pattern=r"^\d{6}$", examples=["123456"])
+    # Required only when the phone is not registered yet (first-time entry).
+    firstName: str | None = Field(None, alias="firstName", min_length=1)
+    lastName: str | None = Field(None, alias="lastName", min_length=1)
+    nationalId: str | None = Field(None, alias="nationalId", pattern=r"^\d{10}$")
 
     model_config = {"populate_by_name": True}
+
+
+class PasswordLoginRequest(BaseModel):
+    phone: str = Field(pattern=PHONE_PATTERN, examples=["09123456789"])
+    password: str = Field(min_length=1, max_length=72)
+
+
+class PasswordChangeRequest(BaseModel):
+    currentPassword: str | None = Field(None, alias="currentPassword", max_length=72)
+    newPassword: str = Field(alias="newPassword", min_length=8, max_length=72)
+
+    model_config = {"populate_by_name": True}
+
+
+class PasswordChangeResponse(BaseModel):
+    success: bool
+    user: UserResponse
 
 
 class UserResponse(BaseModel):
@@ -41,6 +85,7 @@ class UserResponse(BaseModel):
     firstName: str = Field(alias="firstName", examples=["Ali"])
     lastName: str = Field(alias="lastName", examples=["Rezaei"])
     isAdmin: bool = Field(alias="isAdmin")
+    hasPassword: bool = Field(alias="hasPassword")
 
     model_config = {"from_attributes": True, "populate_by_name": True}
 

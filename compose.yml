@@ -4,6 +4,7 @@ services:
     image: postgres:18
     container_name: shahr-ara-db
     restart: unless-stopped
+    profiles: ["dev"]
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
@@ -24,8 +25,11 @@ services:
       dockerfile: Dockerfile
     container_name: shahr-ara-backend
     restart: unless-stopped
+    # Dev: local docker DB. Production: set DATABASE_URL (Neon) in .env —
+    # the db service and depends_on are dev-only.
     environment:
-      - DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-shahr_ara}
+      - DATABASE_URL=${DATABASE_URL:-postgresql+psycopg://postgres:postgres@db:5432/shahr_ara}
+      - DATABASE_URL_UNPOOLED=${DATABASE_URL_UNPOOLED:-}
       - JWT_SECRET=${JWT_SECRET:-shahr-ara-dev-secret-change-in-production}
       - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
       - JWT_EXPIRATION_MINUTES=${JWT_EXPIRATION_MINUTES:-1440}
@@ -39,6 +43,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
+        required: false
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
       interval: 30s

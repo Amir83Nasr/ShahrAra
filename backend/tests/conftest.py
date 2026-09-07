@@ -6,19 +6,43 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
-# Tests run against the same Postgres instance used in dev (docker compose `db`).
+# Tests run against a dedicated test database on the dev Postgres (docker compose `db`).
 # Requires `make db-up` (or a running Postgres at localhost:5432).
-os.environ.setdefault(
-    "DATABASE_URL", "postgresql+psycopg://postgres:postgres@localhost:5432/shahr_ara"
-)
+TEST_DB_URL = "postgresql+psycopg://postgres:postgres@localhost:5432/shahr_ara_test"
+os.environ.setdefault("DATABASE_URL", TEST_DB_URL)
 os.environ["ADMIN_PHONE"] = "09120000000"
 os.environ["ADMIN_NATIONAL_ID"] = "1234567890"
+os.environ.setdefault("OTP_DEV_MODE", "true")
+
+
+def _ensure_test_db() -> None:
+    """Create the test database if missing (dev data stays untouched)."""
+    from sqlalchemy import create_engine, text
+    from sqlalchemy.engine.url import make_url
+
+    url = make_url(TEST_DB_URL)
+    admin = url.set(database="postgres")
+    admin_engine = create_engine(admin, isolation_level="AUTOCOMMIT")
+    try:
+        with admin_engine.connect() as conn:
+            exists = conn.execute(
+                text("SELECT 1 FROM pg_database WHERE datname = :d"), {"d": url.database}
+            ).scalar()
+            if not exists:
+                conn.execute(text(f'CREATE DATABASE "{url.database}"'))
+    finally:
+        admin_engine.dispose()
+
+
+_ensure_test_db()
 
 
 @pytest.fixture(scope="session", autouse=True)
 def _setup_db():
+    import app.models.models  # noqa: F401 — must run before create_all
     from app.db.session import Base, engine
 
+    # Tests create/drop schema directly — no migrations, deterministic setup.
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
@@ -56,11 +80,23 @@ def user_data() -> dict[str, Any]:
     }
 
 
+def otp_login(client: TestClient, phone: str, **profile: str) -> dict[str, Any]:
+    """Full OTP flow: request a code (dev mode → devCode) and verify it."""
+    r = client.post("/api/v1/auth/otp/request", json={"phone": phone})
+    assert r.status_code == 200, r.text
+    code = r.json()["devCode"]
+    assert code, "OTP_DEV_MODE must be on in tests"
+    payload: dict[str, Any] = {"phone": phone, "code": code, **profile}
+    r = client.post("/api/v1/auth/otp/verify", json=payload)
+    assert r.status_code == 200, r.text
+    return r.json()
+
+
 @pytest.fixture
 def registered_user(client, user_data):
-    r = client.post("/api/v1/auth/login", json=user_data)
-    assert r.status_code == 200
-    return r.json()
+    return otp_login(client, user_data["phone"], **{
+        k: user_data[k] for k in ("nationalId", "firstName", "lastName")
+    })
 
 
 @pytest.fixture
@@ -70,17 +106,7 @@ def user_token(registered_user):
 
 @pytest.fixture
 def admin_token(client):
-    r = client.post(
-        "/api/v1/auth/login",
-        json={
-            "phone": "09120000000",
-            "nationalId": "1234567890",
-            "firstName": "Manager",
-            "lastName": "System",
-        },
-    )
-    assert r.status_code == 200
-    return r.json()["token"]["accessToken"]
+    return otp_login(client, "09120000000")["token"]["accessToken"]
 
 
 @pytest.fixture
@@ -113,17 +139,9 @@ def token_for(client):
     """Factory fixture: register/login an arbitrary phone and return its access token."""
 
     def _make(phone: str, first_name: str = "Test", last_name: str = "User") -> str:
-        r = client.post(
-            "/api/v1/auth/login",
-            json={
-                "phone": phone,
-                "nationalId": "1111111111",
-                "firstName": first_name,
-                "lastName": last_name,
-            },
-        )
-        assert r.status_code == 200
-        return r.json()["token"]["accessToken"]
+        return otp_login(
+            client, phone, nationalId="1111111111", firstName=first_name, lastName=last_name
+        )["token"]["accessToken"]
 
     return _make
 

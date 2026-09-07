@@ -110,7 +110,7 @@ export function DatePicker({
           variant="outline"
           dir="rtl"
           className={cn(
-            "border-input hover:bg-accent hover:text-accent-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-expanded:bg-accent h-10 w-full justify-between gap-1.5 rounded-md border bg-transparent px-2.5 text-right text-sm font-normal transition-[color,box-shadow] focus-visible:ring-3",
+            "border-input hover:bg-accent hover:text-accent-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-expanded:bg-accent h-10 w-full justify-between gap-1.5 rounded-md border bg-background px-4 text-right text-sm font-normal transition-[color,box-shadow] focus-visible:ring-3",
             !parsed && "text-muted-foreground",
             className,
           )}

@@ -6,17 +6,24 @@
  */
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import {
   AlertCircle,
   CheckCircle,
+  ChevronLeft,
   ClipboardList,
   Edit,
   Heart,
+  KeyRound,
   Loader2,
+  LogOut,
   MapPin,
   Search,
+  Shield,
   Trash2,
+  UserRound,
 } from "lucide-react";
+import LogoutModal from "@/components/LogoutModal";
 import { User, RequestItem, RequestUpdateData } from "../types";
 import { toPersianDigits } from "../utils/numberUtils";
 import { REGIONS } from "../utils/regionUtils";
@@ -30,6 +37,11 @@ import {
 import { cn } from "@/lib/utils";
 import { invalidateCache } from "@/utils/apiCache";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Card,
   CardContent,
@@ -55,7 +67,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
   Select,
@@ -69,6 +80,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useApp } from "../app/providers";
 import dynamic from "next/dynamic";
 
 // leaflet touches `window` at import time; skip prerendering
@@ -88,6 +100,8 @@ export default function UserProfile({
   onLike,
   onRefresh,
 }: UserProfileProps) {
+  const { loginSuccess, logout } = useApp();
+  const [confirmLogout, setConfirmLogout] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<string>("my");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
@@ -111,6 +125,14 @@ export default function UserProfile({
   const [editDescription, setEditDescription] = useState("");
   const [editCategory, setEditCategory] = useState("");
 
+  // Security tab — set/change password
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwError, setPwError] = useState<string | null>(null);
+  const [pwSuccess, setPwSuccess] = useState<string | null>(null);
+
   const myRequests = useMemo(
     () => requests.filter((r) => r.userPhone === currentUser.phone),
     [requests, currentUser.phone],
@@ -119,6 +141,60 @@ export default function UserProfile({
     () => requests.filter((r) => r.likedByCurrentUser),
     [requests],
   );
+
+  const handlePasswordSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwError(null);
+    setPwSuccess(null);
+
+    if (newPassword.length < 8) {
+      setPwError("رمز عبور جدید باید حداقل ۸ کاراکتر باشد.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPwError("رمز عبور جدید و تکرار آن یکسان نیستند.");
+      return;
+    }
+
+    setPwSaving(true);
+    try {
+      const res = await fetch("/api/v1/auth/password", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${currentUser.token}`,
+        },
+        body: JSON.stringify({
+          currentPassword: currentUser.hasPassword
+            ? currentPassword || undefined
+            : undefined,
+          newPassword,
+        }),
+      });
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          result.detail || "خطا در تنظیم رمز عبور. لطفا دوباره تلاش کنید.",
+        );
+      }
+      // Refresh context/localStorage with the new hasPassword flag.
+      loginSuccess({
+        ...currentUser,
+        ...result.user,
+        token: currentUser.token,
+      });
+      setPwSuccess("رمز عبور با موفقیت ذخیره شد.");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: unknown) {
+      setPwError(
+        err instanceof Error ? err.message : "خطا در تنظیم رمز عبور.",
+      );
+    } finally {
+      setPwSaving(false);
+    }
+  };
 
   // Filtered list based on active tab + search/filter
   const filteredRequests = useMemo(() => {
@@ -256,8 +332,102 @@ export default function UserProfile({
     }
   };
 
+  const selectTab = (value: string) => {
+    setActiveSubTab(value);
+    setSearchTerm("");
+    setFilterType("all");
+    setFilterStatus("all");
+    setFilterRegion("all");
+    document
+      .getElementById("profile-tabs")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      {/* منوی حساب — فقط موبایل */}
+      <div className="flex flex-col gap-4 md:hidden">
+        {/* کارت کاربر */}
+        <div className="bg-muted/60 flex items-center justify-between rounded-3xl px-5 py-4">
+          <span className="bg-card flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full">
+            <UserRound className="text-muted-foreground h-8 w-8" strokeWidth={1.5} />
+          </span>
+          <span className="flex flex-col items-start gap-1.5">
+            <span className="flex items-center gap-2">
+              <span className="text-foreground text-lg font-extrabold">
+                {currentUser.firstName} {currentUser.lastName}
+              </span>
+              {currentUser.isAdmin && (
+                <Badge className="bg-primary/15 text-primary rounded-full px-2.5 py-0.5 text-[11px] font-bold hover:bg-primary/15">
+                  ادمین
+                </Badge>
+              )}
+            </span>
+            <span className="text-muted-foreground font-mono text-sm">
+              {toPersianDigits(currentUser.phone)}
+            </span>
+          </span>
+        </div>
+
+        {/* مطالبات من */}
+        <ProfileMenuCard
+          title="مطالبات من"
+          items={[
+            {
+              key: "my",
+              label: "درخواست‌های من",
+              sub: toPersianDigits(myRequests.length.toString()) + " درخواست",
+              Icon: ClipboardList,
+              active: activeSubTab === "my",
+              onClick: () => selectTab("my"),
+            },
+            {
+              key: "liked",
+              label: "لایک کرده‌ام",
+              sub: toPersianDigits(likedRequests.length.toString()) + " درخواست",
+              Icon: Heart,
+              active: activeSubTab === "liked",
+              onClick: () => selectTab("liked"),
+            },
+          ]}
+        />
+
+        {/* حساب کاربری */}
+        <ProfileMenuCard
+          title="حساب کاربری"
+          items={[
+            {
+              key: "security",
+              label: "امنیت و رمز عبور",
+              Icon: KeyRound,
+              active: activeSubTab === "security",
+              onClick: () => selectTab("security"),
+            },
+            ...(currentUser.isAdmin
+              ? [
+                  {
+                    key: "admin",
+                    label: "پنل مدیریت",
+                    Icon: Shield,
+                    href: "/admin" as const,
+                  },
+                ]
+              : []),
+          ]}
+        />
+
+        <button
+          type="button"
+          onClick={() => setConfirmLogout(true)}
+          className="border-destructive/15 bg-card flex w-full cursor-pointer items-center justify-between rounded-3xl border px-5 py-3 shadow-sm"
+        >
+          <span className="text-destructive text-[15px] font-extrabold">خروج از حساب</span>
+          <span className="bg-destructive/10 flex h-11 w-11 items-center justify-center rounded-2xl">
+            <LogOut className="text-destructive h-5 w-5" strokeWidth={1.75} />
+          </span>
+        </button>
+      </div>
+
       {/* Success / Error banners */}
       {success && (
         <Alert className="border-status-resolved/20 bg-status-resolved/10 text-status-resolved mb-4 text-sm">
@@ -278,6 +448,8 @@ export default function UserProfile({
 
       {/* Tabs */}
       <Tabs
+        id="profile-tabs"
+        className="mt-6 scroll-mt-20 md:mt-0"
         dir="rtl"
         value={activeSubTab}
         onValueChange={(v) => {
@@ -295,6 +467,10 @@ export default function UserProfile({
           <TabsTrigger value="liked" className="flex-1 px-4 font-extrabold">
             <Heart className="ml-1.5 h-4 w-4" />
             لایک کرده‌ام
+          </TabsTrigger>
+          <TabsTrigger value="security" className="flex-1 px-4 font-extrabold">
+            <KeyRound className="ml-1.5 h-4 w-4" />
+            امنیت
           </TabsTrigger>
         </TabsList>
 
@@ -397,6 +573,97 @@ export default function UserProfile({
             openEdit={openEdit}
             handleDeleteConfirm={handleDeleteConfirm}
           />
+        </TabsContent>
+
+        <TabsContent value="security" className="mt-0">
+          <Card className="mx-auto max-w-md">
+            <CardContent className="flex flex-col gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-sm font-extrabold">
+                  <KeyRound className="text-primary h-4 w-4" />
+                  رمز عبور حساب
+                </CardTitle>
+                <CardDescription className="mt-1 text-xs leading-relaxed">
+                  {currentUser.hasPassword
+                    ? "برای تغییر رمز، رمز فعلی را وارد کنید."
+                    : "برای حساب خود رمز عبور تنظیم کنید تا علاوه بر کد پیامکی، با رمز هم وارد شوید."}
+                </CardDescription>
+              </div>
+
+              {pwError && (
+                <Alert variant="destructive" className="text-xs">
+                  <AlertCircle />
+                  <AlertTitle>خطا</AlertTitle>
+                  <AlertDescription>{pwError}</AlertDescription>
+                </Alert>
+              )}
+
+              {pwSuccess && (
+                <Alert className="border-status-resolved/20 bg-status-resolved/10 text-status-resolved text-xs">
+                  <CheckCircle />
+                  <AlertTitle>موفق</AlertTitle>
+                  <AlertDescription className="text-status-resolved/90">
+                    {pwSuccess}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <form onSubmit={handlePasswordSave} className="flex flex-col gap-3">
+                {currentUser.hasPassword && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-foreground text-xs font-extrabold">
+                      رمز عبور فعلی <span className="text-destructive">*</span>
+                    </label>
+                    <Input
+                      type="password"
+                      required
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      dir="ltr"
+                      autoComplete="current-password"
+                    />
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-foreground text-xs font-extrabold">
+                    رمز عبور جدید <span className="text-destructive">*</span>
+                  </label>
+                  <Input
+                    type="password"
+                    required
+                    minLength={8}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    dir="ltr"
+                    autoComplete="new-password"
+                  />
+                  <span className="text-muted-foreground text-[10.5px] font-bold">
+                    حداقل ۸ کاراکتر
+                  </span>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-foreground text-xs font-extrabold">
+                    تکرار رمز عبور جدید{" "}
+                    <span className="text-destructive">*</span>
+                  </label>
+                  <Input
+                    type="password"
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    dir="ltr"
+                    autoComplete="new-password"
+                  />
+                </div>
+
+                <Button type="submit" disabled={pwSaving}>
+                  {pwSaving ? "در حال ذخیره..." : "ذخیره رمز عبور"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 
@@ -575,6 +842,71 @@ export default function UserProfile({
           </ResponsiveDialogFooter>
         </ResponsiveDialogContent>
       </ResponsiveDialog>
+
+      <LogoutModal
+        open={confirmLogout}
+        onOpenChange={setConfirmLogout}
+        onConfirm={logout}
+      />
+    </div>
+  );
+}
+
+// ── Profile Menu Card (mobile account menu) ────────────────────────────
+
+interface ProfileMenuItem {
+  key: string;
+  label: string;
+  sub?: string;
+  // ponytail: no href variant except "/admin"; generalize when second link item arrives.
+  href?: "/admin";
+  Icon: typeof ClipboardList;
+  active?: boolean;
+  onClick?: () => void;
+}
+
+function ProfileMenuCard({ title, items }: { title: string; items: ProfileMenuItem[] }) {
+  return (
+    <div className="bg-card overflow-hidden rounded-3xl border shadow-sm">
+      <div className="text-muted-foreground border-b px-5 py-3 text-start text-[13px]">
+        {title}
+      </div>
+      <div className="divide-y divide-border/60">
+        {items.map(({ key, label, sub, href, Icon, active, onClick }) => {
+          const inner = (
+            <>
+              <span
+                className={cn(
+                  "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl",
+                  active ? "bg-primary/10" : "bg-muted",
+                )}
+              >
+                <Icon
+                  className={cn("h-5 w-5", active ? "text-primary" : "text-muted-foreground")}
+                  strokeWidth={1.75}
+                />
+              </span>
+              <span className="flex flex-1 flex-col items-start gap-0.5">
+                <span className="text-foreground text-[15px] font-extrabold">{label}</span>
+                {sub && (
+                  <span className="text-muted-foreground text-[11px] font-bold">{sub}</span>
+                )}
+              </span>
+              <ChevronLeft className="text-muted-foreground/40 h-4 w-4 shrink-0" />
+            </>
+          );
+          const cls = "flex w-full cursor-pointer items-center gap-3 px-5 py-3.5";
+          return href ? (
+            <Link key={key} href={href} className={cls}>
+              {inner}
+            </Link>
+          ) : (
+            <button key={key} type="button" onClick={onClick} className={cls}>
+              {inner}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -669,27 +1001,33 @@ function RequestGrid({
                   (req.status === "submitted" ||
                     req.status === "under_review") && (
                     <>
-                      <Button
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() => openEdit(req)}
-                        title="ویرایش"
-                      >
-                        <Edit className="h-3.5 w-3.5" />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() => openEdit(req)}
+                          >
+                            <Edit className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>ویرایش</TooltipContent>
+                      </Tooltip>
                       {req.status === "submitted" && (
                         <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon-xs"
-                              className="text-red-500 hover:text-red-600"
-                              title="حذف"
-                              onClick={() => setDeletingRequest(req)}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </AlertDialogTrigger>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon-xs"
+                                className="text-red-500 hover:text-red-600"
+                                onClick={() => setDeletingRequest(req)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>حذف</TooltipContent>
+                          </Tooltip>
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>حذف درخواست</AlertDialogTitle>

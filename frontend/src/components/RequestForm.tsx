@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { RequestType, User } from "../types";
 
 // leaflet touches `window` at import time; skip prerendering
@@ -37,14 +38,12 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface RequestFormProps {
   currentUser: User | null;
-  onOpenAuth: () => void;
   onSubmitSuccess: () => void;
   theme?: "light" | "dark";
 }
 
 export default function RequestForm({
   currentUser,
-  onOpenAuth,
   onSubmitSuccess,
   theme = "light",
 }: RequestFormProps) {
@@ -146,8 +145,8 @@ export default function RequestForm({
             روشنایی یا دیگر خدمات شهری، ابتدا باید وارد حساب کاربری خود شوید تا
             درخواستتان مستقیماً به دست مسئولان مربوطه برسد.
           </p>
-          <Button onClick={onOpenAuth} size="lg">
-            ورود / ثبت‌نام شهروندان
+          <Button asChild size="lg">
+            <Link href="/login">ورود / ثبت‌نام شهروندان</Link>
           </Button>
         </div>
       </div>

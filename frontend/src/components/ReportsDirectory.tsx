@@ -7,6 +7,7 @@
 
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { RequestItem, User } from "../types";
 
 // leaflet touches `window` at import time; skip prerendering
@@ -42,6 +43,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { DatePicker } from "@/components/ui/date-picker";
 import {
@@ -63,7 +69,6 @@ interface ReportsDirectoryProps {
   items: RequestItem[];
   currentUser: User | null;
   onLike: (id: string) => Promise<void>;
-  onOpenAuth: () => void;
   onRefresh: () => void;
   theme?: "light" | "dark";
   initialCategory?: string;
@@ -73,11 +78,11 @@ export default function ReportsDirectory({
   items,
   currentUser,
   onLike,
-  onOpenAuth,
   onRefresh,
   theme = "light",
   initialCategory = "all",
 }: ReportsDirectoryProps) {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>(initialCategory);
   const [activeType, setActiveType] = useState<"all" | "problem" | "idea">(
@@ -127,7 +132,7 @@ export default function ReportsDirectory({
   const handleLikeClick = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     if (!currentUser) {
-      onOpenAuth();
+      router.push("/login");
       return;
     }
     setSelectedDetails((prev) =>
@@ -262,14 +267,14 @@ export default function ReportsDirectory({
               date={startDate}
               onSelect={setStartDate}
               placeholder="از تاریخ"
-              className="h-8 w-36 text-xs"
+              className="w-36"
             />
             <span className="text-muted-foreground text-xs">تا</span>
             <DatePicker
               date={endDate}
               onSelect={setEndDate}
               placeholder="تا تاریخ"
-              className="h-8 w-36 text-xs"
+              className="w-36"
             />
           </div>
         </div>
@@ -365,27 +370,31 @@ export default function ReportsDirectory({
                             {toPersianDigits(item.region)}
                           </span>
 
-                          <Button
-                            variant={hasLikedStatus ? "destructive" : "outline"}
-                            size="sm"
-                            onClick={(e) => handleLikeClick(e, item.id)}
-                            className="gap-1"
-                            title={
-                              currentUser
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant={hasLikedStatus ? "destructive" : "outline"}
+                                size="sm"
+                                onClick={(e) => handleLikeClick(e, item.id)}
+                                className="gap-1"
+                              >
+                                <Heart
+                                  className={cn(
+                                    "h-3.5 w-3.5",
+                                    hasLikedStatus && "fill-current",
+                                  )}
+                                />
+                                <span className="font-bold">
+                                  {toPersianDigits(item.likes)} لایک
+                                </span>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {currentUser
                                 ? "ثبت لایک"
-                                : "برای لایک ثبت‌نام کنید"
-                            }
-                          >
-                            <Heart
-                              className={cn(
-                                "h-3.5 w-3.5",
-                                hasLikedStatus && "fill-current",
-                              )}
-                            />
-                            <span className="font-bold">
-                              {toPersianDigits(item.likes)} لایک
-                            </span>
-                          </Button>
+                                : "برای لایک ثبت‌نام کنید"}
+                            </TooltipContent>
+                          </Tooltip>
                         </div>
                       </CardContent>
                     </Card>

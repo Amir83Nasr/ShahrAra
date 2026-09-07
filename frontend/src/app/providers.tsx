@@ -40,9 +40,6 @@ const INITIAL_STATS: Stats = {
 interface AppContextValue {
   currentUser: User | null;
   authReady: boolean;
-  isAuthOpen: boolean;
-  openAuth: () => void;
-  closeAuth: () => void;
   loginSuccess: (user: User) => void;
   logout: () => void;
   theme: "light" | "dark";
@@ -73,39 +70,53 @@ export function useApp(): AppContextValue {
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  // Restore theme + session from localStorage (client-only). Lazy
-  // initializers run during first render; no effect/state cascade.
-  const [theme, setThemeState] = useState<"light" | "dark">(() => {
-    if (typeof window === "undefined") return "light";
-    const saved = localStorage.getItem("shahr_ara_theme");
-    return saved === "dark" || saved === "light" ? saved : "light";
-  });
+  // Restore theme + session from localStorage AFTER hydration (two-pass
+  // render): the first render must match the server HTML, so defaults here
+  // and saved values applied in the effect below.
+  const [theme, setThemeState] = useState<"light" | "dark">("light");
 
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      return JSON.parse(
-        localStorage.getItem("shahr_ara_user") ?? "null",
-      ) as User | null;
-    } catch {
-      localStorage.removeItem("shahr_ara_user");
-      return null;
-    }
-  });
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   // Avoid rendering auth-gated UI until localStorage session restored
   const [authReady, setAuthReady] = useState(false);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
   const [requests, setRequests] = useState<RequestItem[]>([]);
   const [stats, setStats] = useState<Stats>(INITIAL_STATS);
   const [loading, setLoading] = useState(true);
 
-  // Mark session as ready after hydration; theme/user restored via lazy
-  // initializers above. authReady gates auth-dependent UI and effects.
+  // Mark session as ready after hydration; queueMicrotask keeps setState
+  // out of the effect body (eslint react-hooks/set-state-in-effect).
   useEffect(() => {
-    queueMicrotask(() => setAuthReady(true));
+    queueMicrotask(() => {
+      const savedTheme = localStorage.getItem("shahr_ara_theme");
+      if (savedTheme === "dark" || savedTheme === "light") {
+        setThemeState(savedTheme);
+      }
+      try {
+        const savedUser = JSON.parse(
+          localStorage.getItem("shahr_ara_user") ?? "null",
+        ) as User | null;
+        if (savedUser) setCurrentUser(savedUser);
+      } catch {
+        localStorage.removeItem("shahr_ara_user");
+      }
+      setAuthReady(true);
+    });
   }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "dark") {
+      root.classList.add("dark");
+      document.body.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+      document.body.classList.remove("dark");
+    }
+    // Wait for the restore pass above, else first run clobbers saved value
+    if (!authReady) return;
+    localStorage.setItem("shahr_ara_theme", theme);
+  }, [theme, authReady]);
 
   const loginSuccess = useCallback((user: User) => {
     setCurrentUser(user);
@@ -248,9 +259,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
     () => ({
       currentUser,
       authReady,
-      isAuthOpen,
-      openAuth: () => setIsAuthOpen(true),
-      closeAuth: () => setIsAuthOpen(false),
       loginSuccess,
       logout,
       theme,
@@ -271,7 +279,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
     [
       currentUser,
       authReady,
-      isAuthOpen,
       loginSuccess,
       logout,
       theme,

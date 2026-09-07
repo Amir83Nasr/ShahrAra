@@ -12,6 +12,8 @@ dependencies = [
     "python-dotenv==1.2.2",
     "python-jose[cryptography]==3.5.0",
     "psycopg[binary]>=3.3.5",
+    "alembic>=1.19.2",
+    "bcrypt>=5.0.0",
 ]
 
 [dependency-groups]

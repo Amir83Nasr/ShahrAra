@@ -41,6 +41,7 @@ class User(Base):
     first_name: str = Column(String, nullable=False)
     last_name: str = Column(String, nullable=False)
     is_admin: bool = Column(Boolean, default=False)
+    password_hash: str | None = Column(String, nullable=True)
 
     @property
     def nationalId(self) -> str:
@@ -58,8 +59,27 @@ class User(Base):
     def isAdmin(self) -> bool:
         return self.is_admin
 
+    @property
+    def hasPassword(self) -> bool:
+        return self.password_hash is not None
+
     def __repr__(self) -> str:
         return f"<User {self.id} phone={self.phone}>"
+
+
+class OtpCode(Base):
+    __tablename__ = "otp_codes"
+
+    id: str = Column(String, primary_key=True, default=lambda: f"otp_{uuid.uuid4().hex[:8]}")
+    phone: str = Column(String, nullable=False, index=True)
+    code_hash: str = Column(String, nullable=False)
+    expires_at: datetime = Column(DateTime(timezone=True), nullable=False)
+    attempts: int = Column(Integer, default=0)
+    consumed: bool = Column(Boolean, default=False)
+    created_at: datetime = Column(DateTime(timezone=True), server_default=func.now())
+
+    def __repr__(self) -> str:
+        return f"<OtpCode {self.id} phone={self.phone}>"
 
 
 class Request(Base):

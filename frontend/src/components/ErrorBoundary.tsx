@@ -54,7 +54,7 @@ export default class ErrorBoundary extends Component<Props, State> {
               </AlertDescription>
             )}
           </Alert>
-          <Button onClick={this.handleRetry} className="font-bold">
+          <Button onClick={this.handleRetry}>
             <RefreshCcw className="h-4 w-4" />
             تلاش مجدد
           </Button>

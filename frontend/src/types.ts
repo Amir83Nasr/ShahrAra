@@ -10,6 +10,8 @@ export interface User {
   firstName: string;
   lastName: string;
   isAdmin: boolean;
+  // Absent in sessions saved before the OTP auth rework — treat as unknown.
+  hasPassword?: boolean;
   token?: string;
 }
 

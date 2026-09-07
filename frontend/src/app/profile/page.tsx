@@ -6,7 +6,7 @@
  */
 
 import Link from "next/link";
-import { FileText, Home, UserRound } from "lucide-react";
+import { LogIn, UserRound } from "lucide-react";
 import { useApp } from "../providers";
 import UserProfile from "@/components/UserProfile";
 import { Button } from "@/components/ui/button";
@@ -41,9 +41,9 @@ export default function ProfilePage() {
           </p>
         </div>
         <Button asChild size="lg" className="font-bold">
-          <Link href="/">
-            <Home className="h-4 w-4" />
-            بازگشت به صفحه اصلی
+          <Link href="/login">
+            <LogIn className="h-4 w-4" />
+            ورود به حساب کاربری
           </Link>
         </Button>
       </div>
