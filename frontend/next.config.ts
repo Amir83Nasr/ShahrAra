@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone", // Required for Docker production image
+  ...(process.env.VERCEL ? {} : { output: "standalone" as const }),
   allowedDevOrigins: ["192.168.1.20", "192.168.1.21"],
   async rewrites() {
     // Proxy API calls to the FastAPI backend (same-origin for cookies/Bearer)
