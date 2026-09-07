@@ -44,7 +44,7 @@ pre-commit:
     eslint:
       glob: "frontend/**/*.{ts,tsx,js,jsx}"
       root: frontend/
-      run: npx eslint --fix {staged_files}
+      run: npx eslint --fix --max-warnings 0 {staged_files}
       skip: [merge, rebase]
 
 pre-push:
@@ -58,7 +58,7 @@ pre-push:
       run: cd backend && uv run pytest tests/
       skip: [merge, rebase]
 
-    # ── Frontend: lint + typecheck ───────────────────────
+    # ── Frontend: lint (zero warnings) + typecheck ──────
     frontend-lint:
-      run: cd frontend && npx eslint . && npx tsc --noEmit
+      run: cd frontend && npx eslint . --max-warnings 0 && npx tsc --noEmit
       skip: [merge, rebase]

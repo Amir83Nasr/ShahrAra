@@ -299,8 +299,8 @@ export default function LoginPage() {
     </span>
   ) : (
     <span className="border-destructive/10 bg-destructive/5 text-destructive rounded-md border px-2.5 py-1 text-[10.5px] font-bold">
-      کد ملی ۱۰ رقمی ناقص است (در حال حاضر:{" "}
-      {toPersianDigits(nationalId.length)} رقم)
+      کد ملی ۱۰ رقمی ناقص است (در حال حاضر: {toPersianDigits(nationalId.length)}{" "}
+      رقم)
     </span>
   );
 

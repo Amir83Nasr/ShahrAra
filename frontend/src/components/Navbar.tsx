@@ -7,7 +7,6 @@ import {
   CirclePlus,
   ClipboardList,
   House,
-  LogIn,
   LogOut,
   Shield,
   UserRound,

@@ -1,5 +1,5 @@
-from datetime import datetime, timedelta, timezone
 import secrets
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -81,9 +81,7 @@ def _issue_login(user: User) -> LoginResponse:
 
 def _issue_otp(db: Session, phone: str) -> OtpRequestResponse:
     # Single active code per phone: drop previous unconsumed codes.
-    db.query(OtpCode).filter(
-        OtpCode.phone == phone, OtpCode.consumed.is_(False)
-    ).delete()
+    db.query(OtpCode).filter(OtpCode.phone == phone, OtpCode.consumed.is_(False)).delete()
     code = f"{secrets.randbelow(10**6):06d}"
     row = OtpCode(
         phone=phone,
@@ -166,9 +164,11 @@ def verify_otp(body: OtpVerifyRequest, db: Session = Depends(get_db)):
 
     if not verify_secret(body.code, row.code_hash):
         # Atomic attempt increment; lock the code once attempts are exhausted.
-        updated = db.query(OtpCode).filter(
-            OtpCode.id == row.id, OtpCode.attempts < OTP_MAX_ATTEMPTS
-        ).update({"attempts": OtpCode.attempts + 1})
+        updated = (
+            db.query(OtpCode)
+            .filter(OtpCode.id == row.id, OtpCode.attempts < OTP_MAX_ATTEMPTS)
+            .update({"attempts": OtpCode.attempts + 1})
+        )
         db.commit()
         if updated == 0:
             row.consumed = True
@@ -183,9 +183,11 @@ def verify_otp(body: OtpVerifyRequest, db: Session = Depends(get_db)):
         )
 
     # Consume atomically — a concurrent second verify loses this race.
-    consumed = db.query(OtpCode).filter(
-        OtpCode.id == row.id, OtpCode.consumed.is_(False)
-    ).update({"consumed": True})
+    consumed = (
+        db.query(OtpCode)
+        .filter(OtpCode.id == row.id, OtpCode.consumed.is_(False))
+        .update({"consumed": True})
+    )
     db.commit()
     if consumed == 0:
         raise HTTPException(
@@ -201,9 +203,7 @@ def verify_otp(body: OtpVerifyRequest, db: Session = Depends(get_db)):
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="برای تکمیل ثبت‌نام، نام، نام خانوادگی و کد ملی الزامی است.",
             )
-        duplicate = (
-            db.query(User).filter(User.national_id == body.nationalId).first()
-        )
+        duplicate = db.query(User).filter(User.national_id == body.nationalId).first()
         if duplicate:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -231,9 +231,7 @@ def verify_otp(body: OtpVerifyRequest, db: Session = Depends(get_db)):
 def login_password(body: PasswordLoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.phone == body.phone).first()
     # Uniform 401 — no user enumeration.
-    if user is None or not user.hasPassword or not verify_secret(
-        body.password, user.password_hash
-    ):
+    if user is None or not user.hasPassword or not verify_secret(body.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="شماره همراه یا رمز عبور اشتباه است.",
@@ -253,9 +251,7 @@ def change_password(
     db: Session = Depends(get_db),
 ):
     if user.hasPassword:
-        if not body.currentPassword or not verify_secret(
-            body.currentPassword, user.password_hash
-        ):
+        if not body.currentPassword or not verify_secret(body.currentPassword, user.password_hash):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="رمز عبور فعلی صحیح نیست.",
@@ -263,6 +259,4 @@ def change_password(
     user.password_hash = hash_secret(body.newPassword)
     db.commit()
     db.refresh(user)
-    return PasswordChangeResponse(
-        success=True, user=UserResponse.model_validate(user)
-    )
+    return PasswordChangeResponse(success=True, user=UserResponse.model_validate(user))

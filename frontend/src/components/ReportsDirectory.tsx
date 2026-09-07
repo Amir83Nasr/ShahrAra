@@ -373,7 +373,9 @@ export default function ReportsDirectory({
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
-                                variant={hasLikedStatus ? "destructive" : "outline"}
+                                variant={
+                                  hasLikedStatus ? "destructive" : "outline"
+                                }
                                 size="sm"
                                 onClick={(e) => handleLikeClick(e, item.id)}
                                 className="gap-1"

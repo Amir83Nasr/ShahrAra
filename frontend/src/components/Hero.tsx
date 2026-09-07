@@ -8,12 +8,9 @@
 import Link from "next/link";
 import { Map, ArrowLeft } from "lucide-react";
 
-import { useApp } from "@/app/providers";
 import { Button } from "@/components/ui/button";
 
 export default function Hero() {
-  const { stats } = useApp();
-
   return (
     <div
       className="relative overflow-hidden py-12 sm:py-16 md:py-24"

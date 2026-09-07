@@ -3,11 +3,7 @@ import { flushSync } from "react-dom";
 import { Moon, Sun } from "lucide-react";
 
 import { Button } from "./ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "./ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export function ModeToggle({
   theme,

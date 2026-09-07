@@ -6,7 +6,7 @@
  */
 
 import Link from "next/link";
-import { FileText, Home, ShieldAlert } from "lucide-react";
+import { Home, ShieldAlert } from "lucide-react";
 import { useApp } from "../providers";
 import AdminPanel from "@/components/AdminPanel";
 import { Button } from "@/components/ui/button";

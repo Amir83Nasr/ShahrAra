@@ -43,7 +43,10 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
 
   // Never cache API traffic or Next.js data — always network.
-  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/_next/data")) {
+  if (
+    url.pathname.startsWith("/api/") ||
+    url.pathname.startsWith("/_next/data")
+  ) {
     return;
   }
 
@@ -57,9 +60,7 @@ self.addEventListener("fetch", (event) => {
           return response;
         })
         .catch(() =>
-          caches
-            .match(request)
-            .then((hit) => hit || caches.match(SHELL_URL)),
+          caches.match(request).then((hit) => hit || caches.match(SHELL_URL)),
         ),
     );
     return;

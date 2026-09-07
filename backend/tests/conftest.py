@@ -94,9 +94,11 @@ def otp_login(client: TestClient, phone: str, **profile: str) -> dict[str, Any]:
 
 @pytest.fixture
 def registered_user(client, user_data):
-    return otp_login(client, user_data["phone"], **{
-        k: user_data[k] for k in ("nationalId", "firstName", "lastName")
-    })
+    return otp_login(
+        client,
+        user_data["phone"],
+        **{k: user_data[k] for k in ("nationalId", "firstName", "lastName")},
+    )
 
 
 @pytest.fixture

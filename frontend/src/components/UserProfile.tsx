@@ -188,9 +188,7 @@ export default function UserProfile({
       setNewPassword("");
       setConfirmPassword("");
     } catch (err: unknown) {
-      setPwError(
-        err instanceof Error ? err.message : "خطا در تنظیم رمز عبور.",
-      );
+      setPwError(err instanceof Error ? err.message : "خطا در تنظیم رمز عبور.");
     } finally {
       setPwSaving(false);
     }
@@ -350,7 +348,10 @@ export default function UserProfile({
         {/* کارت کاربر */}
         <div className="bg-muted/60 flex items-center justify-between rounded-3xl px-5 py-4">
           <span className="bg-card flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full">
-            <UserRound className="text-muted-foreground h-8 w-8" strokeWidth={1.5} />
+            <UserRound
+              className="text-muted-foreground h-8 w-8"
+              strokeWidth={1.5}
+            />
           </span>
           <span className="flex flex-col items-start gap-1.5">
             <span className="flex items-center gap-2">
@@ -384,7 +385,8 @@ export default function UserProfile({
             {
               key: "liked",
               label: "لایک کرده‌ام",
-              sub: toPersianDigits(likedRequests.length.toString()) + " درخواست",
+              sub:
+                toPersianDigits(likedRequests.length.toString()) + " درخواست",
               Icon: Heart,
               active: activeSubTab === "liked",
               onClick: () => selectTab("liked"),
@@ -421,7 +423,9 @@ export default function UserProfile({
           onClick={() => setConfirmLogout(true)}
           className="border-destructive/15 bg-card flex w-full cursor-pointer items-center justify-between rounded-3xl border px-5 py-3 shadow-sm"
         >
-          <span className="text-destructive text-[15px] font-extrabold">خروج از حساب</span>
+          <span className="text-destructive text-[15px] font-extrabold">
+            خروج از حساب
+          </span>
           <span className="bg-destructive/10 flex h-11 w-11 items-center justify-center rounded-2xl">
             <LogOut className="text-destructive h-5 w-5" strokeWidth={1.75} />
           </span>
@@ -608,7 +612,10 @@ export default function UserProfile({
                 </Alert>
               )}
 
-              <form onSubmit={handlePasswordSave} className="flex flex-col gap-3">
+              <form
+                onSubmit={handlePasswordSave}
+                className="flex flex-col gap-3"
+              >
                 {currentUser.hasPassword && (
                   <div className="flex flex-col gap-1.5">
                     <label className="text-foreground text-xs font-extrabold">
@@ -865,7 +872,13 @@ interface ProfileMenuItem {
   onClick?: () => void;
 }
 
-function ProfileMenuCard({ title, items }: { title: string; items: ProfileMenuItem[] }) {
+function ProfileMenuCard({
+  title,
+  items,
+}: {
+  title: string;
+  items: ProfileMenuItem[];
+}) {
   return (
     <div className="bg-card overflow-hidden rounded-3xl border shadow-sm">
       <div className="text-muted-foreground border-b px-5 py-3 text-start text-[13px]">
@@ -882,20 +895,28 @@ function ProfileMenuCard({ title, items }: { title: string; items: ProfileMenuIt
                 )}
               >
                 <Icon
-                  className={cn("h-5 w-5", active ? "text-primary" : "text-muted-foreground")}
+                  className={cn(
+                    "h-5 w-5",
+                    active ? "text-primary" : "text-muted-foreground",
+                  )}
                   strokeWidth={1.75}
                 />
               </span>
               <span className="flex flex-1 flex-col items-start gap-0.5">
-                <span className="text-foreground text-[15px] font-extrabold">{label}</span>
+                <span className="text-foreground text-[15px] font-extrabold">
+                  {label}
+                </span>
                 {sub && (
-                  <span className="text-muted-foreground text-[11px] font-bold">{sub}</span>
+                  <span className="text-muted-foreground text-[11px] font-bold">
+                    {sub}
+                  </span>
                 )}
               </span>
               <ChevronLeft className="text-muted-foreground/40 h-4 w-4 shrink-0" />
             </>
           );
-          const cls = "flex w-full cursor-pointer items-center gap-3 px-5 py-3.5";
+          const cls =
+            "flex w-full cursor-pointer items-center gap-3 px-5 py-3.5";
           return href ? (
             <Link key={key} href={href} className={cls}>
               {inner}

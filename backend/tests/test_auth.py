@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-import pytest
-
 
 def request_code(client, phone: str) -> str:
     r = client.post("/api/v1/auth/otp/request", json={"phone": phone})
