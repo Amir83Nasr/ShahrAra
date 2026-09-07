@@ -56,7 +56,7 @@ const FEATURES = [
 
 function FeaturesSection() {
   return (
-    <section className="border-t border-b bg-muted/30 py-16">
+    <section className="bg-muted/30 border-t border-b py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-10 text-center">
           <h2 className="text-foreground text-2xl font-extrabold">

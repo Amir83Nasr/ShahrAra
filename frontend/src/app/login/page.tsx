@@ -335,7 +335,7 @@ export default function LoginPage() {
                     ? "تکمیل ثبت‌نام"
                     : "ورود به شهرآرا"}
                 </h1>
-                <p className="text-sm text-balance text-muted-foreground">
+                <p className="text-muted-foreground text-sm text-balance">
                   {stepDescription}
                 </p>
               </div>
@@ -630,7 +630,7 @@ export default function LoginPage() {
       </div>
 
       {/* ── تصویر ────────────────────────────────────────── */}
-      <div className="relative hidden bg-muted lg:block">
+      <div className="bg-muted relative hidden lg:block">
         <Image
           src="/assets/login.jpg"
           alt="نمای شهری"

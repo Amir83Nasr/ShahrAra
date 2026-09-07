@@ -2,7 +2,7 @@
 # CI — ShahrAra
 # ────────────────────────────────────────────────────────────────
 # Runs on push to main and pull requests.
-# Checks: backend lint + tests, frontend lint + typecheck + build.
+# Separate jobs: backend (format + lint + tests) and frontend (format + lint + typecheck + build).
 # ────────────────────────────────────────────────────────────────
 
 name: CI
@@ -14,7 +14,8 @@ on:
     branches: [ main ]
 
 jobs:
-  lint-and-test:
+  backend:
+    name: Backend — format, lint, tests
     runs-on: ubuntu-latest
 
     services:
@@ -34,19 +35,22 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # ── Backend ────────────────────────────────────────
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.14'
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v10.0.1
 
       - name: Install backend dependencies
         run: cd backend && uv sync
+
+      - name: Run backend format check
+        run: cd backend && uv run ruff format --check .
 
       - name: Run backend lint
         run: cd backend && uv run ruff check .
@@ -54,14 +58,22 @@ jobs:
       - name: Run backend tests
         run: cd backend && uv run pytest tests/
 
+  frontend:
+    name: Frontend — format, lint, typecheck, build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
       # ── Frontend ───────────────────────────────────────
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 12.2.1
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: 'pnpm'
@@ -70,8 +82,14 @@ jobs:
       - name: Install frontend dependencies
         run: cd frontend && pnpm install --frozen-lockfile
 
-      - name: Run frontend lint + typecheck
-        run: cd frontend && pnpm run lint && pnpm exec tsc --noEmit
+      - name: Run frontend format check
+        run: cd frontend && pnpm run format:check
+
+      - name: Run frontend lint
+        run: cd frontend && pnpm run lint
+
+      - name: Run frontend typecheck
+        run: cd frontend && pnpm exec tsc --noEmit
 
       - name: Build frontend
         run: cd frontend && pnpm run build

@@ -359,7 +359,7 @@ export default function UserProfile({
                 {currentUser.firstName} {currentUser.lastName}
               </span>
               {currentUser.isAdmin && (
-                <Badge className="bg-primary/15 text-primary rounded-full px-2.5 py-0.5 text-[11px] font-bold hover:bg-primary/15">
+                <Badge className="bg-primary/15 text-primary hover:bg-primary/15 rounded-full px-2.5 py-0.5 text-[11px] font-bold">
                   ادمین
                 </Badge>
               )}
@@ -884,7 +884,7 @@ function ProfileMenuCard({
       <div className="text-muted-foreground border-b px-5 py-3 text-start text-[13px]">
         {title}
       </div>
-      <div className="divide-y divide-border/60">
+      <div className="divide-border/60 divide-y">
         {items.map(({ key, label, sub, href, Icon, active, onClick }) => {
           const inner = (
             <>

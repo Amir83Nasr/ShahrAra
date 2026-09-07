@@ -191,7 +191,7 @@ export default function Navbar({
       </nav>
 
       {/* نوار پایین — فقط موبایل */}
-      <div className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden">
+      <div className="bg-background/95 fixed inset-x-0 bottom-0 z-50 border-t pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden">
         <div className="flex items-stretch justify-around">
           {[
             { href: "/", label: "خانه", Icon: House },
