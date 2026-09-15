@@ -145,7 +145,7 @@ export default function RequestForm({
             روشنایی یا دیگر خدمات شهری، ابتدا باید وارد حساب کاربری خود شوید تا
             درخواستتان مستقیماً به دست مسئولان مربوطه برسد.
           </p>
-          <Button asChild size="lg">
+          <Button asChild>
             <Link href="/login">ورود / ثبت‌نام شهروندان</Link>
           </Button>
         </div>
@@ -377,8 +377,8 @@ export default function RequestForm({
 
             {/* Action Submit */}
 
-            <Button type="submit" disabled={loading || success} size="lg">
-              <Send className="h-4 w-4 shrink-0" />
+            <Button type="submit" disabled={loading || success}>
+              <Send />
               <span>
                 {loading
                   ? "در حال ثبت درخواست..."

@@ -79,7 +79,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useApp } from "../app/providers";
 import dynamic from "next/dynamic";
@@ -519,7 +518,7 @@ export default function UserProfile({
                 value={filterType}
                 onValueChange={(v) => setFilterType(v)}
               >
-                <SelectTrigger size="sm" className="w-full sm:w-32">
+                <SelectTrigger className="w-full sm:w-32">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent position="popper" dir="rtl">
@@ -536,7 +535,7 @@ export default function UserProfile({
                 value={filterStatus}
                 onValueChange={(v) => setFilterStatus(v)}
               >
-                <SelectTrigger size="sm" className="w-full sm:w-36">
+                <SelectTrigger className="w-full sm:w-36">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent position="popper" align="end">
@@ -556,7 +555,7 @@ export default function UserProfile({
                 value={filterRegion}
                 onValueChange={setFilterRegion}
               >
-                <SelectTrigger size="sm" className="w-full sm:w-32">
+                <SelectTrigger className="w-full sm:w-32">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent position="popper" align="end">
@@ -841,8 +840,6 @@ export default function UserProfile({
             </div>
           </div>
 
-          <Separator />
-
           <ResponsiveDialogFooter className="flex flex-col-reverse items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-muted-foreground order-last text-center font-mono text-[10px] font-semibold sm:order-first">
               کد رهگیری: {toPersianDigits(syncedDetails?.id ?? "")}
@@ -854,7 +851,6 @@ export default function UserProfile({
                   ? "destructive"
                   : "outline"
               }
-              size="sm"
               className="w-full sm:w-auto"
               onClick={(e) =>
                 syncedDetails && handleLikeClick(e, syncedDetails.id)

@@ -47,7 +47,7 @@ export default function ProfileGate({
             برای مشاهده پروفایل و درخواست‌های خود باید وارد حساب کاربری شوید.
           </p>
         </div>
-        <Button asChild className="px-8 text-base">
+        <Button asChild>
           <Link href="/login">ورود به حساب کاربری</Link>
         </Button>
       </div>

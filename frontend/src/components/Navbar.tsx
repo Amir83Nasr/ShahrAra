@@ -67,10 +67,7 @@ export default function Navbar({
               asChild
               className="h-auto bg-transparent p-0 hover:bg-transparent focus-visible:bg-transparent active:bg-transparent dark:bg-transparent dark:hover:bg-transparent"
             >
-              <Link
-                href="/"
-                className="nav-logo flex cursor-pointer items-center gap-3"
-              >
+              <Link href="/" className="nav-logo flex items-center gap-3">
                 <Image
                   src="/assets/logo.svg"
                   alt="لوگوی شهرآرا"
@@ -99,7 +96,7 @@ export default function Navbar({
                   )}
                 >
                   <Link href={href}>
-                    <Icon className="h-4 w-4" />
+                    <Icon />
                     <span>{label}</span>
                   </Link>
                 </Button>
@@ -141,7 +138,6 @@ export default function Navbar({
                         onClick={() => {
                           setDropdownOpen(false);
                         }}
-                        className="flex gap-2"
                         asChild
                       >
                         <Link href="/profile">
@@ -170,7 +166,6 @@ export default function Navbar({
                           setDropdownOpen(false);
                           setConfirmLogout(true);
                         }}
-                        className="flex gap-2"
                       >
                         <LogOut />
                         <span>خروج از حساب</span>
@@ -178,7 +173,7 @@ export default function Navbar({
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : (
-                  <Button variant="default" className="px-4" asChild>
+                  <Button variant="default" asChild>
                     <Link href="/login">
                       <span>ورود / ثبت‌نام</span>
                     </Link>

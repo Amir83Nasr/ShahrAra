@@ -18,7 +18,7 @@ export default function Hero() {
     >
       <div className="relative z-10 mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
         {/* Top welcome indicator */}
-        <div className="border-primary/20 bg-primary/[0.04] text-muted-foreground dark:border-primary/15 dark:bg-primary/[0.03] mb-4 inline-flex max-w-full items-center gap-2.5 rounded-full border px-4 py-2 text-xs font-bold backdrop-blur-sm">
+        <div className="border-primary/20 bg-primary/[0.04] text-muted-foreground dark:border-primary/15 dark:bg-primary/[0.03] mb-4 inline-flex max-w-full items-center gap-2.5 rounded-full border px-4 py-2 text-xs font-medium backdrop-blur-sm">
           <span className="relative flex h-1.5 w-1.5">
             <span className="bg-primary/50 absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" />
             <span className="bg-primary relative inline-flex h-1.5 w-1.5 rounded-full" />
@@ -52,17 +52,13 @@ export default function Hero() {
             <Button asChild className="w-full sm:w-auto">
               <Link href="/submit">
                 <span>شروع مشارکت فردی و ثبت گزارش</span>
-                <ArrowLeft className="shrink-0" />
+                <ArrowLeft />
               </Link>
             </Button>
 
-            <Button
-              variant="outline"
-              asChild
-              className="w-full font-semibold sm:w-auto"
-            >
+            <Button variant="outline" asChild className="w-full sm:w-auto">
               <Link href="/reports">
-                <Map className="shrink-0" />
+                <Map />
                 <span>پایش زنده گزارش‌های قم</span>
               </Link>
             </Button>

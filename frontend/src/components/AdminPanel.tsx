@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { RequestItem, RequestStatus, RequestType } from "../types";
 
@@ -55,6 +55,36 @@ import {
   SelectItem,
   SelectLabel,
 } from "@/components/ui/select";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+
+// compact page list with ellipsis: 1 … c-1 c c+1 … last
+function buildPageRange(
+  current: number,
+  total: number,
+): (number | "ellipsis")[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  const pages = new Set<number>([1, total, current - 1, current, current + 1]);
+  const middle = [...pages]
+    .filter((p) => p >= 1 && p <= total)
+    .sort((a, b) => a - b);
+  const out: (number | "ellipsis")[] = [];
+  let prev = 0;
+  for (const p of middle) {
+    if (p - prev > 1) out.push("ellipsis");
+    out.push(p);
+    prev = p;
+  }
+  return out;
+}
 
 interface AdminPanelProps {
   requests: RequestItem[];
@@ -89,9 +119,8 @@ export default function AdminPanel({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const [visibleCount, setVisibleCount] = useState(12);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   // Sync selected item inputs when selected item changes
   useEffect(() => {
@@ -116,7 +145,7 @@ export default function AdminPanel({
   // Reset pagination on filter change
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setVisibleCount(12);
+    setCurrentPage(1);
   }, [
     searchTerm,
     selectedType,
@@ -125,25 +154,18 @@ export default function AdminPanel({
     selectedRegion,
   ]);
 
-  // IntersectionObserver for infinite scroll
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    const scrollContainer = scrollContainerRef.current;
-    if (!sentinel || visibleCount >= filteredItems.length) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setVisibleCount((prev) => Math.min(prev + 8, filteredItems.length));
-        }
-      },
-      {
-        root: scrollContainer,
-        rootMargin: scrollContainer ? "0px" : "100px",
-      },
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [filteredItems.length, visibleCount]);
+  const totalAdminPages = Math.max(
+    1,
+    Math.ceil(filteredItems.length / PAGE_SIZE),
+  );
+  const safeAdminPage = Math.min(currentPage, totalAdminPages);
+  const pageItems = filteredItems.slice(
+    (safeAdminPage - 1) * PAGE_SIZE,
+    safeAdminPage * PAGE_SIZE,
+  );
+
+  const goToAdminPage = (page: number) =>
+    setCurrentPage(Math.min(Math.max(1, page), totalAdminPages));
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -198,7 +220,7 @@ export default function AdminPanel({
           </div>
         </div>
 
-        <Button variant="outline" size="sm" onClick={onRefresh}>
+        <Button variant="outline" onClick={onRefresh}>
           <RefreshCcw />
           بروزرسانی لیست کارهای مردمی
         </Button>
@@ -351,12 +373,9 @@ export default function AdminPanel({
           </div>
 
           {/* Submissions List */}
-          <div
-            ref={scrollContainerRef}
-            className="max-h-[500px] space-y-3 overflow-y-auto p-0.5 max-lg:max-h-none max-lg:overflow-visible"
-          >
+          <div className="space-y-3 p-0.5">
             {filteredItems.length > 0 ? (
-              filteredItems.slice(0, visibleCount).map((item) => {
+              pageItems.map((item) => {
                 const isSelected = selectedItem?.id === item.id;
                 const dateString = new Date(item.createdAt).toLocaleDateString(
                   "fa-IR",
@@ -423,10 +442,44 @@ export default function AdminPanel({
               </div>
             )}
 
-            {filteredItems.length > 0 &&
-              filteredItems.length > visibleCount && (
-                <div ref={sentinelRef} className="h-4" />
-              )}
+            {totalAdminPages > 1 && (
+              <Pagination className="pt-2">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => goToAdminPage(safeAdminPage - 1)}
+                      disabled={safeAdminPage <= 1}
+                    />
+                  </PaginationItem>
+
+                  {buildPageRange(safeAdminPage, totalAdminPages).map((p, i) =>
+                    p === "ellipsis" ? (
+                      <PaginationItem key={`e${i}`}>
+                        <span className="text-muted-foreground flex size-9 items-center justify-center">
+                          …
+                        </span>
+                      </PaginationItem>
+                    ) : (
+                      <PaginationItem key={p}>
+                        <PaginationLink
+                          isActive={p === safeAdminPage}
+                          onClick={() => goToAdminPage(p)}
+                        >
+                          {toPersianDigits(p)}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ),
+                  )}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => goToAdminPage(safeAdminPage + 1)}
+                      disabled={safeAdminPage >= totalAdminPages}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
           </div>
         </div>
 
@@ -601,12 +654,7 @@ export default function AdminPanel({
                   />
                 </div>
 
-                <Button
-                  type="submit"
-                  variant="default"
-                  className="w-full"
-                  disabled={submitting}
-                >
+                <Button type="submit" className="w-full" disabled={submitting}>
                   {submitting ? "در حال انتشار..." : "ثبت و انتشار پاسخ"}
                 </Button>
               </form>

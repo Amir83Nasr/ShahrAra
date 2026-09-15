@@ -38,9 +38,9 @@ export default function AdminPage() {
             دسترسی به پنل مدیریت نیازمند ورود با حساب کاربری مدیر است.
           </p>
         </div>
-        <Button asChild size="lg" className="font-bold">
+        <Button asChild>
           <Link href="/">
-            <Home className="h-4 w-4" />
+            <Home />
             بازگشت به صفحه اصلی
           </Link>
         </Button>

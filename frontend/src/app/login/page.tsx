@@ -327,7 +327,7 @@ export default function LoginPage() {
       {/* ── فرم ──────────────────────────────────────────── */}
       <div className="relative flex flex-col p-6 md:p-10">
         <div className="absolute inset-e-4 top-4 hidden gap-2 md:static md:flex md:justify-start">
-          <Button asChild variant="outline" size="sm">
+          <Button asChild variant="outline">
             <Link href="/">
               <ArrowRight className="h-4 w-4" />
               بازگشت به صفحه اصلی
@@ -446,9 +446,7 @@ export default function LoginPage() {
                         <Button
                           type="button"
                           variant="link"
-                          size="sm"
                           onClick={backToPhone}
-                          className="font-medium"
                         >
                           تغییر شماره
                         </Button>
@@ -516,10 +514,8 @@ export default function LoginPage() {
                         <Button
                           type="button"
                           variant="link"
-                          size="sm"
                           onClick={() => requestOtp()}
                           disabled={loading || remaining > 0}
-                          className="font-medium"
                         >
                           ارسال مجدد کد
                         </Button>
@@ -616,9 +612,7 @@ export default function LoginPage() {
                         <Button
                           type="button"
                           variant="link"
-                          size="sm"
                           onClick={backToPhone}
-                          className="font-medium"
                         >
                           تغییر شماره
                         </Button>

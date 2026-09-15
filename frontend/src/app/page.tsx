@@ -167,22 +167,13 @@ function CtaSection() {
         یا ایده‌ای برای زیباتر شدن قم به اشتراک بگذارید.
       </p>
       <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-        <Button
-          size="lg"
-          asChild
-          className="h-12 w-full text-base font-semibold sm:w-auto"
-        >
+        <Button asChild className="w-full sm:w-auto">
           <Link href="/submit">
             <span>ثبت گزارش یا ایده</span>
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft />
           </Link>
         </Button>
-        <Button
-          size="lg"
-          variant="outline"
-          asChild
-          className="h-12 w-full text-base font-semibold sm:w-auto"
-        >
+        <Button variant="outline" asChild className="w-full sm:w-auto">
           <Link href="/reports">
             <span>مشاهده گزارش‌ها</span>
           </Link>

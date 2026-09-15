@@ -44,6 +44,14 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -56,7 +64,6 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -64,6 +71,28 @@ import {
   ResponsiveDialogTitle,
   ResponsiveDialogFooter,
 } from "@/components/ui/responsive-dialog";
+
+// compact page list with ellipsis: 1 … c-1 c c+1 … last
+function buildPageRange(
+  current: number,
+  total: number,
+): (number | "ellipsis")[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  const pages = new Set<number>([1, total, current - 1, current, current + 1]);
+  const middle = [...pages]
+    .filter((p) => p >= 1 && p <= total)
+    .sort((a, b) => a - b);
+  const out: (number | "ellipsis")[] = [];
+  let prev = 0;
+  for (const p of middle) {
+    if (p - prev > 1) out.push("ellipsis");
+    out.push(p);
+    prev = p;
+  }
+  return out;
+}
 
 interface ReportsDirectoryProps {
   items: RequestItem[];
@@ -88,7 +117,7 @@ export default function ReportsDirectory({
   const [activeType, setActiveType] = useState<"all" | "problem" | "idea">(
     "all",
   );
-  const [showMap, setShowMap] = useState<boolean>(true);
+  const [showMap, setShowMap] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<
     "newest" | "oldest" | "most_liked" | "least_liked"
   >("newest");
@@ -97,7 +126,9 @@ export default function ReportsDirectory({
   const [selectedDetails, setSelectedDetails] = useState<RequestItem | null>(
     null,
   );
-  const [visibleCount, setVisibleCount] = useState(12);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [prevFilters, setPrevFilters] = useState("");
+  const PAGE_SIZE = 12;
   const [filterRegion, setFilterRegion] = useState<string>("all");
 
   const filtered = filterRequests(items, {
@@ -112,22 +143,34 @@ export default function ReportsDirectory({
 
   const sorted = sortRequests(filtered, sortBy);
 
-  const handleLoadMore = () => {
-    setVisibleCount((prev) => Math.min(prev + 8, sorted.length));
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const pageItems = sorted.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE,
+  );
+
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.min(Math.max(1, page), totalPages));
+    document
+      .getElementById("shahr_ara_directory")
+      ?.scrollIntoView({ behavior: "smooth" });
   };
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setVisibleCount(12);
-  }, [
+  // Reset pagination on filter change (adjust state during render)
+  const filterKey = [
     searchTerm,
     activeCategory,
     activeType,
     sortBy,
-    startDate,
-    endDate,
+    startDate?.getTime(),
+    endDate?.getTime(),
     filterRegion,
-  ]);
+  ].join("|");
+  if (filterKey !== prevFilters) {
+    setPrevFilters(filterKey);
+    setCurrentPage(1);
+  }
 
   const handleLikeClick = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -163,7 +206,7 @@ export default function ReportsDirectory({
   return (
     <div className="mx-auto max-w-7xl px-4 py-8" id="shahr_ara_directory">
       {/* Filters */}
-      <div className="bg-card mb-8 flex flex-col gap-4 rounded-xl border p-5">
+      <div className="bg-card mb-4 flex flex-col gap-4 rounded-xl border p-5">
         {/* Top row: search + map/refresh buttons */}
         <div className="flex w-full items-center gap-3">
           <div className="relative flex-1">
@@ -178,7 +221,6 @@ export default function ReportsDirectory({
           </div>
           <Button
             variant={showMap ? "default" : "outline"}
-            size="sm"
             onClick={() => setShowMap(!showMap)}
             className="whitespace-nowrap"
           >
@@ -187,7 +229,6 @@ export default function ReportsDirectory({
           </Button>
           <Button
             variant="outline"
-            size="sm"
             onClick={onRefresh}
             className="whitespace-nowrap"
           >
@@ -208,7 +249,7 @@ export default function ReportsDirectory({
                 )
               }
             >
-              <SelectTrigger size="sm" className="w-32">
+              <SelectTrigger className="w-32">
                 <ArrowUpDown />
                 <SelectValue />
               </SelectTrigger>
@@ -229,7 +270,7 @@ export default function ReportsDirectory({
                 setActiveType(v as "all" | "problem" | "idea")
               }
             >
-              <SelectTrigger size="sm" className="w-32">
+              <SelectTrigger className="w-32">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent position="popper">
@@ -246,7 +287,7 @@ export default function ReportsDirectory({
               value={filterRegion}
               onValueChange={setFilterRegion}
             >
-              <SelectTrigger size="sm" className="w-32">
+              <SelectTrigger className="w-32">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent position="popper">
@@ -281,10 +322,9 @@ export default function ReportsDirectory({
       </div>
 
       {/* Category filter */}
-      <div className="-mx-4 mb-8 flex scrollbar-thin gap-2 overflow-x-auto px-4 pb-4">
+      <div className="-mx-4 mb-4 flex scrollbar-thin gap-2 overflow-x-auto px-4 pb-4">
         <Button
           variant={activeCategory === "all" ? "default" : "outline"}
-          size="sm"
           onClick={() => setActiveCategory("all")}
           className="shrink-0 rounded-full"
         >
@@ -294,7 +334,6 @@ export default function ReportsDirectory({
           <Button
             key={idx}
             variant={activeCategory === cat ? "default" : "outline"}
-            size="sm"
             onClick={() => setActiveCategory(cat)}
             className="shrink-0 rounded-full"
           >
@@ -305,18 +344,31 @@ export default function ReportsDirectory({
 
       {/* Display Directory Main Arena */}
       <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
-        <div className={`${showMap ? "lg:col-span-7" : "lg:col-span-12"}`}>
+        {/* Map — mobile: below filters (hidden by default); desktop: sidebar */}
+        {showMap && (
+          <div className="border-border bg-card sticky top-24 order-1 h-[500px] overflow-hidden rounded-xl border max-lg:static lg:order-2 lg:col-span-5">
+            <MapComponent
+              pickerMode={false}
+              items={sorted}
+              onSelectItem={(item) => setSelectedDetails(item)}
+              theme={theme}
+            />
+          </div>
+        )}
+        <div
+          className={`order-2 lg:order-1 ${
+            showMap ? "lg:col-span-7" : "lg:col-span-12"
+          }`}
+        >
           <div className="max-h-[600px] overflow-y-auto p-0.5 max-lg:max-h-none max-lg:overflow-visible">
             <div
               className={cn(
                 "grid grid-cols-1 gap-5",
-                showMap
-                  ? "sm:grid-cols-2"
-                  : "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
+                showMap ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3",
               )}
             >
               {sorted.length > 0 ? (
-                sorted.slice(0, visibleCount).map((item) => {
+                pageItems.map((item) => {
                   const hasLikedStatus = currentUser
                     ? item.likedByCurrentUser
                     : false;
@@ -376,7 +428,6 @@ export default function ReportsDirectory({
                                 variant={
                                   hasLikedStatus ? "destructive" : "outline"
                                 }
-                                size="sm"
                                 onClick={(e) => handleLikeClick(e, item.id)}
                               >
                                 <Heart
@@ -412,30 +463,50 @@ export default function ReportsDirectory({
                 </div>
               )}
 
-              {/* Load More button */}
-              {sorted.length > 0 && sorted.length > visibleCount && (
-                <div className="col-span-full flex justify-center pt-4">
-                  <Button variant="outline" size="sm" onClick={handleLoadMore}>
-                    بارگذاری بیشتر (
-                    {toPersianDigits(sorted.length - visibleCount)} مورد)
-                  </Button>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="col-span-full pt-4">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => goToPage(safePage - 1)}
+                          disabled={safePage <= 1}
+                        />
+                      </PaginationItem>
+
+                      {buildPageRange(safePage, totalPages).map((p, i) =>
+                        p === "ellipsis" ? (
+                          <PaginationItem key={`e${i}`}>
+                            <span className="text-muted-foreground flex size-9 items-center justify-center">
+                              …
+                            </span>
+                          </PaginationItem>
+                        ) : (
+                          <PaginationItem key={p}>
+                            <PaginationLink
+                              isActive={p === safePage}
+                              onClick={() => goToPage(p)}
+                            >
+                              {toPersianDigits(p)}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ),
+                      )}
+
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => goToPage(safePage + 1)}
+                          disabled={safePage >= totalPages}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
                 </div>
               )}
             </div>
           </div>
         </div>
-
-        {/* Map */}
-        {showMap && (
-          <div className="border-border bg-card sticky top-24 h-[500px] overflow-hidden rounded-xl border lg:col-span-5">
-            <MapComponent
-              pickerMode={false}
-              items={sorted}
-              onSelectItem={(item) => setSelectedDetails(item)}
-              theme={theme}
-            />
-          </div>
-        )}
       </div>
 
       {/* Details Dialog */}
@@ -509,8 +580,6 @@ export default function ReportsDirectory({
             </div>
           </div>
 
-          <Separator />
-
           <ResponsiveDialogFooter className="flex items-center justify-between sm:justify-between">
             <span className="text-muted-foreground font-mono text-[10px] font-bold">
               کد رهگیری: {toPersianDigits(selectedDetails?.id ?? "")}
@@ -522,7 +591,6 @@ export default function ReportsDirectory({
                   ? "destructive"
                   : "outline"
               }
-              size="sm"
               onClick={(e) =>
                 selectedDetails && handleLikeClick(e, selectedDetails.id)
               }
