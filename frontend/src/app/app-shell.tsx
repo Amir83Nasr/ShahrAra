@@ -26,14 +26,8 @@ import { toPersianDigits } from "@/utils/numberUtils";
 // Shared chrome + global auth modal + API error alert.
 // Every page renders inside this shell via the root layout.
 export default function AppShell({ children }: { children: React.ReactNode }) {
-  const {
-    currentUser,
-    theme,
-    setTheme,
-    apiError,
-    dismissError,
-    logout,
-  } = useApp();
+  const { currentUser, theme, setTheme, apiError, dismissError, logout } =
+    useApp();
   const pathname = usePathname();
 
   // صفحات بدون هدر/فوتر (مثل لاگین) — فقط محتوا
