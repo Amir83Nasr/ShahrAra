@@ -7,6 +7,11 @@ class TestHealth:
         assert r.status_code == 200
         assert r.json() == {"status": "ok"}
 
+    def test_root_level_health_alias(self, client):
+        r = client.get("/health")
+        assert r.status_code == 200
+        assert r.json() == {"status": "ok"}
+
 
 class TestApiRoot:
     def test_api_root_returns_metadata(self, client):

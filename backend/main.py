@@ -227,6 +227,12 @@ def api_root() -> dict[str, Any]:
     return _service_descriptor()
 
 
+@app.get("/health", include_in_schema=False)
+def health() -> dict[str, str]:
+    """Root-level alias for hosting-platform health probes."""
+    return {"status": "ok"}
+
+
 @app.get("/api/health", tags=["System"], summary="Health check")
 def api_health() -> dict[str, str]:
     return {"status": "ok"}
