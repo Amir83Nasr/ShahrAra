@@ -238,10 +238,6 @@ class StatsResponse(BaseModel):
     )
 
 
-class ErrorResponse(BaseModel):
-    detail: str = Field(examples=["Request not found."])
-
-
 # ── Notification ───────────────────────────────────────
 
 

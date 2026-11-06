@@ -21,7 +21,7 @@ ALL_STATUSES = ["submitted", "under_review", "in_progress", "resolved", "archive
     response_model=StatsResponse,
     summary="Aggregate statistics",
     description="Get total counts, breakdown by type, status, and category.",
-    tags=["stats"],
+    tags=["Statistics"],
 )
 def get_stats(db: Session = Depends(get_db)):
     total_count = db.query(func.count(Request.id)).scalar()

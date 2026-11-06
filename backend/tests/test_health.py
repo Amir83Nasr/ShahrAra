@@ -14,10 +14,27 @@ class TestApiRoot:
         assert r.status_code == 200
         data = r.json()
         assert data["name"] == "ShahrAra API"
-        assert "v1" in data["versions"]
-        assert "health" in data["endpoints"]
+        assert data["status"] == "ok"
+        assert "v1" in data["endpoints"]
 
-    def test_root_redirects_to_docs(self, client):
-        r = client.get("/", follow_redirects=False)
-        assert r.status_code == 307
-        assert "/docs" in r.headers.get("location", "")
+    def test_root_returns_service_descriptor(self, client):
+        r = client.get("/")
+        assert r.status_code == 200
+        assert r.headers["content-type"].startswith("application/json")
+        data = r.json()
+        assert data["name"] == "ShahrAra API"
+        assert data["documentation"]["swagger"] == "/docs"
+
+    def test_root_serves_landing_page_for_browsers(self, client):
+        r = client.get("/", headers={"Accept": "text/html"})
+        assert r.status_code == 200
+        assert r.headers["content-type"].startswith("text/html")
+        assert "شهرآرا" in r.text
+        assert "/docs" in r.text
+
+    def test_openapi_schema_is_available(self, client):
+        r = client.get("/openapi.json")
+        assert r.status_code == 200
+        schema = r.json()
+        assert schema["info"]["title"] == "ShahrAra API"
+        assert {"JWT"} <= set(schema["components"]["securitySchemes"])

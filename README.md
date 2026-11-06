@@ -28,7 +28,8 @@ make dev-frontend
 ```
 
 - Frontend: <http://localhost:3000>
-- API: <http://localhost:8000> — Swagger UI at `/docs`
+- API: <http://localhost:8000> — landing page in the browser, JSON descriptor for API clients
+- Swagger UI: `/docs` · ReDoc: `/redoc` · OpenAPI: `/openapi.json`
 - Sample data: `make seed`
 
 ## Make Targets
@@ -46,6 +47,9 @@ make dev-frontend
 ## API
 
 Base URL: `/api/v1` — routers: `auth`, `requests`, `notifications`.
+
+`GET /` returns a landing page for browsers and a JSON service descriptor for API clients
+(`Accept: application/json`). `GET /api` returns the same descriptor as JSON.
 
 ## Testing
 

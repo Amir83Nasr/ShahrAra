@@ -35,7 +35,7 @@ from app.schemas.schemas import (
     UserResponse,
 )
 
-router = APIRouter(tags=["auth"])
+router = APIRouter(tags=["Authentication"])
 
 
 # ── Helpers ──────────────────────────────────────────────
@@ -120,6 +120,7 @@ def _latest_otp(db: Session, phone: str) -> OtpCode | None:
     "/check-phone",
     response_model=CheckPhoneResponse,
     summary="Check phone registration state",
+    description="Returns whether the phone is already registered and whether it has a password set.",
 )
 def check_phone(body: CheckPhoneRequest, db: Session = Depends(get_db)):
     _ensure_admin(db, body.phone)
@@ -144,6 +145,9 @@ def request_otp(body: OtpRequest, db: Session = Depends(get_db)):
 @router.post(
     "/otp/verify",
     response_model=LoginResponse,
+    summary="Verify a one-time code",
+    description="Verifies the 6-digit code and returns an access token. "
+    "First-time users must also send `firstName`, `lastName`, and `nationalId` to complete registration.",
     responses={
         400: {"description": "کد نامعتبر/منقضی/مصرف‌شده یا اطلاعات ثبت‌نام ناقص"},
         401: {"description": "کد تأیید وارد شده صحیح نیست"},
@@ -225,6 +229,8 @@ def verify_otp(body: OtpVerifyRequest, db: Session = Depends(get_db)):
 
 @router.post(
     "/login/password",
+    summary="Log in with a password",
+    description="Authenticates an account that already has a password set.",
     response_model=LoginResponse,
     responses={401: {"description": "شماره همراه یا رمز عبور اشتباه است"}},
 )

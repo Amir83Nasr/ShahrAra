@@ -8,7 +8,7 @@ from app.db.session import get_db
 from app.models.models import Notification, User
 from app.schemas.schemas import NotificationReadResponse, NotificationResponse
 
-router = APIRouter(tags=["notifications"])
+router = APIRouter(tags=["Notifications"])
 
 
 @router.get(

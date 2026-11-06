@@ -12,7 +12,15 @@ from app.core.config import JWT_ALGORITHM, JWT_EXPIRATION_MINUTES, JWT_SECRET
 from app.db.session import get_db
 from app.models.models import User
 
-security_scheme = HTTPBearer(auto_error=False)
+security_scheme = HTTPBearer(
+    scheme_name="JWT",
+    bearerFormat="JWT",
+    description=(
+        "Paste the `accessToken` returned by `/api/v1/auth/otp/verify` "
+        "or `/api/v1/auth/login/password`."
+    ),
+    auto_error=False,
+)
 
 
 def hash_secret(raw: str) -> str:

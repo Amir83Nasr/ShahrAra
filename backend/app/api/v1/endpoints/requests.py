@@ -21,7 +21,7 @@ from app.schemas.schemas import (
     UserStatsResponse,
 )
 
-router = APIRouter(tags=["requests"])
+router = APIRouter(tags=["Requests"])
 
 
 @router.get(
