@@ -1,51 +1,133 @@
-@import "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @custom-variant dark (&:is(.dark *));
 
+/* Read-only maps show report markers only; the location picker pin belongs to
+   the submit form. Detail cards can be shorter than the picker's default
+   minimum, so let the map fill whatever height its container has. */
+.map-display .lp-pin {
+  display: none;
+}
+
+.map-display .lp-layout,
+.map-display .lp-map-wrap {
+  min-height: 0;
+}
+
+/* فونت اصلی پروژه — پلاک (تمام وزن‌ها) */
 @font-face {
-  font-family: "Iran Yekan X";
-  src: url("/assets/fonts/iran-yekan-x/IRANYekanX-Light.woff2") format("woff2");
+  font-family: "Pelak";
+  src: url("/assets/fonts/pelak/Pelak-Thin.woff2") format("woff2");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pelak";
+  src: url("/assets/fonts/pelak/Pelak-Light.woff2") format("woff2");
   font-weight: 300;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Iran Yekan X";
-  src: url("/assets/fonts/iran-yekan-x/IRANYekanX-Regular.woff2")
-    format("woff2");
+  font-family: "Pelak";
+  src: url("/assets/fonts/pelak/Pelak-Regular.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Iran Yekan X";
-  src: url("/assets/fonts/iran-yekan-x/IRANYekanX-Medium.woff2") format("woff2");
+  font-family: "Pelak";
+  src: url("/assets/fonts/pelak/Pelak-Medium.woff2") format("woff2");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Iran Yekan X";
-  src: url("/assets/fonts/iran-yekan-x/IRANYekanX-DemiBold.woff2")
-    format("woff2");
+  font-family: "Pelak";
+  src: url("/assets/fonts/pelak/Pelak-SemiBold.woff2") format("woff2");
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Iran Yekan X";
-  src: url("/assets/fonts/iran-yekan-x/IRANYekanX-Bold.woff2") format("woff2");
+  font-family: "Pelak";
+  src: url("/assets/fonts/pelak/Pelak-Bold.woff2") format("woff2");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
+@font-face {
+  font-family: "Pelak";
+  src: url("/assets/fonts/pelak/Pelak-ExtraBold.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pelak";
+  src: url("/assets/fonts/pelak/Pelak-Black.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* نسخه جایگزین با معیارهای هم‌تراز با Pelak برای حذف جهش چیدمان
+   هنگام سوییچ فونت (font swap). */
+@font-face {
+  font-family: "Pelak Fallback";
+  src: local("Tahoma"), local("Arial");
+  font-weight: 100 500;
+  size-adjust: 104%;
+  ascent-override: 96.15%;
+  descent-override: 43.27%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Pelak Fallback";
+  src:
+    local("Tahoma Bold"), local("Tahoma-Bold"), local("Arial Bold"),
+    local("Arial-Bold");
+  font-weight: 600 900;
+  size-adjust: 104%;
+  ascent-override: 96.15%;
+  descent-override: 43.27%;
+  line-gap-override: 0%;
+}
+
+/* انتخاب فونت در کل برنامه — مقدار data-font روی <html> ست می‌شود. */
+:root {
+  --app-font-pelak: "Pelak", "Pelak Fallback", "Tahoma", sans-serif;
+  --app-font-system: "Tahoma", "Segoe UI", Arial, sans-serif;
+  --app-font-sans: var(--app-font-pelak);
+  --app-font-heading: var(--app-font-pelak);
+}
+
+html[data-font="pelak"] {
+  --app-font-sans: var(--app-font-pelak);
+  --app-font-heading: var(--app-font-pelak);
+}
+
+html[data-font="system"] {
+  --app-font-sans: var(--app-font-system);
+  --app-font-heading: var(--app-font-system);
+}
+
+/* پیش‌نمایش هر گزینه در منوی انتخاب فونت */
+[data-font-preview="default"],
+[data-font-preview="pelak"] {
+  font-family: var(--app-font-pelak);
+}
+
+[data-font-preview="system"] {
+  font-family: var(--app-font-system);
+}
 
 @theme inline {
-  --font-heading: "Iran Yekan X", sans-serif;
-  --font-sans: "Iran Yekan X", sans-serif;
-  --font-mono: "Iran Yekan X", monospace;
+  --font-heading: var(--app-font-heading);
+  --font-sans: var(--app-font-sans);
+  --font-mono: var(--app-font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -177,22 +259,20 @@
   --sidebar-ring: oklch(0.7 0.08 240);
 }
 
+/* گذار یکپارچهٔ تم — هنگام سوییچ، همهٔ عناصر با مدت‌زمان و منحنی یکسان
+   رنگ عوض می‌کنند؛ کلاس theme-transition فقط در لحظهٔ تغییر تم روی <html>
+   قرار می‌گیرد و بعد از پایان گذار حذف می‌شود تا transition دائمی تحمیل نشود. */
 @media (prefers-reduced-motion: no-preference) {
-  ::view-transition-old(root) {
-    animation: 500ms ease-out both;
-    mix-blend-mode: normal;
-  }
-  ::view-transition-new(root) {
-    animation: 500ms ease-out both theme-spread;
-    mix-blend-mode: normal;
-  }
-  @keyframes theme-spread {
-    from {
-      clip-path: circle(0% at var(--theme-x, 100%) var(--theme-y, 0%));
-    }
-    to {
-      clip-path: circle(150% at var(--theme-x, 100%) var(--theme-y, 0%));
-    }
+  html.theme-transition,
+  html.theme-transition *,
+  html.theme-transition *::before,
+  html.theme-transition *::after {
+    transition-property:
+      background-color, border-color, color, fill, stroke, outline-color,
+      text-decoration-color, caret-color, box-shadow, opacity;
+    transition-duration: 300ms;
+    transition-timing-function: ease;
+    transition-delay: 0s;
   }
 }
 
@@ -202,9 +282,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    transition:
-      background-color 0.3s ease,
-      color 0.3s ease;
     background-image:
       radial-gradient(
         ellipse 80% 50% at 50% 0%,
@@ -237,6 +314,14 @@
     @apply font-sans;
     scrollbar-gutter: stable;
   }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading font-semibold;
+  }
   /* react-remove-scroll-bar (Radix scroll lock) assumes LTR: on open it
      sets margin-right/padding-right equal to the hidden scrollbar width.
      Here the page is RTL (scrollbar on the left) and scrollbar-gutter
@@ -262,6 +347,12 @@
   }
   .scrollbar-gutter-stable {
     scrollbar-gutter: stable;
+  }
+  /* هایلایت متن انتخاب‌شده — پس‌زمینه سبز برند و متن هم‌رنگ آن.
+     چون از متغیرهای تم استفاده می‌کند، در حالت روشن و تاریک خودکار است. */
+  ::selection {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
   }
   /* جلوگیری از درگ تصاویر و لوگوها با موس */
   img,

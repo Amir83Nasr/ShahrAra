@@ -10,7 +10,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { RequestItem, User } from "../types";
 
-// leaflet touches `window` at import time; skip prerendering
+// maplibre-gl touches `window` at import time; skip prerendering
 const MapComponent = dynamic(() => import("./MapComponent"), { ssr: false });
 import {
   Heart,
@@ -441,9 +441,11 @@ export default function ReportsDirectory({
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              {currentUser
-                                ? "ثبت لایک"
-                                : "برای لایک ثبت‌نام کنید"}
+                              {!currentUser
+                                ? "برای ثبت لایک وارد شوید"
+                                : hasLikedStatus
+                                  ? "لغو لایک"
+                                  : "ثبت لایک"}
                             </TooltipContent>
                           </Tooltip>
                         </div>

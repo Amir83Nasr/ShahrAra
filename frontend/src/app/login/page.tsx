@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertCircle, ArrowRight, KeyRound, MessageSquare } from "lucide-react";
+import { AlertCircle, KeyRound, MessageSquare } from "lucide-react";
 import { useApp } from "../providers";
+import { ModeToggle } from "@/components/mode-toggle";
 import { User } from "../../types";
 import { toPersianDigits, toEnglishDigits } from "@/utils/numberUtils";
 import { cn } from "@/lib/utils";
@@ -42,7 +42,7 @@ const FETCH_ERROR =
 
 export default function LoginPage() {
   const router = useRouter();
-  const { currentUser, authReady, loginSuccess } = useApp();
+  const { currentUser, authReady, loginSuccess, theme, setTheme } = useApp();
 
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
@@ -323,16 +323,11 @@ export default function LoginPage() {
           : `کد تأیید ارسال‌شده به ${toPersianDigits(phone)} را وارد کنید.`;
 
   return (
-    <div className="grid min-h-svh lg:grid-cols-2">
+    <div className="grid min-h-svh md:grid-cols-2">
       {/* ── فرم ──────────────────────────────────────────── */}
       <div className="relative flex flex-col p-6 md:p-10">
-        <div className="absolute inset-e-4 top-4 hidden gap-2 md:static md:flex md:justify-start">
-          <Button asChild variant="outline">
-            <Link href="/">
-              <ArrowRight className="h-4 w-4" />
-              بازگشت به صفحه اصلی
-            </Link>
-          </Button>
+        <div className="absolute end-4 top-4">
+          <ModeToggle theme={theme} onThemeChange={setTheme} />
         </div>
 
         <div className="flex flex-1 items-center justify-center">
@@ -627,15 +622,17 @@ export default function LoginPage() {
       </div>
 
       {/* ── تصویر ────────────────────────────────────────── */}
-      <div className="bg-muted relative hidden lg:block">
-        <Image
-          src="/assets/login.jpg"
-          alt="نمای شهری"
-          fill
-          sizes="(max-width: 1024px) 0px, 50vw"
-          priority
-          className="object-cover dark:opacity-80"
-        />
+      <div className="relative hidden p-2 md:order-first md:block xl:p-4">
+        <div className="bg-muted relative h-full w-full overflow-hidden rounded-3xl">
+          <Image
+            src="/assets/login-3in4.jpg"
+            alt="ماکت شهر و تیم شهرسازی"
+            fill
+            sizes="50vw"
+            priority
+            className="object-cover dark:opacity-80"
+          />
+        </div>
       </div>
     </div>
   );

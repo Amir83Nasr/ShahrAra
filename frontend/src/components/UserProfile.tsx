@@ -83,7 +83,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useApp } from "../app/providers";
 import dynamic from "next/dynamic";
 
-// leaflet touches `window` at import time; skip prerendering
+// maplibre-gl touches `window` at import time; skip prerendering
 const MapComponent = dynamic(() => import("./MapComponent"), { ssr: false });
 
 const SECTION_TITLES: Record<string, string> = {
@@ -1057,6 +1057,7 @@ function RequestGrid({
                                 size="icon-xs"
                                 className="text-destructive"
                                 onClick={() => setDeletingRequest(req)}
+                                aria-label="حذف"
                               >
                                 <Trash2 />
                               </Button>

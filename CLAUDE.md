@@ -1,5 +1,3 @@
-always use pnpm instead of npm
+# CLAUDE.md
 
-use uv for backend
-
-never make a.txt b.txt or c.txt file
+@AGENTS.md

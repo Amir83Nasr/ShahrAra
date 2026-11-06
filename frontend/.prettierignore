@@ -4,3 +4,4 @@ out
 build
 pnpm-lock.yaml
 tsconfig.tsbuildinfo
+public/maplibre

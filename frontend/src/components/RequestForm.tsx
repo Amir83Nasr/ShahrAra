@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { RequestType, User } from "../types";
 
-// leaflet touches `window` at import time; skip prerendering
+// maplibre-gl touches `window` at import time; skip prerendering
 const MapComponent = dynamic(() => import("./MapComponent"), { ssr: false });
 import { determineRegion, REGIONS } from "../utils/regionUtils";
 import { CATEGORIES } from "../utils/categoryUtils";
@@ -338,7 +338,7 @@ export default function RequestForm({
                 <span className="text-destructive">*</span>
               </label>
 
-              <div className="border-border bg-card relative h-[300px] w-full overflow-hidden rounded-xl border">
+              <div className="border-border bg-card relative h-[400px] w-full overflow-hidden rounded-xl border">
                 <MapComponent
                   pickerMode={true}
                   selectedCoordinates={coords}

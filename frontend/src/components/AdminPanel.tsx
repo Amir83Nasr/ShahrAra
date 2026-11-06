@@ -9,7 +9,7 @@ import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { RequestItem, RequestStatus, RequestType } from "../types";
 
-// leaflet touches `window` at import time; skip prerendering
+// maplibre-gl touches `window` at import time; skip prerendering
 const MapComponent = dynamic(() => import("./MapComponent"), { ssr: false });
 import {
   Shield,

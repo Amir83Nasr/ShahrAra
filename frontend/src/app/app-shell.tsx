@@ -26,8 +26,14 @@ import { toPersianDigits } from "@/utils/numberUtils";
 // Shared chrome + global auth modal + API error alert.
 // Every page renders inside this shell via the root layout.
 export default function AppShell({ children }: { children: React.ReactNode }) {
-  const { currentUser, theme, setTheme, apiError, dismissError, logout } =
-    useApp();
+  const {
+    currentUser,
+    theme,
+    setTheme,
+    apiError,
+    dismissError,
+    logout,
+  } = useApp();
   const pathname = usePathname();
 
   // صفحات بدون هدر/فوتر (مثل لاگین) — فقط محتوا
@@ -39,7 +45,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/admin");
 
   return (
-    <TooltipProvider delayDuration={200}>
+    <TooltipProvider delayDuration={800}>
       <div
         className="bg-background text-foreground relative z-0 flex min-h-screen flex-col justify-between transition-colors duration-300"
         id="shahr_ara_app_root"

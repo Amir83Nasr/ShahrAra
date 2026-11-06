@@ -11,6 +11,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { User, RequestItem, RequestStatus, Stats } from "@/types";
@@ -19,9 +20,19 @@ import {
   setCachedData,
   invalidateCache,
 } from "@/utils/apiCache";
+import {
+  DEFAULT_FONT,
+  FONT_STORAGE_KEY,
+  FontOption,
+  normalizeFontOption,
+} from "@/utils/fontUtils";
 
 const REQ_CACHE_KEY = "requests";
 const STATS_CACHE_KEY = "stats";
+
+// Should match the transition-duration in globals.css (300ms). The small
+// buffer lets the final frame paint before the helper class is removed.
+const THEME_TRANSITION_MS = 320;
 
 const INITIAL_STATS: Stats = {
   totalCount: 0,
@@ -44,6 +55,8 @@ interface AppContextValue {
   logout: () => void;
   theme: "light" | "dark";
   setTheme: (theme: "light" | "dark") => void;
+  font: FontOption;
+  setFont: (font: FontOption) => void;
   requests: RequestItem[];
   stats: Stats;
   loading: boolean;
@@ -74,6 +87,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
   // render): the first render must match the server HTML, so defaults here
   // and saved values applied in the effect below.
   const [theme, setThemeState] = useState<"light" | "dark">("light");
+  const [font, setFontState] = useState<FontOption>(DEFAULT_FONT);
+  const themeTransitionTimer = useRef<number | null>(null);
+
+  // Never leave the transition helper class behind (e.g. on unmount).
+  useEffect(() => {
+    return () => {
+      if (themeTransitionTimer.current !== null) {
+        window.clearTimeout(themeTransitionTimer.current);
+      }
+      document.documentElement.classList.remove("theme-transition");
+    };
+  }, []);
 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   // Avoid rendering auth-gated UI until localStorage session restored
@@ -91,6 +116,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
       const savedTheme = localStorage.getItem("shahr_ara_theme");
       if (savedTheme === "dark" || savedTheme === "light") {
         setThemeState(savedTheme);
+      }
+      const savedFont = localStorage.getItem(FONT_STORAGE_KEY);
+      // مهاجرت مقادیر قدیمی («پلاک»، «مربع»، «دیدار») به تنظیم فعلی
+      const restoredFont = normalizeFontOption(savedFont);
+      if (restoredFont) {
+        setFontState(restoredFont);
       }
       try {
         const savedUser = JSON.parse(
@@ -118,6 +149,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
     localStorage.setItem("shahr_ara_theme", theme);
   }, [theme, authReady]);
 
+  useEffect(() => {
+    // Wait for the restore pass so the pre-hydration script's value is not
+    // clobbered by the default font on the first frame.
+    if (!authReady) return;
+    document.documentElement.dataset.font = font;
+    localStorage.setItem(FONT_STORAGE_KEY, font);
+  }, [font, authReady]);
+
   const loginSuccess = useCallback((user: User) => {
     setCurrentUser(user);
     localStorage.setItem("shahr_ara_user", JSON.stringify(user));
@@ -135,7 +174,39 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setTheme = useCallback((next: "light" | "dark") => {
+    const root = document.documentElement;
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    // Add the helper class *before* the state change so the browser sees the
+    // new colors as a transition target rather than an instant repaint.
+    if (reduceMotion) {
+      if (themeTransitionTimer.current !== null) {
+        window.clearTimeout(themeTransitionTimer.current);
+        themeTransitionTimer.current = null;
+      }
+      root.classList.remove("theme-transition");
+    } else {
+      root.classList.add("theme-transition");
+      // Force a style flush so the helper class is part of the "before-change"
+      // style; otherwise the color change may land in the same style
+      // recalculation and the browser skips the animation.
+      void root.offsetWidth;
+      if (themeTransitionTimer.current !== null) {
+        window.clearTimeout(themeTransitionTimer.current);
+      }
+      themeTransitionTimer.current = window.setTimeout(() => {
+        root.classList.remove("theme-transition");
+        themeTransitionTimer.current = null;
+      }, THEME_TRANSITION_MS);
+    }
+
     setThemeState(next);
+  }, []);
+
+  const setFont = useCallback((next: FontOption) => {
+    setFontState(next);
   }, []);
 
   const refresh = useCallback(
@@ -263,6 +334,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
       logout,
       theme,
       setTheme,
+      font,
+      setFont,
       requests,
       stats,
       loading,
@@ -283,6 +356,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
       logout,
       theme,
       setTheme,
+      font,
+      setFont,
       requests,
       stats,
       loading,

@@ -1,5 +1,3 @@
-import * as React from "react";
-import { flushSync } from "react-dom";
 import { Moon, Sun } from "lucide-react";
 
 import { Button } from "./ui/button";
@@ -12,26 +10,8 @@ export function ModeToggle({
   theme: "light" | "dark";
   onThemeChange: (theme: "light" | "dark") => void;
 }) {
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = (rect.left + rect.width / 2).toFixed(0);
-    const y = (rect.top + rect.height / 2).toFixed(0);
-    document.documentElement.style.setProperty("--theme-x", `${x}px`);
-    document.documentElement.style.setProperty("--theme-y", `${y}px`);
-
-    const next = theme === "light" ? "dark" : "light";
-
-    if ("startViewTransition" in document) {
-      (
-        document as unknown as { startViewTransition: (cb: () => void) => void }
-      ).startViewTransition(() => {
-        flushSync(() => {
-          onThemeChange(next);
-        });
-      });
-    } else {
-      onThemeChange(next);
-    }
+  const handleClick = () => {
+    onThemeChange(theme === "light" ? "dark" : "light");
   };
 
   return (
@@ -47,7 +27,7 @@ export function ModeToggle({
         </Button>
       </TooltipTrigger>
       <TooltipContent>
-        {theme === "light" ? "فعال‌سازی تم تاریک" : "فعال‌سازی تم روشن"}
+        {theme === "light" ? "تغییر به حالت تاریک" : "تغییر به حالت روشن"}
       </TooltipContent>
     </Tooltip>
   );
