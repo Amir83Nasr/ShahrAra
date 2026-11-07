@@ -144,6 +144,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
       root.classList.remove("dark");
       document.body.classList.remove("dark");
     }
+    // نوار مرورگر/PWA هم‌رنگ تم فعلی
+    const themeColor = theme === "dark" ? "#151f29" : "#f8fafd";
+    document
+      .querySelectorAll('meta[name="theme-color"]')
+      .forEach((meta) => meta.setAttribute("content", themeColor));
     // Wait for the restore pass above, else first run clobbers saved value
     if (!authReady) return;
     localStorage.setItem("shahr_ara_theme", theme);

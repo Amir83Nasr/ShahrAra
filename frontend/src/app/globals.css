@@ -175,88 +175,93 @@ html[data-font="system"] {
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* پالت آبی تلگرامی — تم روشن
+   آبی برند (#0080C6) از خانوادهٔ آبی تلگرام (#2AABEE / #0088CC) گرفته شده؛
+   برای خوانایی متن، --primary یک پله عمیق‌تر (#006FB1، کنتراست ~۵.۱) است. */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: oklch(0.985 0.004 246);
+  --foreground: oklch(0.21 0.02 255);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.21 0.02 255);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  /* Brand green from logo/Final/svg/01.svg (#11453a → oklch 0.353 0.057 175.8) */
-  --primary: oklch(0.4 0.07 176);
+  --popover-foreground: oklch(0.21 0.02 255);
+  --primary: oklch(0.52 0.145 242);
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.93 0.03 176);
-  --secondary-foreground: oklch(0.3 0.05 176);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.93 0.03 176);
-  --accent-foreground: oklch(0.3 0.05 176);
-  --destructive: oklch(0.577 0.245 27.325);
-  --status-submitted: oklch(0.52 0 0);
-  --status-under-review: oklch(0.55 0.14 240);
-  --status-in-progress: oklch(0.65 0.15 80);
-  --status-resolved: oklch(0.55 0.14 160);
-  --status-archived: oklch(0.45 0 0);
-  --type-problem: oklch(0.577 0.245 27.325);
-  --type-idea: oklch(0.55 0.14 160);
-  --border: oklch(0.2 0 0 / 28%);
-  --input: oklch(0.2 0 0 / 32%);
-  --ring: oklch(0.5 0.08 176);
-  --chart-1: oklch(0.45 0.09 176);
-  --chart-2: oklch(0.62 0.1 160);
-  --chart-3: oklch(0.32 0.07 185);
-  --chart-4: oklch(0.75 0.1 100);
-  --chart-5: oklch(0.6 0.15 30);
+  --secondary: oklch(0.955 0.022 240);
+  --secondary-foreground: oklch(0.37 0.09 245);
+  --muted: oklch(0.965 0.008 248);
+  --muted-foreground: oklch(0.5 0.022 255);
+  --accent: oklch(0.945 0.03 238);
+  --accent-foreground: oklch(0.36 0.1 245);
+  --destructive: oklch(0.56 0.21 27);
+  --status-submitted: oklch(0.5 0.02 255);
+  --status-under-review: oklch(0.55 0.15 275);
+  --status-in-progress: oklch(0.58 0.14 70);
+  --status-resolved: oklch(0.54 0.13 155);
+  --status-archived: oklch(0.5 0.015 255);
+  --type-problem: oklch(0.56 0.21 27);
+  --type-idea: oklch(0.54 0.13 155);
+  --border: oklch(0.9 0.012 250);
+  --input: oklch(0.86 0.016 250);
+  --ring: oklch(0.6 0.14 242);
+  --chart-1: oklch(0.52 0.145 242);
+  --chart-2: oklch(0.68 0.12 210);
+  --chart-3: oklch(0.5 0.16 275);
+  --chart-4: oklch(0.62 0.11 190);
+  --chart-5: oklch(0.65 0.14 70);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.4 0.07 176);
+  --sidebar: oklch(0.975 0.008 246);
+  --sidebar-foreground: oklch(0.21 0.02 255);
+  --sidebar-primary: oklch(0.52 0.145 242);
   --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.93 0.03 176);
-  --sidebar-accent-foreground: oklch(0.3 0.05 176);
-  --sidebar-border: oklch(0.2 0 0 / 28%);
-  --sidebar-ring: oklch(0.5 0.08 176);
+  --sidebar-accent: oklch(0.945 0.03 238);
+  --sidebar-accent-foreground: oklch(0.36 0.1 245);
+  --sidebar-border: oklch(0.9 0.012 250);
+  --sidebar-ring: oklch(0.6 0.14 242);
 }
 
+/* پالت آبی تلگرامی — تم تاریک
+   پس‌زمینهٔ سرمه‌ای نزدیک به تلگرام (#151F29) با کارت‌های یک پله روشن‌تر و
+   آبی روشن (#4EB2F1) برای حفظ کنتراست بالا روی سطوح تیره. */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.8 0.09 176);
-  --primary-foreground: oklch(0.15 0 0);
-  --secondary: oklch(0.26 0.04 176);
-  --secondary-foreground: oklch(0.82 0.08 176);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.26 0.04 176);
-  --accent-foreground: oklch(0.82 0.08 176);
-  --destructive: oklch(0.704 0.191 22.216);
-  --status-submitted: oklch(0.65 0 0);
-  --status-under-review: oklch(0.7 0.1 240);
-  --status-in-progress: oklch(0.75 0.12 80);
-  --status-resolved: oklch(0.7 0.1 160);
-  --status-archived: oklch(0.55 0 0);
-  --type-problem: oklch(0.704 0.191 22.216);
-  --type-idea: oklch(0.7 0.1 160);
-  --border: oklch(1 0 0 / 20%);
-  --input: oklch(1 0 0 / 25%);
-  --ring: oklch(0.7 0.08 240);
-  --chart-1: oklch(0.85 0.08 240);
-  --chart-2: oklch(0.75 0.1 200);
-  --chart-3: oklch(0.65 0.1 260);
-  --chart-4: oklch(0.55 0.12 100);
-  --chart-5: oklch(0.45 0.14 30);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.85 0.08 240);
-  --sidebar-primary-foreground: oklch(0.15 0 0);
-  --sidebar-accent: oklch(0.25 0.06 240);
-  --sidebar-accent-foreground: oklch(0.85 0.08 240);
-  --sidebar-border: oklch(1 0 0 / 20%);
-  --sidebar-ring: oklch(0.7 0.08 240);
+  --background: oklch(0.235 0.024 250);
+  --foreground: oklch(0.965 0.006 250);
+  --card: oklch(0.285 0.028 252);
+  --card-foreground: oklch(0.965 0.006 250);
+  --popover: oklch(0.3 0.03 252);
+  --popover-foreground: oklch(0.965 0.006 250);
+  --primary: oklch(0.73 0.13 240);
+  --primary-foreground: oklch(0.2 0.03 250);
+  --secondary: oklch(0.315 0.035 250);
+  --secondary-foreground: oklch(0.86 0.06 240);
+  --muted: oklch(0.305 0.025 252);
+  --muted-foreground: oklch(0.72 0.02 250);
+  --accent: oklch(0.32 0.05 245);
+  --accent-foreground: oklch(0.87 0.07 240);
+  --destructive: oklch(0.7 0.18 25);
+  --status-submitted: oklch(0.7 0.02 250);
+  --status-under-review: oklch(0.72 0.12 275);
+  --status-in-progress: oklch(0.78 0.12 75);
+  --status-resolved: oklch(0.74 0.11 155);
+  --status-archived: oklch(0.6 0.015 250);
+  --type-problem: oklch(0.72 0.17 25);
+  --type-idea: oklch(0.74 0.11 155);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 17%);
+  --ring: oklch(0.72 0.12 240);
+  --chart-1: oklch(0.73 0.13 240);
+  --chart-2: oklch(0.78 0.1 200);
+  --chart-3: oklch(0.68 0.14 275);
+  --chart-4: oklch(0.72 0.1 185);
+  --chart-5: oklch(0.76 0.13 80);
+  --sidebar: oklch(0.265 0.026 252);
+  --sidebar-foreground: oklch(0.965 0.006 250);
+  --sidebar-primary: oklch(0.73 0.13 240);
+  --sidebar-primary-foreground: oklch(0.2 0.03 250);
+  --sidebar-accent: oklch(0.32 0.05 245);
+  --sidebar-accent-foreground: oklch(0.87 0.07 240);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.72 0.12 240);
 }
 
 /* گذار یکپارچهٔ تم — هنگام سوییچ، همهٔ عناصر با مدت‌زمان و منحنی یکسان
@@ -282,20 +287,22 @@ html[data-font="system"] {
   }
   body {
     @apply bg-background text-foreground;
+    /* هالهٔ آبی ملایم برند در پس‌زمینه — color-mix با هر فضای رنگی کار می‌کند
+       (پیش‌تر hsl() روی مقدار oklch نامعتبر بود و این گرادیان‌ها رندر نمی‌شدند). */
     background-image:
       radial-gradient(
         ellipse 80% 50% at 50% 0%,
-        hsl(var(--primary) / 0.06) 0%,
+        color-mix(in oklch, var(--primary) 7%, transparent) 0%,
         transparent 70%
       ),
       radial-gradient(
         ellipse 50% 80% at 80% 100%,
-        hsl(var(--primary) / 0.04) 0%,
+        color-mix(in oklch, var(--primary) 5%, transparent) 0%,
         transparent 70%
       ),
       radial-gradient(
         ellipse 50% 80% at 20% 100%,
-        hsl(var(--primary) / 0.03) 0%,
+        color-mix(in oklch, var(--primary) 4%, transparent) 0%,
         transparent 70%
       );
   }
@@ -339,16 +346,27 @@ html[data-font="system"] {
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground) / 0.25);
+    background: color-mix(in oklch, var(--muted-foreground) 30%, transparent);
     border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.45);
+    background: color-mix(in oklch, var(--muted-foreground) 55%, transparent);
   }
   .scrollbar-gutter-stable {
     scrollbar-gutter: stable;
   }
-  /* هایلایت متن انتخاب‌شده — پس‌زمینه سبز برند و متن هم‌رنگ آن.
+  /* سایهٔ نرم و لایه‌ای برای کارت‌ها — عمق ملایم بدون شلوغی بصری */
+  [data-slot="card"] {
+    box-shadow:
+      0 1px 2px color-mix(in oklch, var(--foreground) 5%, transparent),
+      0 10px 30px -18px color-mix(in oklch, var(--foreground) 14%, transparent);
+  }
+  .dark [data-slot="card"] {
+    box-shadow:
+      0 1px 2px rgb(0 0 0 / 35%),
+      0 16px 40px -24px rgb(0 0 0 / 55%);
+  }
+  /* هایلایت متن انتخاب‌شده — پس‌زمینه آبی برند و متن هم‌رنگ آن.
      چون از متغیرهای تم استفاده می‌کند، در حالت روشن و تاریک خودکار است. */
   ::selection {
     background-color: var(--primary);
@@ -370,8 +388,16 @@ html[data-font="system"] {
   z-index: -1;
   pointer-events: none;
   background-image:
-    linear-gradient(to right, rgba(0, 0, 0, 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+    linear-gradient(
+      to right,
+      color-mix(in oklch, var(--primary) 9%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklch, var(--primary) 9%, transparent) 1px,
+      transparent 1px
+    );
   background-size: 48px 48px;
   mask-image: radial-gradient(ellipse at center, #000 50%, transparent 78%);
   -webkit-mask-image: radial-gradient(
@@ -383,6 +409,14 @@ html[data-font="system"] {
 
 .dark #shahr_ara_app_root::before {
   background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+    linear-gradient(
+      to right,
+      color-mix(in oklch, var(--primary) 12%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklch, var(--primary) 12%, transparent) 1px,
+      transparent 1px
+    );
 }

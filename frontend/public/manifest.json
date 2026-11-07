@@ -4,8 +4,8 @@
   "description": "سامانه هوشمند ثبت و ارتقای مطالبات و ایده‌های مردمی",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#11453a",
+  "background_color": "#f8fafd",
+  "theme_color": "#0080c6",
   "icons": [
     {
       "src": "/icons/icon-192.png",

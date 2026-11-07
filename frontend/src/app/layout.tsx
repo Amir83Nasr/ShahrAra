@@ -40,7 +40,11 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#11453a",
+  // رنگ نوار مرورگر/PWA؛ مقدار واقعی هنگام سوییچ تم در providers به‌روز می‌شود.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8fafd" },
+    { media: "(prefers-color-scheme: dark)", color: "#151f29" },
+  ],
 };
 
 export default function RootLayout({
@@ -72,7 +76,7 @@ export default function RootLayout({
       <head>
         {/* برگرداندن فونت انتخاب‌شده پیش از رندر، برای جلوگیری از پرش فونت */}
         <script dangerouslySetInnerHTML={{ __html: FONT_RESTORE_SCRIPT }} />
-        {/* اسپلش اسکرین iOS — لوگوی سبز روی پس‌زمینه سفید */}
+        {/* اسپلش اسکرین iOS — لوگوی آبی روی پس‌زمینه سفید */}
         <link
           rel="apple-touch-startup-image"
           href="/icons/splash-ios.png"
