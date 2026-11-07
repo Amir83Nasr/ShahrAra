@@ -6,24 +6,25 @@ from datetime import datetime, timedelta, timezone
 
 from app.core.config import ADMIN_NATIONAL_ID, ADMIN_PHONE
 from app.db.session import SessionLocal
-from app.models.models import Request, User
+from app.models.models import Like, Notification, OtpCode, Request, User
 
+# Obviously fake numbers: seed data must never look like real citizens' PII.
 USERS = [
     {
-        "phone": "09912910622",
-        "national_id": str(random.randint(1000000000, 9999999999)),
+        "phone": "09120000001",
+        "national_id": "1111111111",
         "first_name": "مهدی",
         "last_name": "امامی",
     },
     {
-        "phone": "09962229652",
-        "national_id": str(random.randint(1000000000, 9999999999)),
+        "phone": "09120000002",
+        "national_id": "2222222222",
         "first_name": "ایمان",
         "last_name": "کربلایی",
     },
     {
-        "phone": "09197663264",
-        "national_id": str(random.randint(1000000000, 9999999999)),
+        "phone": "09120000003",
+        "national_id": "3333333333",
         "first_name": "عرفان",
         "last_name": "کربلایی",
     },
@@ -162,14 +163,19 @@ IDEA_DESCRIPTIONS = [
 ]
 
 
-def generate_random_national_id() -> str:
-    return str(random.randint(1000000000, 9999999999))
-
-
 def seed():
+    if not ADMIN_PHONE or not ADMIN_NATIONAL_ID:
+        raise SystemExit(
+            "ADMIN_PHONE and ADMIN_NATIONAL_ID must be set before seeding "
+            "(see backend/.env.example)."
+        )
+
     db = SessionLocal()
 
-    # Clear existing data
+    # Clear existing data in child-to-parent order so foreign keys stay valid.
+    db.query(Notification).delete()
+    db.query(Like).delete()
+    db.query(OtpCode).delete()
     db.query(Request).delete()
     db.query(User).delete()
 
@@ -184,9 +190,7 @@ def seed():
         is_admin=True,
     )
     db.add(admin_user)
-    # Assign random national IDs for users
     for u in USERS:
-        u["national_id"] = generate_random_national_id()
         db.add(User(**u))
     db.commit()
     print(f"Seeded {len(USERS) + 1} users (1 admin + {len(USERS)} citizens)")
@@ -199,6 +203,7 @@ def seed():
 
     from sqlalchemy import text
 
+    inserted_ids: list[str] = []
     for i in range(request_count):
         user = random.choice(all_users)
         is_problem = random.random() < 0.65
@@ -207,7 +212,6 @@ def seed():
         status = random.choice(STATUSES)
         lat = round(random.uniform(34.620, 34.680), 4)
         lng = round(random.uniform(50.820, 50.990), 4)
-        likes = random.randint(0, 60)
         created = base_time + timedelta(
             days=random.randint(0, 58),
             hours=random.randint(0, 23),
@@ -232,6 +236,8 @@ def seed():
             ]
             admin_response = random.choice(admin_responses)
 
+        request_id = f"req_{uuid.uuid4().hex}"
+        inserted_ids.append(request_id)
         db.execute(
             text("""
                 INSERT INTO requests (id, title, description, type, category, lat, lng,
@@ -240,7 +246,7 @@ def seed():
                     :region, :status, :user_phone, :user_name, :created_at, :admin_response, :likes)
             """),
             {
-                "id": f"req_{uuid.uuid4().hex[:8]}",
+                "id": request_id,
                 "title": title,
                 "description": description,
                 "type": "problem" if is_problem else "idea",
@@ -253,8 +259,18 @@ def seed():
                 "user_name": f"{user.first_name} {user.last_name}",
                 "created_at": created,
                 "admin_response": admin_response,
-                "likes": likes,
+                "likes": 0,
             },
+        )
+
+    # Keep the denormalised counter consistent with the likes table.
+    for request_id in inserted_ids:
+        likers = random.sample(all_users, k=random.randint(0, len(all_users)))
+        for liker in likers:
+            db.add(Like(user_phone=liker.phone, request_id=request_id))
+        db.execute(
+            text("UPDATE requests SET likes = :likes WHERE id = :id"),
+            {"likes": len(likers), "id": request_id},
         )
 
     db.commit()

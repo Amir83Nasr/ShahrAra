@@ -16,6 +16,12 @@ import {
 } from "react";
 import { User, RequestItem, RequestStatus, Stats } from "@/types";
 import {
+  UNAUTHORIZED_EVENT,
+  apiErrorMessage,
+  apiFetch,
+  authHeaders,
+} from "@/lib/api";
+import {
   getCachedData,
   setCachedData,
   invalidateCache,
@@ -127,7 +133,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
         const savedUser = JSON.parse(
           localStorage.getItem("shahr_ara_user") ?? "null",
         ) as User | null;
-        if (savedUser) setCurrentUser(savedUser);
+        if (savedUser) {
+          // Sessions saved before national-ID masking may still hold the full
+          // value; scrub it in place rather than keeping it in localStorage.
+          if (
+            savedUser.nationalId &&
+            !savedUser.nationalId.startsWith("******")
+          ) {
+            savedUser.nationalId = `******${savedUser.nationalId.slice(-4)}`;
+            localStorage.setItem("shahr_ara_user", JSON.stringify(savedUser));
+          }
+          setCurrentUser(savedUser);
+        }
       } catch {
         localStorage.removeItem("shahr_ara_user");
       }
@@ -177,6 +194,41 @@ export function Providers({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("shahr_ara_token");
     invalidateCache();
   }, []);
+
+  // Revalidate a restored session once. A stale/expired token is cleared
+  // instead of leaving the UI in a fake logged-in state.
+  useEffect(() => {
+    if (!authReady) return;
+    const token = localStorage.getItem("shahr_ara_token");
+    if (!token) return;
+
+    let cancelled = false;
+    apiFetch<User>("/api/v1/auth/me", { headers: authHeaders(token) })
+      .then((fresh) => {
+        if (cancelled) return;
+        const next = { ...fresh, token };
+        setCurrentUser(next);
+        localStorage.setItem("shahr_ara_user", JSON.stringify(next));
+      })
+      .catch(() => {
+        if (!cancelled) logout();
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authReady, logout]);
+
+  // Any 401 from a shared API call means the token is no longer usable.
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      logout();
+      setApiError("نشست شما منقضی شده است. لطفاً دوباره وارد شوید.");
+    };
+    window.addEventListener(UNAUTHORIZED_EVENT, handleUnauthorized);
+    return () =>
+      window.removeEventListener(UNAUTHORIZED_EVENT, handleUnauthorized);
+  }, [logout]);
 
   const setTheme = useCallback((next: "light" | "dark") => {
     const root = document.documentElement;
@@ -238,31 +290,25 @@ export function Providers({ children }: { children: React.ReactNode }) {
         const userParam = currentUser
           ? `?currentUserPhone=${currentUser.phone}`
           : "";
-        const headers: Record<string, string> = {};
         const token =
           currentUser?.token ?? localStorage.getItem("shahr_ara_token");
-        if (token) headers["Authorization"] = `Bearer ${token}`;
+        const headers = authHeaders(token);
 
-        const [requestsRes, statsRes] = await Promise.all([
-          fetch(`/api/v1/requests${userParam}`, { headers }),
-          fetch("/api/v1/stats"),
+        const [reqData, statData] = await Promise.all([
+          apiFetch<RequestItem[]>(`/api/v1/requests${userParam}`, { headers }),
+          apiFetch<Stats>("/api/v1/stats"),
         ]);
 
-        if (requestsRes.ok && statsRes.ok) {
-          const reqData = await requestsRes.json();
-          const statData = await statsRes.json();
-          setRequests(reqData);
-          setStats(statData);
-          setCachedData(REQ_CACHE_KEY, reqData);
-          setCachedData(STATS_CACHE_KEY, statData);
-        } else {
-          setApiError(
-            "در دریافت اطلاعات از سرور مشکلی پیش آمد. لطفاً بعداً تلاش کنید.",
-          );
-        }
-      } catch {
+        setRequests(reqData);
+        setStats(statData);
+        setCachedData(REQ_CACHE_KEY, reqData);
+        setCachedData(STATS_CACHE_KEY, statData);
+      } catch (err) {
         setApiError(
-          "ارتباط با سرور برقرار نشد. از اتصال اینترنت خود مطمئن شوید.",
+          apiErrorMessage(
+            err,
+            "در دریافت اطلاعات از سرور مشکلی پیش آمد. لطفاً بعداً تلاش کنید.",
+          ),
         );
       } finally {
         if (!silent) setLoading(false);
@@ -285,22 +331,22 @@ export function Providers({ children }: { children: React.ReactNode }) {
         currentUser?.token ?? localStorage.getItem("shahr_ara_token");
       if (!token) return;
       try {
-        const res = await fetch(`/api/v1/requests/${id}/like`, {
+        const updatedReq = await apiFetch<{
+          success: boolean;
+          request: RequestItem;
+        }>(`/api/v1/requests/${id}/like`, {
           method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
+          headers: authHeaders(token),
         });
 
-        if (res.ok) {
-          const updatedReq = await res.json();
-          if (updatedReq.success) {
-            setRequests((prev) =>
-              prev.map((r) => (r.id === id ? updatedReq.request : r)),
-            );
-            invalidateCache();
-          }
+        if (updatedReq.success) {
+          setRequests((prev) =>
+            prev.map((r) => (r.id === id ? updatedReq.request : r)),
+          );
+          invalidateCache();
         }
-      } catch {
-        // silent fail — optimistic UI already updated
+      } catch (err) {
+        setApiError(apiErrorMessage(err, "ثبت لایک انجام نشد."));
       }
     },
     [currentUser],
@@ -310,21 +356,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
     async (id: string, status: RequestStatus, adminResponse: string) => {
       const token =
         currentUser?.token ?? localStorage.getItem("shahr_ara_token");
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const res = await fetch(`/api/v1/requests/${id}/status`, {
+      await apiFetch(`/api/v1/requests/${id}/status`, {
         method: "PUT",
-        headers,
+        headers: authHeaders(token, true),
         body: JSON.stringify({ status, adminResponse }),
       });
 
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.detail || "خطا در بروزرسانی وضعیت.");
-      }
       invalidateCache();
       await refresh({ force: true, silent: true });
     },

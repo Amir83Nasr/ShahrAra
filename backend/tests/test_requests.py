@@ -450,6 +450,72 @@ class TestDeleteRequest:
         assert r.status_code == 404
 
 
+class TestPublicPrivacy:
+    def test_public_listing_masks_contact_details(self, client, sample_request):
+        r = client.get("/api/v1/requests")
+        assert r.status_code == 200
+        item = r.json()[0]
+        assert "***" in item["userPhone"]
+        assert item["userPhone"] != "09123456789"
+        assert item["userName"] != "Ali Rezaei"
+        assert item["isOwner"] is False
+
+    def test_owner_sees_own_contact_details(self, client, sample_request, user_token):
+        r = client.get(
+            "/api/v1/requests",
+            headers={"Authorization": f"Bearer {user_token}"},
+        )
+        item = r.json()[0]
+        assert item["userPhone"] == "09123456789"
+        assert item["userName"] == "Ali Rezaei"
+        assert item["isOwner"] is True
+
+    def test_admin_sees_full_contact_details(self, client, sample_request, admin_token):
+        r = client.get(
+            "/api/v1/requests",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        item = r.json()[0]
+        assert item["userPhone"] == "09123456789"
+        assert item["userName"] == "Ali Rezaei"
+        assert item["isOwner"] is False
+
+
+class TestDeleteWithChildren:
+    def test_delete_request_with_notification_succeeds(
+        self, client, sample_request_id, admin_token, user_token
+    ):
+        # A response-only change creates a notification; the request itself
+        # stays in `submitted`, so the owner may still delete it.
+        r = client.put(
+            f"/api/v1/requests/{sample_request_id}/status",
+            json={"status": "submitted", "adminResponse": "یادداشت آزمایشی"},
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert r.status_code == 200
+
+        headers = {"Authorization": f"Bearer {user_token}"}
+        assert client.get("/api/v1/notifications", headers=headers).json()
+
+        r = client.delete(f"/api/v1/requests/{sample_request_id}", headers=headers)
+        assert r.status_code == 200
+        assert client.get("/api/v1/requests").json() == []
+        assert client.get("/api/v1/notifications", headers=headers).json() == []
+
+    def test_no_notification_when_nothing_changes(
+        self, client, sample_request_id, admin_token, user_token
+    ):
+        r = client.put(
+            f"/api/v1/requests/{sample_request_id}/status",
+            json={"status": "submitted"},
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert r.status_code == 200
+
+        headers = {"Authorization": f"Bearer {user_token}"}
+        assert client.get("/api/v1/notifications", headers=headers).json() == []
+
+
 class TestNotifications:
     def test_get_notifications_empty(self, client, user_token):
         r = client.get("/api/v1/notifications", headers={"Authorization": f"Bearer {user_token}"})

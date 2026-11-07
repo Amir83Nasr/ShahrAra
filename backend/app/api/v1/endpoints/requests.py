@@ -91,6 +91,7 @@ def get_requests(
         examples=["2025-06-30"],
     ),
     db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_current_user),
 ):
     query = db.query(Request)
 
@@ -131,17 +132,24 @@ def get_requests(
 
     results = query.all()
 
-    # likedByCurrentUser enrichment
-    if currentUserPhone:
-        liked_ids = set(
+    # likedByCurrentUser: trust the bearer token first; keep the legacy
+    # currentUserPhone query parameter only for unauthenticated clients.
+    liked_by_phone = current_user.phone if current_user else currentUserPhone
+    liked_ids: set[str] = set()
+    if liked_by_phone:
+        liked_ids = {
             like.request_id
-            for like in db.query(Like).filter(Like.user_phone == currentUserPhone).all()
+            for like in db.query(Like).filter(Like.user_phone == liked_by_phone).all()
+        }
+
+    items = [
+        RequestResponse.from_orm(
+            r,
+            liked_by_current_user=(r.id in liked_ids) if liked_by_phone else None,
+            viewer=current_user,
         )
-        items = [
-            RequestResponse.from_orm(r, liked_by_current_user=r.id in liked_ids) for r in results
-        ]
-    else:
-        items = [RequestResponse.from_orm(r) for r in results]
+        for r in results
+    ]
 
     if limit > 0:
         return PaginatedRequestResponse(items=items, total=total, limit=limit, offset=offset)
@@ -183,7 +191,10 @@ def create_request(
     db.add(new_request)
     db.commit()
     db.refresh(new_request)
-    return CreateRequestResponse(success=True, request=RequestResponse.from_orm(new_request))
+    return CreateRequestResponse(
+        success=True,
+        request=RequestResponse.from_orm(new_request, viewer=current_user),
+    )
 
 
 @router.put(
@@ -240,7 +251,9 @@ def update_request(
         is not None
     )
 
-    return RequestResponse.from_orm(req, liked_by_current_user=liked_by_current_user)
+    return RequestResponse.from_orm(
+        req, liked_by_current_user=liked_by_current_user, viewer=current_user
+    )
 
 
 @router.delete(
@@ -276,7 +289,9 @@ def delete_request(
             detail='فقط درخواست‌های با وضعیت "ثبت شده" قابل حذف هستند.',
         )
 
-    # Delete associated likes first
+    # Remove child rows explicitly as well as via the FK rules, so the endpoint
+    # also works against databases created before the cascade migration.
+    db.query(Notification).filter(Notification.request_id == request_id).delete()
     db.query(Like).filter(Like.request_id == request_id).delete()
     db.delete(req)
     db.commit()
@@ -331,36 +346,46 @@ def update_status(
             detail="درخواست مورد نظر یافت نشد.",
         )
 
-    req.status = (
+    old_status = req.status
+    old_response = req.admin_response
+    new_status = (
         status_update.status.value
         if hasattr(status_update.status, "value")
         else status_update.status
     )
+    req.status = new_status
     if status_update.adminResponse is not None:
         req.admin_response = status_update.adminResponse
 
     db.commit()
     db.refresh(req)
 
-    # Auto-create notification for request owner
-    if req.user_phone != admin.phone:
-        status_label = {
-            "submitted": "ثبت شده",
-            "under_review": "در حال بررسی",
-            "in_progress": "در حال انجام",
-            "resolved": "حل شده",
-            "archived": "بایگانی شده",
-        }.get(req.status, req.status)
+    status_changed = old_status != req.status
+    response_changed = old_response != req.admin_response
+
+    # Notify only on a real change — repeated saves used to spam the owner.
+    if (status_changed or response_changed) and req.user_phone != admin.phone:
+        if status_changed:
+            status_label = {
+                "submitted": "ثبت شده",
+                "under_review": "در حال بررسی",
+                "in_progress": "در حال انجام",
+                "resolved": "حل شده",
+                "archived": "بایگانی شده",
+            }.get(req.status, req.status)
+            message = f"وضعیت درخواست شما به «{status_label}» تغییر یافت."
+        else:
+            message = "پاسخ رسمی جدیدی برای درخواست شما ثبت شد."
         notification = Notification(
             user_phone=req.user_phone,
-            message=f"وضعیت درخواست شما به «{status_label}» تغییر یافت.",
+            message=message,
             request_id=req.id,
             request_title=req.title,
         )
         db.add(notification)
         db.commit()
 
-    return StatusUpdateResponse(success=True, request=RequestResponse.from_orm(req))
+    return StatusUpdateResponse(success=True, request=RequestResponse.from_orm(req, viewer=admin))
 
 
 @router.post(
@@ -408,5 +433,7 @@ def toggle_like(
 
     return LikeResponse(
         success=True,
-        request=RequestResponse.from_orm(req, liked_by_current_user=liked_by_current_user),
+        request=RequestResponse.from_orm(
+            req, liked_by_current_user=liked_by_current_user, viewer=current_user
+        ),
     )

@@ -12,7 +12,9 @@ TEST_DB_URL = "postgresql+psycopg://postgres:postgres@localhost:5432/shahr_ara_t
 os.environ.setdefault("DATABASE_URL", TEST_DB_URL)
 os.environ["ADMIN_PHONE"] = "09120000000"
 os.environ["ADMIN_NATIONAL_ID"] = "1234567890"
-os.environ.setdefault("OTP_DEV_MODE", "true")
+os.environ["APP_ENV"] = "development"
+os.environ["OTP_DEV_MODE"] = "true"
+os.environ["AUTO_CREATE_ADMIN"] = "true"
 
 
 def _ensure_test_db() -> None:

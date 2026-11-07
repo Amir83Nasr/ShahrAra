@@ -64,6 +64,7 @@ class TestOtp:
         assert data["user"]["firstName"] == "Ali"
         assert data["user"]["isAdmin"] is False
         assert data["user"]["hasPassword"] is False
+        assert data["user"]["nationalId"] == "******7890"
         assert "accessToken" in data["token"]
 
     def test_verify_new_user_without_profile_returns_400(self, client):
@@ -188,6 +189,47 @@ class TestOtpDevModeOff:
         r = client.post("/api/v1/auth/otp/request", json={"phone": "09123456789"})
         assert r.status_code == 200
         assert r.json()["devCode"] is None
+
+    def test_code_is_not_printed_when_dev_mode_disabled(self, client, monkeypatch, capsys):
+        import app.api.v1.endpoints.auth as auth_module
+
+        monkeypatch.setattr(auth_module, "OTP_DEV_MODE", False)
+        r = client.post("/api/v1/auth/otp/request", json={"phone": "09123456789"})
+        assert r.status_code == 200
+        captured = capsys.readouterr()
+        assert "[OTP][DEV]" not in captured.out
+        assert "[OTP][DEV]" not in captured.err
+
+    def test_admin_is_not_auto_created_when_disabled(self, client, monkeypatch):
+        import app.api.v1.endpoints.auth as auth_module
+        from app.db.session import SessionLocal
+        from app.models.models import User
+
+        monkeypatch.setattr(auth_module, "AUTO_CREATE_ADMIN", False)
+        r = client.post("/api/v1/auth/otp/request", json={"phone": "09120000000"})
+        assert r.status_code == 200
+
+        db = SessionLocal()
+        try:
+            assert db.query(User).filter(User.phone == "09120000000").first() is None
+        finally:
+            db.close()
+
+
+class TestMe:
+    def test_returns_signed_in_user(self, client, user_token):
+        r = client.get(
+            "/api/v1/auth/me",
+            headers={"Authorization": f"Bearer {user_token}"},
+        )
+        assert r.status_code == 200
+        data = r.json()
+        assert data["phone"] == "09123456789"
+        assert data["nationalId"] == "******7890"
+
+    def test_requires_token(self, client):
+        r = client.get("/api/v1/auth/me")
+        assert r.status_code == 401
 
 
 class TestPasswordLogin:

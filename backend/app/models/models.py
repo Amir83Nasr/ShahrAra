@@ -35,7 +35,7 @@ class RequestStatus(str, PyEnum):
 class User(Base):
     __tablename__ = "users"
 
-    id: str = Column(String, primary_key=True, default=lambda: f"usr_{uuid.uuid4().hex[:8]}")
+    id: str = Column(String, primary_key=True, default=lambda: f"usr_{uuid.uuid4().hex}")
     phone: str = Column(String, unique=True, index=True, nullable=False)
     national_id: str = Column(String, nullable=False)
     first_name: str = Column(String, nullable=False)
@@ -70,7 +70,7 @@ class User(Base):
 class OtpCode(Base):
     __tablename__ = "otp_codes"
 
-    id: str = Column(String, primary_key=True, default=lambda: f"otp_{uuid.uuid4().hex[:8]}")
+    id: str = Column(String, primary_key=True, default=lambda: f"otp_{uuid.uuid4().hex}")
     phone: str = Column(String, nullable=False, index=True)
     code_hash: str = Column(String, nullable=False)
     expires_at: datetime = Column(DateTime(timezone=True), nullable=False)
@@ -85,7 +85,7 @@ class OtpCode(Base):
 class Request(Base):
     __tablename__ = "requests"
 
-    id: str = Column(String, primary_key=True, default=lambda: f"req_{uuid.uuid4().hex[:8]}")
+    id: str = Column(String, primary_key=True, default=lambda: f"req_{uuid.uuid4().hex}")
     title: str = Column(String, nullable=False)
     description: str = Column(Text, nullable=False)
     type: str = Column(String, nullable=False)
@@ -127,9 +127,13 @@ class Request(Base):
 class Like(Base):
     __tablename__ = "likes"
 
-    id: str = Column(String, primary_key=True, default=lambda: f"lik_{uuid.uuid4().hex[:8]}")
+    id: str = Column(String, primary_key=True, default=lambda: f"lik_{uuid.uuid4().hex}")
     user_phone: str = Column(String, nullable=False, index=True)
-    request_id: str = Column(String, ForeignKey("requests.id"), nullable=False)
+    request_id: str = Column(
+        String,
+        ForeignKey("requests.id", ondelete="CASCADE", name="fk_likes_request_id"),
+        nullable=False,
+    )
 
     __table_args__ = (UniqueConstraint("user_phone", "request_id", name="uq_user_request_like"),)
 
@@ -140,10 +144,14 @@ class Like(Base):
 class Notification(Base):
     __tablename__ = "notifications"
 
-    id: str = Column(String, primary_key=True, default=lambda: f"ntf_{uuid.uuid4().hex[:8]}")
+    id: str = Column(String, primary_key=True, default=lambda: f"ntf_{uuid.uuid4().hex}")
     user_phone: str = Column(String, nullable=False, index=True)
     message: str = Column(String, nullable=False)
-    request_id: str = Column(String, ForeignKey("requests.id"), nullable=True)
+    request_id: str | None = Column(
+        String,
+        ForeignKey("requests.id", ondelete="SET NULL", name="fk_notifications_request_id"),
+        nullable=True,
+    )
     request_title: str = Column(String, nullable=True)
     created_at: datetime = Column(DateTime(timezone=True), server_default=func.now())
     is_read: bool = Column(Boolean, default=False)

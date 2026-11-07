@@ -55,15 +55,17 @@ Loaded from `backend/.env` (see `.env.example`); the process environment wins.
 
 | Variable | Default | Notes |
 | --- | --- | --- |
+| `APP_ENV` | `development` | `production` refuses insecure defaults |
 | `DATABASE_URL` | local Postgres | Pooled URL in production |
 | `DATABASE_URL_UNPOOLED` | `DATABASE_URL` | Required for migrations on pooled hosts |
-| `JWT_SECRET` | dev placeholder | **Must** be set in production |
+| `JWT_SECRET` | dev placeholder | **Must** be set in production; startup fails otherwise |
 | `JWT_ALGORITHM` | `HS256` | |
 | `JWT_EXPIRATION_MINUTES` | `1440` | 24-hour tokens |
-| `ADMIN_PHONE` / `ADMIN_NATIONAL_ID` / `ADMIN_FIRST_NAME` / `ADMIN_LAST_NAME` | dev values | Admin account is created on first contact |
+| `ADMIN_PHONE` / `ADMIN_NATIONAL_ID` / `ADMIN_FIRST_NAME` / `ADMIN_LAST_NAME` | empty | Used by `make seed` / `make seed-admin`; never auto-created from a public request |
+| `AUTO_CREATE_ADMIN` | `false` | Development convenience; startup fails if enabled in production |
 | `OTP_EXPIRATION_MINUTES` | `2` | Code lifetime |
 | `OTP_MAX_ATTEMPTS` | `5` | Wrong guesses before the code is locked |
-| `OTP_DEV_MODE` | `true` | Returns `devCode` instead of sending SMS; **never** enable in production |
+| `OTP_DEV_MODE` | `true` in development, `false` in production | Returns `devCode` instead of sending SMS; production refuses to start with it enabled |
 | `CORS_ORIGINS` | localhost origins | Comma-separated allow-list |
 
 ## Authentication
@@ -77,8 +79,8 @@ Loaded from `backend/.env` (see `.env.example`); the process environment wins.
 3. Use the returned `accessToken` as `Authorization: Bearer <token>`.
 
 In development the code is returned as `devCode` and also printed to the server
-log. No SMS provider is wired yet — replace `_deliver_sms` in
-`app/api/v1/endpoints/auth.py` before production. Codes expire after
+log. Outside `OTP_DEV_MODE` the code is never printed; no SMS provider is wired
+yet, so production needs one before accepting live traffic. Codes expire after
 `OTP_EXPIRATION_MINUTES` and are locked after `OTP_MAX_ATTEMPTS` wrong guesses.
 
 ### Password sign-in
@@ -87,8 +89,17 @@ log. No SMS provider is wired yet — replace `_deliver_sms` in
 - `PUT /api/v1/auth/password` — set the first password, or rotate an existing
   one by supplying `currentPassword`.
 
-The admin account is auto-created from the `ADMIN_*` variables the first time its
-phone is seen, so the seeded admin never needs to register manually.
+The admin account is created explicitly, never as a side effect of a public auth
+request:
+
+```bash
+make seed-admin          # uses ADMIN_PHONE / ADMIN_NATIONAL_ID from the environment
+# or
+cd backend && uv run python -m scripts.create_admin --phone 09123456789 --national-id 1234567890
+```
+
+For local convenience only, `AUTO_CREATE_ADMIN=true` recreates/promotes the
+account named by `ADMIN_PHONE` on first contact. Production rejects that flag.
 
 ```bash
 # OTP login
@@ -166,13 +177,14 @@ shows a dropdown and invalid values are rejected with `422`.
 | `POST` | `/api/v1/auth/otp/request` | — | Send a one-time code |
 | `POST` | `/api/v1/auth/otp/verify` | — | Verify the code, register if needed, return a token |
 | `POST` | `/api/v1/auth/login/password` | — | Password sign-in |
+| `GET` | `/api/v1/auth/me` | Bearer | Validate the token and return the current profile |
 | `PUT` | `/api/v1/auth/password` | Bearer | Set or rotate the password |
 
 ### Requests
 
 | Method | Path | Auth | Purpose |
 | --- | --- | --- | --- |
-| `GET` | `/api/v1/requests` | — | List with search, filters, sorting, pagination |
+| `GET` | `/api/v1/requests` | optional | List with search, filters, sorting, pagination |
 | `POST` | `/api/v1/requests` | Bearer | Create a problem report or idea |
 | `PUT` | `/api/v1/requests/{id}` | Bearer | Edit your own request |
 | `DELETE` | `/api/v1/requests/{id}` | Bearer | Delete your own `submitted` request |
@@ -184,14 +196,20 @@ Listing supports `search`, `type`, `status`, `category`, `userPhone`,
 `likedByUser`, `currentUserPhone`, `startDate`, `endDate`, `sort_by`
 (`created_at` or `likes`), `sort_order`, `limit`, and `offset`.
 
+Public listings mask `userPhone` and `userName`; owners and administrators see
+the full values. Every item also carries `isOwner` so clients can build “my
+requests” without trusting a client-supplied phone number. National IDs in auth
+responses are masked to their last four digits.
+
 Ownership and state rules:
 
 - Only the owner can edit or delete; administrators cannot edit another user's
   content through these endpoints.
 - Editing is allowed while the status is `submitted` or `under_review`.
 - Deleting is allowed only while the status is `submitted`.
-- A status change creates a notification for the owner unless an admin updates
-  their own request.
+- A real status or admin-response change creates one notification for the
+  owner; repeated saves with no change do not. Admins updating their own
+  requests do not notify themselves.
 
 ### Notifications
 
@@ -239,7 +257,9 @@ make db-migrate                   # upgrade head
 ```
 
 Tests create and drop the `shahr_ara_test` database schema directly, so they do
-not need migrations. They do require a running Postgres (`make db-up`).
+not need migrations. CI additionally runs `alembic upgrade head` and
+`alembic downgrade base` against an empty database so a broken migration chain
+cannot merge. A running Postgres is required (`make db-up`).
 
 ## Testing and Linting
 

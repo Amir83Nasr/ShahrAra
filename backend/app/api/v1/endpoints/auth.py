@@ -1,3 +1,4 @@
+import logging
 import secrets
 from datetime import datetime, timedelta, timezone
 
@@ -10,6 +11,7 @@ from app.core.config import (
     ADMIN_LAST_NAME,
     ADMIN_NATIONAL_ID,
     ADMIN_PHONE,
+    AUTO_CREATE_ADMIN,
     OTP_DEV_MODE,
     OTP_EXPIRATION_MINUTES,
     OTP_MAX_ATTEMPTS,
@@ -38,6 +40,8 @@ from app.schemas.schemas import (
 
 router = APIRouter(tags=["Authentication"])
 
+logger = logging.getLogger(__name__)
+
 
 # ── Helpers ──────────────────────────────────────────────
 
@@ -51,24 +55,31 @@ def _validate_phone(phone: str) -> None:
 
 
 def _ensure_admin(db: Session, phone: str) -> None:
-    """Auto-create the admin account from env defaults on first contact."""
-    if phone != ADMIN_PHONE:
+    """Development-only bootstrap for the account named in ADMIN_PHONE.
+
+    Production must create its administrator explicitly (seed or
+    ``scripts/create_admin.py``); a public auth request must never mint one.
+    """
+    if not AUTO_CREATE_ADMIN or not ADMIN_PHONE or not ADMIN_NATIONAL_ID or phone != ADMIN_PHONE:
         return
+
     existing = db.query(User).filter(User.phone == ADMIN_PHONE).first()
     if existing:
+        if not existing.is_admin:
+            existing.is_admin = True
+            db.commit()
         return
-    admin_user = db.query(User).filter(User.is_admin).first()
-    if not admin_user:
-        admin_user = User(
-            phone=ADMIN_PHONE,
-            national_id=ADMIN_NATIONAL_ID,
-            first_name=ADMIN_FIRST_NAME,
-            last_name=ADMIN_LAST_NAME,
-            is_admin=True,
-        )
-        db.add(admin_user)
-        db.commit()
-        db.refresh(admin_user)
+
+    admin_user = User(
+        phone=ADMIN_PHONE,
+        national_id=ADMIN_NATIONAL_ID,
+        first_name=ADMIN_FIRST_NAME,
+        last_name=ADMIN_LAST_NAME,
+        is_admin=True,
+    )
+    db.add(admin_user)
+    db.commit()
+    db.refresh(admin_user)
 
 
 def _issue_login(user: User) -> LoginResponse:
@@ -100,9 +111,16 @@ def _issue_otp(db: Session, phone: str) -> OtpRequestResponse:
 
 
 def _deliver_sms(phone: str, code: str) -> None:
-    # ponytail: dev-mode only delivery — replace with a real SMS provider
-    # (Kavenegar/SMS.ir) when OTP_DEV_MODE=false ships.
-    print(f"[OTP] phone={phone} code={code}")
+    # Development delivery only. Never print the code outside OTP_DEV_MODE:
+    # server logs are readable by more people than the SMS inbox.
+    if OTP_DEV_MODE:
+        print(f"[OTP][DEV] phone={phone} code={code}")
+        return
+    logger.warning(
+        "SMS delivery is not configured; OTP for %s was not delivered. "
+        "Wire a provider (Kavenegar/SMS.ir) before production.",
+        phone,
+    )
 
 
 def _latest_otp(db: Session, phone: str) -> OtpCode | None:
@@ -232,6 +250,20 @@ def verify_otp(body: OtpVerifyRequest, db: Session = Depends(get_db)):
         db.refresh(user)
 
     return _issue_login(user)
+
+
+@router.get(
+    "/me",
+    response_model=UserResponse,
+    summary="Get the signed-in profile",
+    description="Validates the bearer token and returns the current citizen profile. "
+    "Use it to confirm a stored session before rendering authenticated screens.",
+    operation_id="auth_me",
+    response_description="The authenticated user.",
+    responses=error_responses(401),
+)
+def me(user: User = Depends(require_user)):
+    return UserResponse.model_validate(user)
 
 
 @router.post(

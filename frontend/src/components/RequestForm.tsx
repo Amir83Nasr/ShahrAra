@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { RequestType, User } from "../types";
+import { RequestItem, RequestType, User } from "../types";
+import { apiErrorMessage, apiFetch, authHeaders } from "@/lib/api";
 
 // maplibre-gl touches `window` at import time; skip prerendering
 const MapComponent = dynamic(() => import("./MapComponent"), { ssr: false });
@@ -64,6 +65,7 @@ export default function RequestForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [trackingCode, setTrackingCode] = useState<string | null>(null);
 
   const handleCoordsChange = (
     newCoords: { lat: number; lng: number },
@@ -79,6 +81,7 @@ export default function RequestForm({
 
     setError(null);
     setSuccess(false);
+    setTrackingCode(null);
 
     if (!title.trim() || !description.trim()) {
       setError("لطفا تمامی فیلدهای الزامی را پر کنید.");
@@ -88,43 +91,32 @@ export default function RequestForm({
     setLoading(true);
 
     try {
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-      if (currentUser.token) {
-        headers["Authorization"] = `Bearer ${currentUser.token}`;
-      }
-
-      const response = await fetch("/api/v1/requests", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          title: title.trim(),
-          description: description.trim(),
-          type,
-          category,
-          coordinates: coords,
-          region: region || "منطقه ۲ (مرکز قم)",
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "خطا در ثبت درخواست شهری.");
-      }
+      const result = await apiFetch<{ success: boolean; request: RequestItem }>(
+        "/api/v1/requests",
+        {
+          method: "POST",
+          headers: authHeaders(currentUser.token, true),
+          body: JSON.stringify({
+            title: title.trim(),
+            description: description.trim(),
+            type,
+            category,
+            coordinates: coords,
+            region: region || "منطقه ۲ (مرکز قم)",
+          }),
+        },
+      );
 
       setSuccess(true);
+      setTrackingCode(result.request.id);
       setTitle("");
       setDescription("");
 
       setTimeout(() => {
         onSubmitSuccess();
-      }, 1500);
+      }, 2500);
     } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "خطا در برقراری ارتباط با سرور.",
-      );
+      setError(apiErrorMessage(err, "خطا در برقراری ارتباط با سرور."));
     } finally {
       setLoading(false);
     }
@@ -232,6 +224,11 @@ export default function RequestForm({
                 <AlertTitle>درخواست ثبت شد</AlertTitle>
                 <AlertDescription className="text-type-idea/90">
                   درخواست شما با موفقیت ثبت گردید و در اسرع وقت رسیدگی خواهد شد!
+                  {trackingCode && (
+                    <span className="mt-1 block font-mono text-[11px]">
+                      کد رهگیری: {trackingCode}
+                    </span>
+                  )}
                 </AlertDescription>
               </Alert>
             )}

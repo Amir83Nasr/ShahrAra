@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import LogoutModal from "@/components/LogoutModal";
 import { User, RequestItem, RequestUpdateData } from "../types";
+import { apiErrorMessage, apiFetch, authHeaders } from "@/lib/api";
 import { toPersianDigits } from "../utils/numberUtils";
 import { REGIONS } from "../utils/regionUtils";
 import { filterRequests } from "../utils/requestFilters";
@@ -143,7 +144,8 @@ export default function UserProfile({
   const [pwSuccess, setPwSuccess] = useState<string | null>(null);
 
   const myRequests = useMemo(
-    () => requests.filter((r) => r.userPhone === currentUser.phone),
+    () =>
+      requests.filter((r) => r.isOwner ?? r.userPhone === currentUser.phone),
     [requests, currentUser.phone],
   );
   const likedRequests = useMemo(
@@ -167,25 +169,19 @@ export default function UserProfile({
 
     setPwSaving(true);
     try {
-      const res = await fetch("/api/v1/auth/password", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${currentUser.token}`,
+      const result = await apiFetch<{ success: boolean; user: User }>(
+        "/api/v1/auth/password",
+        {
+          method: "PUT",
+          headers: authHeaders(currentUser.token, true),
+          body: JSON.stringify({
+            currentPassword: currentUser.hasPassword
+              ? currentPassword || undefined
+              : undefined,
+            newPassword,
+          }),
         },
-        body: JSON.stringify({
-          currentPassword: currentUser.hasPassword
-            ? currentPassword || undefined
-            : undefined,
-          newPassword,
-        }),
-      });
-      const result = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(
-          result.detail || "خطا در تنظیم رمز عبور. لطفا دوباره تلاش کنید.",
-        );
-      }
+      );
       // Refresh context/localStorage with the new hasPassword flag.
       loginSuccess({
         ...currentUser,
@@ -197,7 +193,7 @@ export default function UserProfile({
       setNewPassword("");
       setConfirmPassword("");
     } catch (err: unknown) {
-      setPwError(err instanceof Error ? err.message : "خطا در تنظیم رمز عبور.");
+      setPwError(apiErrorMessage(err, "خطا در تنظیم رمز عبور."));
     } finally {
       setPwSaving(false);
     }
@@ -240,13 +236,6 @@ export default function UserProfile({
     setSuccess(null);
 
     try {
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-      if (currentUser.token) {
-        headers["Authorization"] = `Bearer ${currentUser.token}`;
-      }
-
       const body: RequestUpdateData = {};
       if (editTitle !== editingRequest.title) body.title = editTitle;
       if (editDescription !== editingRequest.description)
@@ -259,23 +248,18 @@ export default function UserProfile({
         return;
       }
 
-      const res = await fetch(`/api/v1/requests/${editingRequest.id}`, {
+      await apiFetch(`/api/v1/requests/${editingRequest.id}`, {
         method: "PUT",
-        headers,
+        headers: authHeaders(currentUser.token, true),
         body: JSON.stringify(body),
       });
 
-      if (res.ok) {
-        invalidateCache();
-        onRefresh();
-        setSuccess("درخواست با موفقیت ویرایش شد.");
-        setTimeout(() => setEditingRequest(null), 800);
-      } else {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail || "خطا در ویرایش درخواست.");
-      }
+      invalidateCache();
+      onRefresh();
+      setSuccess("درخواست با موفقیت ویرایش شد.");
+      setTimeout(() => setEditingRequest(null), 800);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "خطا در ویرایش درخواست.");
+      setError(apiErrorMessage(err, "خطا در ویرایش درخواست."));
     } finally {
       setSaving(false);
     }
@@ -312,28 +296,18 @@ export default function UserProfile({
     setSuccess(null);
 
     try {
-      const headers: Record<string, string> = {};
-      if (currentUser.token) {
-        headers["Authorization"] = `Bearer ${currentUser.token}`;
-      }
-
-      const res = await fetch(`/api/v1/requests/${deletingRequest.id}`, {
+      await apiFetch(`/api/v1/requests/${deletingRequest.id}`, {
         method: "DELETE",
-        headers,
+        headers: authHeaders(currentUser.token),
       });
 
-      if (res.ok) {
-        invalidateCache();
-        onRefresh();
-        setDeletingRequest(null);
-        setSuccess("درخواست با موفقیت حذف شد.");
-        setTimeout(() => setSuccess(null), 3000);
-      } else {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail || "خطا در حذف درخواست.");
-      }
+      invalidateCache();
+      onRefresh();
+      setDeletingRequest(null);
+      setSuccess("درخواست با موفقیت حذف شد.");
+      setTimeout(() => setSuccess(null), 3000);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "خطا در حذف درخواست.");
+      setError(apiErrorMessage(err, "خطا در حذف درخواست."));
     } finally {
       setSaving(false);
     }

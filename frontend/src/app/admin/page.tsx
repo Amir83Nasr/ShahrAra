@@ -12,7 +12,8 @@ import AdminPanel from "@/components/AdminPanel";
 import { Button } from "@/components/ui/button";
 
 export default function AdminPage() {
-  const { currentUser, authReady, requests, updateStatus, refresh } = useApp();
+  const { currentUser, authReady, requests, updateStatus, refresh, theme } =
+    useApp();
 
   // Wait for localStorage session restore before deciding
   if (!authReady) {
@@ -53,6 +54,7 @@ export default function AdminPage() {
       requests={requests}
       onUpdateStatus={updateStatus}
       onRefresh={() => refresh({ force: true })}
+      theme={theme}
     />
   );
 }

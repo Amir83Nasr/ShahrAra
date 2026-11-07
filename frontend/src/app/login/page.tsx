@@ -301,7 +301,7 @@ export default function LoginPage() {
 
   const nationalIdHint = !isNationalIdDirty ? (
     <span className="bg-muted text-muted-foreground rounded-md px-2.5 py-1 text-[10.5px] font-medium">
-      ۱۰ رقم عددی معتبر بدون خط تیره (مانند: {toPersianDigits("037000000")})
+      ۱۰ رقم عددی معتبر بدون خط تیره (مانند: {toPersianDigits("0370000000")})
     </span>
   ) : isNationalIdValid ? (
     <span className="border-status-resolved/10 bg-status-resolved/5 text-status-resolved flex items-center gap-1 rounded-md border px-2.5 py-1 text-[10.5px] font-medium">
@@ -575,7 +575,7 @@ export default function LoginPage() {
                               const numbersOnly = rawVal.replace(/\D/g, "");
                               setNationalId(numbersOnly);
                             }}
-                            placeholder={toPersianDigits("037000000")}
+                            placeholder={toPersianDigits("0370000000")}
                             dir="rtl"
                             autoComplete="off"
                             className={cn(

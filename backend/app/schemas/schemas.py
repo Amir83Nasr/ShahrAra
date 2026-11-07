@@ -1,8 +1,36 @@
 from __future__ import annotations
 
 from enum import Enum as PyEnum
+from typing import TYPE_CHECKING
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+if TYPE_CHECKING:
+    from app.models.models import User
+
+
+def mask_phone(phone: str | None) -> str:
+    """Keep a phone recognisable to its owner without exposing it publicly."""
+    if not phone or len(phone) < 7:
+        return "***"
+    return f"{phone[:4]}***{phone[-3:]}"
+
+
+def mask_name(name: str | None) -> str:
+    """Reduce a full name to a public-friendly first name and initial."""
+    parts = (name or "").split()
+    if not parts:
+        return "شهروند"
+    if len(parts) == 1:
+        return parts[0]
+    return f"{parts[0]} {parts[1][0]}."
+
+
+def mask_national_id(value: str | None) -> str:
+    """Never return a full national ID to the client."""
+    if not value:
+        return ""
+    return f"******{value[-4:]}"
 
 
 class RequestType(str, PyEnum):
@@ -200,8 +228,8 @@ class UserResponse(BaseModel):
     phone: str = Field(description="Registered mobile number.", examples=["09123456789"])
     nationalId: str = Field(
         alias="nationalId",
-        description="National ID (کد ملی).",
-        examples=["1234567890"],
+        description="Masked national ID (کد ملی). Only the last four digits are returned.",
+        examples=["******7890"],
     )
     firstName: str = Field(alias="firstName", description="Given name.", examples=["Ali"])
     lastName: str = Field(alias="lastName", description="Family name.", examples=["Rezaei"])
@@ -221,7 +249,7 @@ class UserResponse(BaseModel):
             "example": {
                 "id": "usr_a1b2c3d4",
                 "phone": "09123456789",
-                "nationalId": "1234567890",
+                "nationalId": "******7890",
                 "firstName": "Ali",
                 "lastName": "Rezaei",
                 "isAdmin": False,
@@ -229,6 +257,11 @@ class UserResponse(BaseModel):
             }
         },
     }
+
+    @field_validator("nationalId", mode="before")
+    @classmethod
+    def _mask_national_id(cls, value: str | None) -> str:
+        return mask_national_id(value)
 
 
 class TokenResponse(BaseModel):
@@ -258,7 +291,7 @@ class LoginResponse(BaseModel):
                 "user": {
                     "id": "usr_a1b2c3d4",
                     "phone": "09123456789",
-                    "nationalId": "1234567890",
+                    "nationalId": "******7890",
                     "firstName": "Ali",
                     "lastName": "Rezaei",
                     "isAdmin": False,
@@ -345,10 +378,15 @@ class RequestResponse(BaseModel):
         examples=["Under review"],
     )
     likes: int = Field(ge=0, description="Number of likes.", examples=[5])
+    isOwner: bool = Field(
+        False,
+        alias="isOwner",
+        description="Whether the request belongs to the authenticated viewer.",
+    )
     likedByCurrentUser: bool | None = Field(
         None,
         alias="likedByCurrentUser",
-        description="Present only when `currentUserPhone` is supplied.",
+        description="Whether the authenticated viewer has liked this request.",
     )
 
     model_config = {
@@ -369,13 +407,21 @@ class RequestResponse(BaseModel):
                 "createdAt": "2025-06-13T10:30:00",
                 "adminResponse": None,
                 "likes": 0,
+                "isOwner": False,
                 "likedByCurrentUser": None,
             }
         },
     }
 
     @classmethod
-    def from_orm(cls, req, liked_by_current_user: bool | None = None) -> RequestResponse:
+    def from_orm(
+        cls,
+        req,
+        liked_by_current_user: bool | None = None,
+        viewer: User | None = None,
+    ) -> RequestResponse:
+        is_owner = viewer is not None and viewer.phone == req.user_phone
+        can_see_private = is_owner or (viewer is not None and viewer.is_admin)
         return cls(
             id=req.id,
             title=req.title,
@@ -385,11 +431,12 @@ class RequestResponse(BaseModel):
             coordinates=Coordinates(lat=float(req.lat), lng=float(req.lng)),
             region=req.region,
             status=RequestStatus(req.status),
-            userPhone=req.user_phone,
-            userName=req.user_name,
+            userPhone=req.user_phone if can_see_private else mask_phone(req.user_phone),
+            userName=req.user_name if can_see_private else mask_name(req.user_name),
             createdAt=req.created_at.isoformat() if req.created_at else "",
             adminResponse=req.admin_response,
             likes=req.likes,
+            isOwner=is_owner,
             likedByCurrentUser=liked_by_current_user,
         )
 

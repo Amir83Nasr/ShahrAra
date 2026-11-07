@@ -9,7 +9,7 @@ Municipal engagement platform. Citizens report urban problems and submit improve
 ## Stack
 
 - **Backend** — FastAPI + SQLAlchemy + PostgreSQL, JWT auth (`backend/`)
-- **Frontend** — Next.js + React + Tailwind CSS + Leaflet map (`frontend/`)
+- **Frontend** — Next.js + React + Tailwind CSS + MapLibre map (`frontend/`)
 - **Infra** — Docker Compose (Postgres), Makefile, lefthook
 
 ## Requirements
@@ -40,6 +40,7 @@ make dev-frontend
 | `make db-up` / `make db-down` | Start / stop Postgres container |
 | `make dev-backend` / `make dev-frontend` | Run dev servers |
 | `make seed` | Seed database with sample data |
+| `make seed-admin` | Create/promote the admin account from `ADMIN_*` env vars |
 | `make test` | Run backend tests (pytest) |
 | `make lint` / `make format` | Ruff + ESLint / Prettier |
 | `make hooks` | Install lefthook git hooks |

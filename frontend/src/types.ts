@@ -36,6 +36,7 @@ export interface RequestItem {
   createdAt: string;
   adminResponse?: string;
   likes: number;
+  isOwner?: boolean;
   likedByCurrentUser?: boolean;
   likedBy?: string[];
 }
