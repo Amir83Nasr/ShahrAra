@@ -33,10 +33,6 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Shahr Ara",
   },
-  icons: {
-    icon: "/icons/icon-192.png",
-    apple: "/icons/apple-touch-icon.png",
-  },
 };
 
 export const viewport: Viewport = {
@@ -76,12 +72,6 @@ export default function RootLayout({
       <head>
         {/* برگرداندن فونت انتخاب‌شده پیش از رندر، برای جلوگیری از پرش فونت */}
         <script dangerouslySetInnerHTML={{ __html: FONT_RESTORE_SCRIPT }} />
-        {/* اسپلش اسکرین iOS — لوگوی آبی روی پس‌زمینه سفید */}
-        <link
-          rel="apple-touch-startup-image"
-          href="/icons/splash-ios.png"
-          media="(prefers-color-scheme: light)"
-        />
       </head>
       <body className="bg-background text-foreground min-h-screen">
         <PWARegister />
