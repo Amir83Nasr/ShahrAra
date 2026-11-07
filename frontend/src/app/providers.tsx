@@ -145,7 +145,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       document.body.classList.remove("dark");
     }
     // نوار مرورگر/PWA هم‌رنگ تم فعلی
-    const themeColor = theme === "dark" ? "#151f29" : "#f8fafd";
+    const themeColor = theme === "dark" ? "#212121" : "#ffffff";
     document
       .querySelectorAll('meta[name="theme-color"]')
       .forEach((meta) => meta.setAttribute("content", themeColor));

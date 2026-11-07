@@ -200,18 +200,21 @@ export default function AdminPanel({
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8" id="shahr_ara_admin_panel">
-      <div className="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-        <div className="flex items-center gap-4">
-          <div className="border-primary/30 bg-primary/10 text-primary flex h-12 w-12 items-center justify-center rounded-lg border">
-            <Shield className="h-6 w-6" />
+    <div
+      className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6"
+      id="shahr_ara_admin_panel"
+    >
+      <div className="mb-6 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+        <div className="flex items-center gap-3">
+          <div className="bg-muted text-foreground flex size-10 items-center justify-center rounded-full">
+            <Shield className="size-5" />
           </div>
           <div>
-            <span className="text-primary font-mono text-[10px] font-bold tracking-wider">
+            <span className="text-muted-foreground text-[11px] font-medium">
               پنل مدیریت شهری
             </span>
-            <h2 className="text-foreground mt-0.5 text-sm font-extrabold sm:text-2xl">
-              پنل پاسخگویی و مدیریت شهرداری شهرآرا
+            <h2 className="text-foreground mt-0.5 text-lg font-semibold tracking-tight sm:text-xl">
+              پاسخگویی و مدیریت شهرداری
             </h2>
             <p className="text-muted-foreground mt-1 hidden text-xs sm:block">
               شما وارد حساب کاربری مدیر سامانه شده‌اید. پاسخ به شهروندان و
@@ -222,32 +225,32 @@ export default function AdminPanel({
 
         <Button variant="outline" onClick={onRefresh}>
           <RefreshCcw />
-          بروزرسانی لیست کارهای مردمی
+          بروزرسانی لیست
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
         {/* Left Column: List with Filters (7 columns on large desktop) */}
-        <div className="flex flex-col gap-6 lg:col-span-7">
+        <div className="flex flex-col gap-4 lg:col-span-7">
           {/* Active Filters / Search */}
-          <div className="border-border bg-card flex flex-col gap-4 rounded-xl border p-5">
+          <div className="border-border bg-card flex flex-col gap-3 rounded-2xl border p-3">
             {/* Search row */}
             <div className="relative">
-              <Search className="text-muted-foreground absolute top-3 right-3.5 h-4 w-4" />
+              <Search className="text-muted-foreground pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2" />
               <Input
                 type="text"
-                placeholder="جستجوی درخواست‌ها (عنوان، توضیحات، نام شهروند ارائه‌دهنده...)"
+                placeholder="جستجوی درخواست‌ها (عنوان، توضیحات، نام شهروند...)"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-background pr-10"
+                className="bg-muted/60 focus-visible:bg-background h-11 rounded-full border-transparent pr-10"
               />
             </div>
 
             {/* Quick Filters Group */}
-            <div className="grid grid-cols-2 gap-4 md:flex md:justify-between">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {/* Type selector */}
               <div className="flex flex-col gap-1.5 text-right">
-                <span className="text-muted-foreground flex items-center gap-1 text-[10px] font-bold">
+                <span className="text-muted-foreground flex items-center gap-1 text-[10px] font-medium">
                   <Filter className="text-primary h-3 w-3" />
                   نوع مشارکت
                 </span>
@@ -258,15 +261,13 @@ export default function AdminPanel({
                     setSelectedType(v as "all" | "problem" | "idea")
                   }
                 >
-                  <SelectTrigger className="w-full md:w-40">
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent position="popper">
                     <SelectGroup>
                       <SelectLabel>نوع مشارکت</SelectLabel>
-                      <SelectItem value="all">
-                        همه دسته‌ها (مشکل و ایده)
-                      </SelectItem>
+                      <SelectItem value="all">همه انواع</SelectItem>
                       <SelectItem value="problem">
                         فقط گزارش مشکلات شهری
                       </SelectItem>
@@ -280,7 +281,7 @@ export default function AdminPanel({
 
               {/* Category selector */}
               <div className="flex flex-col gap-1.5 text-right">
-                <span className="text-muted-foreground flex items-center gap-1 text-[10px] font-bold">
+                <span className="text-muted-foreground flex items-center gap-1 text-[10px] font-medium">
                   <Layers className="text-primary h-3 w-3" />
                   موضوع خدمت
                 </span>
@@ -289,13 +290,13 @@ export default function AdminPanel({
                   value={selectedCategory}
                   onValueChange={setSelectedCategory}
                 >
-                  <SelectTrigger className="w-full md:w-40">
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent position="popper" align="end">
                     <SelectGroup>
                       <SelectLabel>موضوع خدمت</SelectLabel>
-                      <SelectItem value="all">همه موضوعات خدمتی</SelectItem>
+                      <SelectItem value="all">همه موضوعات</SelectItem>
                       {CATEGORIES.map((c, i) => (
                         <SelectItem key={i} value={c}>
                           {c}
@@ -308,7 +309,7 @@ export default function AdminPanel({
 
               {/* Status selector */}
               <div className="flex flex-col gap-1.5 text-right">
-                <span className="text-muted-foreground flex items-center gap-1 text-[10px] font-bold">
+                <span className="text-muted-foreground flex items-center gap-1 text-[10px] font-medium">
                   <CheckCircle className="text-primary h-3 w-3" />
                   وضعیت فرآیند
                 </span>
@@ -317,7 +318,7 @@ export default function AdminPanel({
                   value={selectedStatus}
                   onValueChange={(v) => setSelectedStatus(v as RequestStatus)}
                 >
-                  <SelectTrigger className="w-full md:w-40">
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent position="popper" align="end">
@@ -344,7 +345,7 @@ export default function AdminPanel({
 
               {/* Region selector */}
               <div className="flex flex-col gap-1.5 text-right">
-                <span className="text-muted-foreground flex items-center gap-1 text-[10px] font-bold">
+                <span className="text-muted-foreground flex items-center gap-1 text-[10px] font-medium">
                   <MapPin className="text-primary h-3 w-3" />
                   منطقه شهری
                 </span>
@@ -353,7 +354,7 @@ export default function AdminPanel({
                   value={selectedRegion}
                   onValueChange={setSelectedRegion}
                 >
-                  <SelectTrigger className="w-full md:w-40">
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent position="popper" align="end">
@@ -386,10 +387,10 @@ export default function AdminPanel({
                     key={item.id}
                     size="sm"
                     className={cn(
-                      "admin-card cursor-pointer transition-all",
+                      "admin-card cursor-pointer rounded-2xl transition-colors",
                       isSelected
-                        ? "border-primary ring-primary/40 ring-2"
-                        : "border-border bg-card hover:shadow-sm",
+                        ? "border-foreground ring-foreground/15 ring-2"
+                        : "border-border bg-card hover:bg-muted/40",
                     )}
                     onClick={() => setSelectedItem(item)}
                   >
@@ -411,21 +412,21 @@ export default function AdminPanel({
                         </Badge>
                       </div>
 
-                      <CardTitle className="text-foreground text-sm font-bold">
+                      <CardTitle className="text-foreground text-[14px] font-medium">
                         {item.title}
                       </CardTitle>
 
-                      <CardDescription className="text-muted-foreground line-clamp-2 min-h-[2lh] text-xs leading-relaxed">
+                      <CardDescription className="text-muted-foreground line-clamp-2 min-h-[2lh] text-[13px] leading-relaxed">
                         {item.description}
                       </CardDescription>
 
-                      <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-2 text-[10px]">
-                        <span className="flex items-center gap-1">
-                          <User className="text-muted-foreground h-3 w-3" />
+                      <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                        <span className="flex items-center gap-1.5">
+                          <User className="size-3.5" />
                           {item.userName} - {toPersianDigits(item.region)}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="text-muted-foreground h-3 w-3" />
+                        <span className="flex items-center gap-1.5">
+                          <Calendar className="size-3.5" />
                           {dateString}
                         </span>
                       </div>
@@ -434,9 +435,9 @@ export default function AdminPanel({
                 );
               })
             ) : (
-              <div className="border-border bg-card text-muted-foreground rounded-xl border p-10 text-center">
-                <Filter className="text-muted-foreground mx-auto mb-3 h-8 w-8" />
-                <p className="text-xs font-semibold">
+              <div className="border-border bg-card text-muted-foreground rounded-2xl border p-10 text-center">
+                <Filter className="text-muted-foreground mx-auto mb-3 size-8" />
+                <p className="text-xs">
                   هیچ موردی منطبق با فیلترهای بالا یافت نشد.
                 </p>
               </div>
@@ -486,14 +487,14 @@ export default function AdminPanel({
         {/* Right Column: Detailed Response Dashboard (5 columns on desktop) */}
         <div className="h-full lg:col-span-5">
           {selectedItem ? (
-            <Card className="border-border bg-card rounded-xl border">
+            <Card className="border-border bg-card rounded-2xl border">
               {/* Header */}
               <div className="flex items-start justify-between gap-4 px-(--card-spacing)">
                 <div className="space-y-1">
-                  <span className="text-primary block font-mono text-[10px] font-bold tracking-wider">
+                  <span className="text-muted-foreground block text-[11px] font-medium">
                     جزئیات درخواست
                   </span>
-                  <h3 className="text-foreground text-base font-extrabold">
+                  <h3 className="text-foreground text-base font-semibold">
                     بررسی درخواست برگزیده
                   </h3>
                 </div>
@@ -508,7 +509,7 @@ export default function AdminPanel({
               </div>
 
               {/* Category & Region */}
-              <div className="text-muted-foreground flex items-center gap-2 px-(--card-spacing) text-xs font-bold">
+              <div className="text-muted-foreground flex items-center gap-2 px-(--card-spacing) text-xs font-medium">
                 <Badge
                   variant="outline"
                   className={TYPE_BADGE_CLASS[selectedItem.type]}
@@ -523,10 +524,10 @@ export default function AdminPanel({
 
               {/* Title & Description */}
               <div className="space-y-3 px-(--card-spacing)">
-                <CardTitle className="text-foreground text-base font-extrabold">
+                <CardTitle className="text-foreground text-base font-semibold">
                   {selectedItem.title}
                 </CardTitle>
-                <div className="border-border bg-muted/30 text-foreground/80 rounded-lg border p-3.5 text-xs leading-relaxed whitespace-pre-line">
+                <div className="border-border bg-muted/50 text-foreground/80 rounded-xl border p-3.5 text-xs leading-relaxed whitespace-pre-line">
                   {selectedItem.description}
                 </div>
               </div>
@@ -545,10 +546,10 @@ export default function AdminPanel({
               </div>
 
               {/* Citizen Info */}
-              <div className="border-border bg-muted/20 mx-(--card-spacing) rounded-lg border p-3.5">
+              <div className="border-border bg-muted/40 mx-(--card-spacing) rounded-xl border p-3.5">
                 <div className="flex items-center gap-2 pb-2">
-                  <User className="text-primary h-4 w-4" />
-                  <span className="text-foreground text-xs font-bold">
+                  <User className="text-muted-foreground size-4" />
+                  <span className="text-foreground text-xs font-medium">
                     اطلاعات تماس شهروند
                   </span>
                 </div>
@@ -557,7 +558,7 @@ export default function AdminPanel({
                     <span className="text-muted-foreground block text-[10px]">
                       نام:
                     </span>
-                    <span className="text-foreground text-xs font-bold">
+                    <span className="text-foreground text-xs font-medium">
                       {selectedItem.userName}
                     </span>
                   </div>
@@ -577,11 +578,11 @@ export default function AdminPanel({
 
               {/* Map */}
               <div className="space-y-2 px-(--card-spacing)">
-                <span className="text-muted-foreground flex items-center gap-1 text-xs font-bold">
-                  <MapPin className="text-primary h-3.5 w-3.5" />
+                <span className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
+                  <MapPin className="text-muted-foreground size-3.5" />
                   موقعیت جغرافیایی
                 </span>
-                <div className="border-border bg-background h-[180px] overflow-hidden rounded-lg border">
+                <div className="border-border bg-background h-[180px] overflow-hidden rounded-2xl border">
                   <MapComponent
                     pickerMode={false}
                     items={[selectedItem]}
@@ -611,7 +612,7 @@ export default function AdminPanel({
                 )}
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-muted-foreground text-xs font-bold">
+                  <label className="text-muted-foreground text-xs font-medium">
                     تغییر وضعیت درخواست
                   </label>
                   <Select
@@ -642,7 +643,7 @@ export default function AdminPanel({
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-muted-foreground text-xs font-bold">
+                  <label className="text-muted-foreground text-xs font-medium">
                     پاسخ رسمی شهرداری
                   </label>
                   <Textarea
@@ -660,10 +661,10 @@ export default function AdminPanel({
               </form>
             </Card>
           ) : (
-            <Card className="border-border bg-card flex h-full min-h-[400px] flex-col items-center justify-center rounded-xl border text-center">
+            <Card className="border-border bg-card flex h-full min-h-[400px] flex-col items-center justify-center rounded-2xl border text-center">
               <CardContent className="p-6">
-                <MessageSquare className="text-muted-foreground/50 mx-auto mb-4 h-10 w-10" />
-                <h3 className="text-foreground mb-1 text-sm font-bold">
+                <MessageSquare className="text-muted-foreground/50 mx-auto mb-4 size-10" />
+                <h3 className="text-foreground mb-1 text-sm font-medium">
                   پنجره اقدام اداری
                 </h3>
                 <p className="text-muted-foreground max-w-xs text-xs leading-relaxed">

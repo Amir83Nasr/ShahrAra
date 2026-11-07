@@ -59,7 +59,7 @@ export function FontToggle({
                 <span
                   data-font-preview={option.value}
                   className={cn(
-                    "text-sm font-bold",
+                    "text-sm font-medium",
                     selected && "text-primary",
                   )}
                 >

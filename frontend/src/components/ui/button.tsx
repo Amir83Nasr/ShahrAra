@@ -6,31 +6,38 @@ import { Slot } from "radix-ui";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * دکمه‌های اپ ChatGPT:
+ * - دکمهٔ اصلی: قرصی، مشکی در تم روشن و سفید در تم تاریک
+ * - دکمه‌های ثانویه: خاکستری ملایم بدون سایه
+ * - همهٔ حالت‌ها با گردی کامل (rounded-full) و ارتفاع ۳۶/۴۰ پیکسل
+ */
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-[10px] border border-transparent bg-clip-padding text-sm leading-none font-medium whitespace-nowrap transition-all outline-none select-none cursor-pointer focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-transparent bg-clip-padding text-sm leading-none font-medium whitespace-nowrap transition-colors outline-none select-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:opacity-40 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground hover:bg-primary/80 active:bg-primary/90",
+          "bg-primary text-primary-foreground hover:bg-primary/85 active:bg-primary/75",
         outline:
-          "border-border bg-background hover:bg-muted hover:text-foreground active:bg-muted aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+          "border-border bg-background text-foreground hover:bg-muted active:bg-accent dark:bg-transparent dark:hover:bg-muted",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "bg-secondary text-secondary-foreground hover:bg-accent active:bg-accent/80",
         ghost:
-          "hover:bg-muted hover:text-foreground active:bg-muted aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
+          "text-foreground hover:bg-accent hover:text-accent-foreground active:bg-accent/80 aria-expanded:bg-accent",
         destructive:
-          "bg-destructive/10 text-destructive hover:bg-destructive/15 active:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
-        link: "text-primary underline-offset-4 hover:underline",
+          "text-destructive hover:bg-destructive/10 active:bg-destructive/15 focus-visible:ring-destructive/30",
+        link: "h-auto rounded-none px-0 text-foreground underline-offset-4 hover:underline",
       },
       size: {
         default:
-          "h-10 gap-2 px-3 has-data-[icon=inline-end]:pe-2 has-data-[icon=inline-start]:ps-2",
-        lg: "h-10 gap-3 px-4 has-data-[icon=inline-end]:pe-2 has-data-[icon=inline-start]:ps-2",
-        icon: "size-10 p-0",
-        "icon-xs": "size-7 [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-8 [&_svg:not([class*='size-'])]:size-4",
-        "icon-lg": "size-11",
+          "h-9 px-4 has-data-[icon=inline-end]:pe-3 has-data-[icon=inline-start]:ps-3",
+        sm: "h-8 px-3 text-xs has-data-[icon=inline-end]:pe-2.5 has-data-[icon=inline-start]:ps-2.5 [&_svg:not([class*='size-'])]:size-3.5",
+        lg: "h-11 px-5 text-[15px] has-data-[icon=inline-end]:pe-4 has-data-[icon=inline-start]:ps-4",
+        icon: "size-9 p-0",
+        "icon-xs": "size-7 p-0 [&_svg:not([class*='size-'])]:size-3.5",
+        "icon-sm": "size-8 p-0 [&_svg:not([class*='size-'])]:size-4",
+        "icon-lg": "size-10 p-0",
       },
     },
     defaultVariants: {

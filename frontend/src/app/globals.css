@@ -124,6 +124,78 @@ html[data-font="system"] {
   font-family: var(--app-font-system);
 }
 
+/* هم‌رنگ‌سازی نقشه و انتخابگر موقعیت با پالت خنثی اپ ChatGPT.
+   کتابخانهٔ نقشه از متغیرهای --lp-* استفاده می‌کند؛ فقط همان‌ها را بازنویسی
+   می‌کنیم تا رفتار و ساختار داخلی نقشه دست‌نخورده بماند. */
+html .lp.lp {
+  --lp-bg: #f9f9f9;
+  --lp-card: #ffffff;
+  --lp-sunk: #f4f4f4;
+  --lp-hover: #f4f4f4;
+  --lp-ink: #0d0d0d;
+  --lp-muted: #676767;
+  --lp-line: #e5e5e5;
+  --lp-map-bg: #ececec;
+  --lp-brand: #0d0d0d;
+  --lp-brand-dark: #000000;
+  --lp-pin: #0d0d0d;
+  --lp-pin-border: #ffffff;
+  --lp-pin-stem: #676767;
+  --lp-pin-shadow: rgba(0, 0, 0, 0.12);
+  --lp-pin-shadow-dot: #ffffff;
+  --lp-my: #0d0d0d;
+  --lp-my-glow: rgba(13, 13, 13, 0.08);
+  --lp-my-ring: rgba(13, 13, 13, 0.15);
+  --lp-venue: #0d0d0d;
+  --lp-radius: 16px;
+  --lp-font: var(--app-font-sans);
+  --lp-cta-ink: #ffffff;
+}
+
+html.dark .lp.lp {
+  --lp-bg: #212121;
+  --lp-card: #2f2f2f;
+  --lp-sunk: #303030;
+  --lp-hover: #303030;
+  --lp-ink: #ececec;
+  --lp-muted: #b4b4b4;
+  --lp-line: #ffffff1a;
+  --lp-map-bg: #171717;
+  --lp-brand: #ececec;
+  --lp-brand-dark: #ffffff;
+  --lp-pin: #ececec;
+  --lp-pin-border: #2f2f2f;
+  --lp-pin-stem: #b4b4b4;
+  --lp-pin-shadow: rgba(0, 0, 0, 0.45);
+  --lp-pin-shadow-dot: #212121;
+  --lp-my: #ececec;
+  --lp-my-glow: rgba(255, 255, 255, 0.1);
+  --lp-my-ring: rgba(255, 255, 255, 0.18);
+  --lp-venue: #ececec;
+  --lp-cta-ink: #0d0d0d;
+}
+
+.lp .lp-cta {
+  color: var(--lp-cta-ink);
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.lp .lp-search-trigger,
+.lp .lp-ghost {
+  border-radius: 12px;
+}
+
+.lp .lp-marker-pin,
+.lp .lp-pin-head {
+  background: var(--lp-brand);
+}
+
+.lp .lp-venue {
+  background: var(--lp-brand);
+  border-color: var(--lp-pin-border);
+}
+
 @theme inline {
   --font-heading: var(--app-font-heading);
   --font-sans: var(--app-font-sans);
@@ -175,93 +247,92 @@ html[data-font="system"] {
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* پالت آبی تلگرامی — تم روشن
-   آبی برند (#0080C6) از خانوادهٔ آبی تلگرام (#2AABEE / #0088CC) گرفته شده؛
-   برای خوانایی متن، --primary یک پله عمیق‌تر (#006FB1، کنتراست ~۵.۱) است. */
+/* پالت خنثی به سبک اپ ChatGPT — تم روشن
+   سطوح سفید/خاکستری بسیار ملایم، متن تقریباً مشکی و دکمهٔ اصلی مشکی.
+   تأکید رنگی فقط برای وضعیت‌ها و خطاها نگه داشته شده است. */
 :root {
-  --background: oklch(0.985 0.004 246);
-  --foreground: oklch(0.21 0.02 255);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.21 0.02 255);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.21 0.02 255);
-  --primary: oklch(0.52 0.145 242);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.955 0.022 240);
-  --secondary-foreground: oklch(0.37 0.09 245);
-  --muted: oklch(0.965 0.008 248);
-  --muted-foreground: oklch(0.5 0.022 255);
-  --accent: oklch(0.945 0.03 238);
-  --accent-foreground: oklch(0.36 0.1 245);
-  --destructive: oklch(0.56 0.21 27);
-  --status-submitted: oklch(0.5 0.02 255);
-  --status-under-review: oklch(0.55 0.15 275);
-  --status-in-progress: oklch(0.58 0.14 70);
-  --status-resolved: oklch(0.54 0.13 155);
-  --status-archived: oklch(0.5 0.015 255);
-  --type-problem: oklch(0.56 0.21 27);
-  --type-idea: oklch(0.54 0.13 155);
-  --border: oklch(0.9 0.012 250);
-  --input: oklch(0.86 0.016 250);
-  --ring: oklch(0.6 0.14 242);
-  --chart-1: oklch(0.52 0.145 242);
-  --chart-2: oklch(0.68 0.12 210);
-  --chart-3: oklch(0.5 0.16 275);
-  --chart-4: oklch(0.62 0.11 190);
-  --chart-5: oklch(0.65 0.14 70);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.975 0.008 246);
-  --sidebar-foreground: oklch(0.21 0.02 255);
-  --sidebar-primary: oklch(0.52 0.145 242);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.945 0.03 238);
-  --sidebar-accent-foreground: oklch(0.36 0.1 245);
-  --sidebar-border: oklch(0.9 0.012 250);
-  --sidebar-ring: oklch(0.6 0.14 242);
+  --background: #ffffff;
+  --foreground: #0d0d0d;
+  --card: #ffffff;
+  --card-foreground: #0d0d0d;
+  --popover: #ffffff;
+  --popover-foreground: #0d0d0d;
+  --primary: #0d0d0d;
+  --primary-foreground: #ffffff;
+  --secondary: #f0f0f0;
+  --secondary-foreground: #0d0d0d;
+  --muted: #f7f7f8;
+  --muted-foreground: #676767;
+  --accent: #f0f0f0;
+  --accent-foreground: #0d0d0d;
+  --destructive: #c62828;
+  --status-submitted: #5d5d5d;
+  --status-under-review: #7c5cbf;
+  --status-in-progress: #a16207;
+  --status-resolved: #15803d;
+  --status-archived: #737373;
+  --type-problem: #b91c1c;
+  --type-idea: #15803d;
+  --border: #e5e5e5;
+  --input: #d9d9d9;
+  --ring: #0d0d0d;
+  --chart-1: #0d0d0d;
+  --chart-2: #676767;
+  --chart-3: #a3a3a3;
+  --chart-4: #8f8f8f;
+  --chart-5: #d4d4d4;
+  --radius: 0.75rem;
+  --sidebar: #f9f9f9;
+  --sidebar-foreground: #0d0d0d;
+  --sidebar-primary: #0d0d0d;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ececec;
+  --sidebar-accent-foreground: #0d0d0d;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #0d0d0d;
 }
 
-/* پالت آبی تلگرامی — تم تاریک
-   پس‌زمینهٔ سرمه‌ای نزدیک به تلگرام (#151F29) با کارت‌های یک پله روشن‌تر و
-   آبی روشن (#4EB2F1) برای حفظ کنتراست بالا روی سطوح تیره. */
+/* پالت خنثی به سبک اپ ChatGPT — تم تاریک
+   پس‌زمینهٔ #212121، سایدبار #171717 و متن #ececec؛ دکمهٔ اصلی سفید. */
 .dark {
-  --background: oklch(0.235 0.024 250);
-  --foreground: oklch(0.965 0.006 250);
-  --card: oklch(0.285 0.028 252);
-  --card-foreground: oklch(0.965 0.006 250);
-  --popover: oklch(0.3 0.03 252);
-  --popover-foreground: oklch(0.965 0.006 250);
-  --primary: oklch(0.73 0.13 240);
-  --primary-foreground: oklch(0.2 0.03 250);
-  --secondary: oklch(0.315 0.035 250);
-  --secondary-foreground: oklch(0.86 0.06 240);
-  --muted: oklch(0.305 0.025 252);
-  --muted-foreground: oklch(0.72 0.02 250);
-  --accent: oklch(0.32 0.05 245);
-  --accent-foreground: oklch(0.87 0.07 240);
-  --destructive: oklch(0.7 0.18 25);
-  --status-submitted: oklch(0.7 0.02 250);
-  --status-under-review: oklch(0.72 0.12 275);
-  --status-in-progress: oklch(0.78 0.12 75);
-  --status-resolved: oklch(0.74 0.11 155);
-  --status-archived: oklch(0.6 0.015 250);
-  --type-problem: oklch(0.72 0.17 25);
-  --type-idea: oklch(0.74 0.11 155);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 17%);
-  --ring: oklch(0.72 0.12 240);
-  --chart-1: oklch(0.73 0.13 240);
-  --chart-2: oklch(0.78 0.1 200);
-  --chart-3: oklch(0.68 0.14 275);
-  --chart-4: oklch(0.72 0.1 185);
-  --chart-5: oklch(0.76 0.13 80);
-  --sidebar: oklch(0.265 0.026 252);
-  --sidebar-foreground: oklch(0.965 0.006 250);
-  --sidebar-primary: oklch(0.73 0.13 240);
-  --sidebar-primary-foreground: oklch(0.2 0.03 250);
-  --sidebar-accent: oklch(0.32 0.05 245);
-  --sidebar-accent-foreground: oklch(0.87 0.07 240);
-  --sidebar-border: oklch(1 0 0 / 12%);
-  --sidebar-ring: oklch(0.72 0.12 240);
+  --background: #212121;
+  --foreground: #ececec;
+  --card: #212121;
+  --card-foreground: #ececec;
+  --popover: #2f2f2f;
+  --popover-foreground: #ececec;
+  --primary: #ffffff;
+  --primary-foreground: #0d0d0d;
+  --secondary: #303030;
+  --secondary-foreground: #ececec;
+  --muted: #2f2f2f;
+  --muted-foreground: #b4b4b4;
+  --accent: #2f2f2f;
+  --accent-foreground: #ececec;
+  --destructive: #f87171;
+  --status-submitted: #b4b4b4;
+  --status-under-review: #b8a5e8;
+  --status-in-progress: #e3b341;
+  --status-resolved: #6cc58a;
+  --status-archived: #8f8f8f;
+  --type-problem: #f08c8c;
+  --type-idea: #6cc58a;
+  --border: #ffffff1a;
+  --input: #ffffff26;
+  --ring: #ffffff;
+  --chart-1: #ffffff;
+  --chart-2: #b4b4b4;
+  --chart-3: #8f8f8f;
+  --chart-4: #d4d4d4;
+  --chart-5: #676767;
+  --sidebar: #171717;
+  --sidebar-foreground: #ececec;
+  --sidebar-primary: #ffffff;
+  --sidebar-primary-foreground: #0d0d0d;
+  --sidebar-accent: #2f2f2f;
+  --sidebar-accent-foreground: #ececec;
+  --sidebar-border: #ffffff1a;
+  --sidebar-ring: #ffffff;
 }
 
 /* گذار یکپارچهٔ تم — هنگام سوییچ، همهٔ عناصر با مدت‌زمان و منحنی یکسان
@@ -286,40 +357,12 @@ html[data-font="system"] {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
-    /* هالهٔ آبی ملایم برند در پس‌زمینه — color-mix با هر فضای رنگی کار می‌کند
-       (پیش‌تر hsl() روی مقدار oklch نامعتبر بود و این گرادیان‌ها رندر نمی‌شدند). */
-    background-image:
-      radial-gradient(
-        ellipse 80% 50% at 50% 0%,
-        color-mix(in oklch, var(--primary) 7%, transparent) 0%,
-        transparent 70%
-      ),
-      radial-gradient(
-        ellipse 50% 80% at 80% 100%,
-        color-mix(in oklch, var(--primary) 5%, transparent) 0%,
-        transparent 70%
-      ),
-      radial-gradient(
-        ellipse 50% 80% at 20% 100%,
-        color-mix(in oklch, var(--primary) 4%, transparent) 0%,
-        transparent 70%
-      );
-  }
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.025;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-repeat: repeat;
-    background-size: 300px 300px;
+    @apply bg-background text-foreground antialiased;
   }
   html {
     @apply font-sans;
     scrollbar-gutter: stable;
+    -webkit-tap-highlight-color: transparent;
   }
   h1,
   h2,
@@ -328,6 +371,10 @@ html[data-font="system"] {
   h5,
   h6 {
     @apply font-heading font-semibold;
+  }
+  /* آیکون‌های خطی نازک‌تر، هم‌خوان با آیکون‌های اپ ChatGPT */
+  svg.lucide {
+    stroke-width: 1.75;
   }
   /* react-remove-scroll-bar (Radix scroll lock) assumes LTR: on open it
      sets margin-right/padding-right equal to the hidden scrollbar width.
@@ -346,28 +393,16 @@ html[data-font="system"] {
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: color-mix(in oklch, var(--muted-foreground) 30%, transparent);
+    background: color-mix(in oklch, var(--muted-foreground) 28%, transparent);
     border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: color-mix(in oklch, var(--muted-foreground) 55%, transparent);
+    background: color-mix(in oklch, var(--muted-foreground) 50%, transparent);
   }
   .scrollbar-gutter-stable {
     scrollbar-gutter: stable;
   }
-  /* سایهٔ نرم و لایه‌ای برای کارت‌ها — عمق ملایم بدون شلوغی بصری */
-  [data-slot="card"] {
-    box-shadow:
-      0 1px 2px color-mix(in oklch, var(--foreground) 5%, transparent),
-      0 10px 30px -18px color-mix(in oklch, var(--foreground) 14%, transparent);
-  }
-  .dark [data-slot="card"] {
-    box-shadow:
-      0 1px 2px rgb(0 0 0 / 35%),
-      0 16px 40px -24px rgb(0 0 0 / 55%);
-  }
-  /* هایلایت متن انتخاب‌شده — پس‌زمینه آبی برند و متن هم‌رنگ آن.
-     چون از متغیرهای تم استفاده می‌کند، در حالت روشن و تاریک خودکار است. */
+  /* هایلایت متن انتخاب‌شده — مشکی/سفید مانند اپ ChatGPT */
   ::selection {
     background-color: var(--primary);
     color: var(--primary-foreground);
@@ -380,43 +415,17 @@ html[data-font="system"] {
   }
 }
 
-/* Grid pattern overlay — sits between app background and content */
-#shahr_ara_app_root::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image:
-    linear-gradient(
-      to right,
-      color-mix(in oklch, var(--primary) 9%, transparent) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      to bottom,
-      color-mix(in oklch, var(--primary) 9%, transparent) 1px,
-      transparent 1px
-    );
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse at center, #000 50%, transparent 78%);
-  -webkit-mask-image: radial-gradient(
-    ellipse at center,
-    #000 50%,
-    transparent 78%
-  );
+/* ورود کشوی موبایل از سمت راست؛ اگر انیمیشن اجرا نشود، حالت نهایی
+   (بدون جابه‌جایی) نمایش داده می‌شود و محتوا هرگز بیرون کادر نمی‌ماند. */
+@keyframes mobile-drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
-.dark #shahr_ara_app_root::before {
-  background-image:
-    linear-gradient(
-      to right,
-      color-mix(in oklch, var(--primary) 12%, transparent) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      to bottom,
-      color-mix(in oklch, var(--primary) 12%, transparent) 1px,
-      transparent 1px
-    );
+.mobile-drawer-in {
+  animation: mobile-drawer-in 200ms ease-out forwards;
 }

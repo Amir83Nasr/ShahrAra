@@ -20,6 +20,9 @@ export function ModeToggle({
         <Button
           variant="ghost"
           aria-pressed={theme === "dark"}
+          aria-label={
+            theme === "light" ? "تغییر به حالت تاریک" : "تغییر به حالت روشن"
+          }
           onClick={handleClick}
         >
           <Sun className="size-4 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />

@@ -39,7 +39,7 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        "data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-[2px]",
+        "data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 fixed inset-0 isolate z-50 bg-black/40 duration-100 supports-backdrop-filter:backdrop-blur-[2px]",
         className,
       )}
       {...props}
@@ -61,13 +61,13 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "bg-popover text-popover-foreground ring-foreground/10 fixed z-50 grid w-full gap-6 p-6 text-sm ring-1 duration-100 outline-none",
+          "bg-popover text-popover-foreground border-border fixed z-50 grid w-full gap-6 p-6 text-sm shadow-xl duration-150 outline-none",
           // Mobile: bottom sheet
-          "max-sm:right-0 max-sm:bottom-0 max-sm:left-0 max-sm:max-w-full max-sm:rounded-t-xl",
+          "max-sm:right-0 max-sm:bottom-0 max-sm:left-0 max-sm:max-w-full max-sm:rounded-t-3xl max-sm:border-t",
           "max-sm:data-open:animate-in max-sm:data-open:slide-in-from-bottom max-sm:data-open:fade-in-0",
           "max-sm:data-closed:animate-out max-sm:data-closed:slide-out-to-bottom max-sm:data-closed:fade-out-0",
           // Desktop: centered modal
-          "sm:start-1/2 sm:top-1/2 sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:rtl:translate-x-1/2",
+          "sm:start-1/2 sm:top-1/2 sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:border sm:rtl:translate-x-1/2",
           "sm:data-open:animate-in sm:data-open:fade-in-0 sm:data-open:zoom-in-95",
           "sm:data-closed:animate-out sm:data-closed:fade-out-0 sm:data-closed:zoom-out-95",
           className,
@@ -136,7 +136,10 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn("font-heading leading-none font-semibold", className)}
+      className={cn(
+        "font-heading text-base leading-none font-semibold",
+        className,
+      )}
       {...props}
     />
   );

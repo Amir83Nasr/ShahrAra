@@ -6,65 +6,104 @@
  */
 
 import Link from "next/link";
-import { Map, ArrowLeft } from "lucide-react";
+import {
+  ArrowUp,
+  Lightbulb,
+  Map,
+  MapPin,
+  Search,
+  Sparkles,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { CATEGORIES } from "@/utils/categoryUtils";
+
+const SUGGESTIONS = [
+  { label: "خرابی آسفالت", category: CATEGORIES[0], Icon: MapPin },
+  { label: "روشنایی خیابان", category: CATEGORIES[2], Icon: Lightbulb },
+  { label: "پسماند و بازیافت", category: CATEGORIES[3], Icon: Sparkles },
+  { label: "همه گزارش‌ها", category: null, Icon: Search },
+];
 
 export default function Hero() {
   return (
-    <div
-      className="relative overflow-hidden py-12 sm:py-16 md:py-24"
+    <section
+      className="flex min-h-[calc(100dvh-3.5rem)] flex-col justify-center px-4 py-10 sm:px-6 md:min-h-dvh"
       id="shahr_ara_hero"
     >
-      <div className="relative z-10 mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
-        {/* Top welcome indicator */}
-        <div className="border-primary/20 bg-primary/[0.04] text-muted-foreground dark:border-primary/15 dark:bg-primary/[0.03] mb-4 inline-flex max-w-full items-center gap-2.5 rounded-full border px-4 py-2 text-xs font-medium backdrop-blur-sm">
-          <span className="relative flex h-1.5 w-1.5">
-            <span className="bg-primary/50 absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" />
-            <span className="bg-primary relative inline-flex h-1.5 w-1.5 rounded-full" />
-          </span>
-          <span className="hidden sm:inline">
-            سامانه ثبت، پیگیری و همفکری مطالبات شهروندی
-          </span>
-          <span className="truncate sm:hidden">سامانه ثبت مطالبات شهروندی</span>
+      <div className="mx-auto w-full max-w-3xl">
+        <div className="mb-8 text-center">
+          <h1 className="text-foreground text-[26px] leading-tight font-semibold tracking-tight sm:text-4xl">
+            امروز چه خبر از شهر؟
+          </h1>
+          <p className="text-muted-foreground mx-auto mt-2.5 max-w-md text-sm leading-relaxed">
+            مشکل یا ایده‌ات را با شهرآرا در میان بگذار؛ مستقیم به شهرداری قم
+            می‌رسد و مراحل رسیدگی شفاف قابل پیگیری است.
+          </p>
         </div>
 
-        {/* Hero centered layout */}
-        <div className="mx-auto flex max-w-3xl flex-col items-center gap-6">
-          <h1 className="text-foreground relative text-2xl leading-snug font-extrabold sm:text-3xl sm:leading-snug lg:text-4xl lg:leading-normal">
-            همراه با شهرداری در ساختن <br />
-            <span className="text-primary font-extrabold">
-              شهری پویاتر و زیباتر
+        {/* Composer — same visual language as the ChatGPT app input */}
+        <div className="border-border bg-card rounded-[28px] border p-3 shadow-[0_2px_12px_rgba(0,0,0,0.05)] dark:bg-[#303030] dark:shadow-[0_2px_12px_rgba(0,0,0,0.25)]">
+          <Link
+            href="/submit"
+            className="flex min-h-[72px] items-start rounded-3xl px-2 pt-1.5 pb-2 text-start"
+          >
+            <span className="text-muted-foreground text-[15px] leading-relaxed">
+              مشکل شهری یا ایده‌ات را اینجا بنویس…
             </span>
-          </h1>
+          </Link>
 
-          <p className="text-muted-foreground max-w-2xl text-sm leading-relaxed font-normal sm:text-base sm:leading-8">
-            سامانه هوشمند{" "}
-            <strong className="text-primary font-extrabold">شهرآرا</strong> پلی
-            ارتباطی و دوسویه برای ارسال فوری گزارش مشکلات شهری (خرابی معابر، سد
-            معابر، نارسایی روشنایی و پسماند) و همفکری پیرامون ایده‌های نوین
-            زیباسازی محله‌ها است. ایده بدهید، مشکلات را ثبت کنید و به یاری
-            مسئولان شهری بشتابید.
-          </p>
+          <div className="flex items-center justify-between gap-2 px-1">
+            <div className="flex items-center gap-0.5">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                asChild
+                aria-label="مشاهده گزارش‌ها روی نقشه"
+              >
+                <Link href="/reports">
+                  <Map className="size-[18px]" />
+                </Link>
+              </Button>
+            </div>
 
-          {/* Quick Action Buttons */}
-          <div className="flex w-full flex-col gap-3 pt-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-5">
-            <Button asChild className="w-full sm:w-auto">
+            <Button
+              size="icon-lg"
+              asChild
+              aria-label="ثبت گزارش جدید"
+              className="rounded-full"
+            >
               <Link href="/submit">
-                <span>شروع مشارکت فردی و ثبت گزارش</span>
-                <ArrowLeft />
-              </Link>
-            </Button>
-
-            <Button variant="outline" asChild className="w-full sm:w-auto">
-              <Link href="/reports">
-                <Map />
-                <span>پایش زنده گزارش‌های قم</span>
+                <ArrowUp className="size-5" />
               </Link>
             </Button>
           </div>
         </div>
+
+        {/* Suggestion chips */}
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+          {SUGGESTIONS.map(({ label, category, Icon }) => (
+            <Button
+              key={label}
+              variant="outline"
+              size="sm"
+              asChild
+              className="text-muted-foreground hover:text-foreground h-8 gap-1.5 rounded-full bg-transparent px-3 text-[12px] font-normal"
+            >
+              <Link
+                href={
+                  category
+                    ? `/reports?category=${encodeURIComponent(category)}`
+                    : "/reports"
+                }
+              >
+                <Icon className="size-3.5" />
+                <span>{label}</span>
+              </Link>
+            </Button>
+          ))}
+        </div>
       </div>
-    </div>
+    </section>
   );
 }

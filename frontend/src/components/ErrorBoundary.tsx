@@ -3,7 +3,6 @@
 import { Component, ErrorInfo, ReactNode } from "react";
 import { AlertTriangle, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface Props {
   children: ReactNode;
@@ -38,22 +37,26 @@ export default class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) return this.props.fallback;
 
       return (
-        <div className="mx-auto flex max-w-md flex-col items-center justify-center gap-6 px-4 py-24 text-center">
-          <Alert variant="destructive" className="text-start">
-            <AlertTriangle />
-            <AlertTitle className="text-base font-extrabold">
-              خطایی رخ داده است
-            </AlertTitle>
-            <AlertDescription className="leading-relaxed font-medium">
-              متأسفانه در اجرای برنامه مشکلی پیش آمد. لطفاً مجدداً تلاش کنید یا
-              صفحه را بازنشانی نمایید.
-            </AlertDescription>
-            {process.env.NODE_ENV === "development" && this.state.error && (
-              <AlertDescription className="mt-3 rounded-md bg-black/5 p-2 font-mono text-[11px] text-red-600 dark:bg-white/5 dark:text-red-400">
-                {this.state.error.name}: {this.state.error.message}
-              </AlertDescription>
-            )}
-          </Alert>
+        <div className="mx-auto flex max-w-md flex-col items-center justify-center gap-5 px-4 py-24 text-center">
+          <div className="border-border bg-card w-full rounded-2xl border p-5 text-start">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="text-destructive mt-0.5 size-5 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <h2 className="text-foreground text-sm font-semibold">
+                  خطایی رخ داده است
+                </h2>
+                <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+                  متأسفانه در اجرای برنامه مشکلی پیش آمد. لطفاً مجدداً تلاش کنید
+                  یا صفحه را بازنشانی نمایید.
+                </p>
+                {process.env.NODE_ENV === "development" && this.state.error && (
+                  <pre className="bg-muted text-destructive mt-3 overflow-auto rounded-xl p-2.5 font-mono text-[11px] leading-relaxed break-words whitespace-pre-wrap">
+                    {this.state.error.name}: {this.state.error.message}
+                  </pre>
+                )}
+              </div>
+            </div>
+          </div>
           <Button onClick={this.handleRetry}>
             <RefreshCcw />
             تلاش مجدد

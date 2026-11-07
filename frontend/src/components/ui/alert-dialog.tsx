@@ -36,7 +36,7 @@ function AlertDialogOverlay({
     <AlertDialogPrimitive.Overlay
       data-slot="alert-dialog-overlay"
       className={cn(
-        "data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 fixed inset-0 z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs",
+        "data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 fixed inset-0 z-50 bg-black/40 duration-100 supports-backdrop-filter:backdrop-blur-[2px]",
         className,
       )}
       {...props}
@@ -58,13 +58,13 @@ function AlertDialogContent({
         data-slot="alert-dialog-content"
         data-size={size}
         className={cn(
-          "group/alert-dialog-content bg-popover text-popover-foreground ring-foreground/10 fixed z-50 grid w-full gap-6 p-6 ring-1 duration-100 outline-none",
+          "group/alert-dialog-content bg-popover text-popover-foreground border-border fixed z-50 grid w-full gap-6 p-6 shadow-xl duration-100 outline-none",
           // Mobile: bottom sheet
-          "max-sm:right-0 max-sm:bottom-0 max-sm:left-0 max-sm:max-w-full max-sm:rounded-t-xl",
+          "max-sm:right-0 max-sm:bottom-0 max-sm:left-0 max-sm:max-w-full max-sm:rounded-t-3xl max-sm:border-t",
           "max-sm:data-open:animate-in max-sm:data-open:slide-in-from-bottom max-sm:data-open:fade-in-0",
           "max-sm:data-closed:animate-out max-sm:data-closed:slide-out-to-bottom max-sm:data-closed:fade-out-0",
           // Desktop: centered modal
-          "sm:start-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:rtl:translate-x-1/2",
+          "sm:start-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:border sm:rtl:translate-x-1/2",
           "data-[size=default]:sm:max-w-lg sm:data-[size=default]:max-w-xs sm:data-[size=sm]:max-w-xs",
           "sm:data-open:animate-in sm:data-open:fade-in-0 sm:data-open:zoom-in-95",
           "sm:data-closed:animate-out sm:data-closed:fade-out-0 sm:data-closed:zoom-out-95",
@@ -116,7 +116,7 @@ function AlertDialogMedia({
     <div
       data-slot="alert-dialog-media"
       className={cn(
-        "bg-muted mb-2 inline-flex size-16 items-center justify-center rounded-md sm:group-data-[size=default]/alert-dialog-content:row-span-2 *:[svg:not([class*='size-'])]:size-8",
+        "bg-muted mb-2 inline-flex size-14 items-center justify-center rounded-full sm:group-data-[size=default]/alert-dialog-content:row-span-2 *:[svg:not([class*='size-'])]:size-7",
         className,
       )}
       {...props}

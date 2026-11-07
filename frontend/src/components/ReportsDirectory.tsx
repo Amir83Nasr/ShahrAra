@@ -101,6 +101,7 @@ interface ReportsDirectoryProps {
   onRefresh: () => void;
   theme?: "light" | "dark";
   initialCategory?: string;
+  initialSearch?: string;
 }
 
 export default function ReportsDirectory({
@@ -110,9 +111,10 @@ export default function ReportsDirectory({
   onRefresh,
   theme = "light",
   initialCategory = "all",
+  initialSearch = "",
 }: ReportsDirectoryProps) {
   const router = useRouter();
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [activeCategory, setActiveCategory] = useState<string>(initialCategory);
   const [activeType, setActiveType] = useState<"all" | "problem" | "idea">(
     "all",
@@ -204,36 +206,52 @@ export default function ReportsDirectory({
   }, [items]);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8" id="shahr_ara_directory">
+    <div
+      className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6"
+      id="shahr_ara_directory"
+    >
+      <div className="mb-5">
+        <h1 className="text-foreground text-xl font-semibold tracking-tight">
+          گزارش‌ها و ایده‌ها
+        </h1>
+        <p className="text-muted-foreground mt-1 text-sm">
+          مطالبات شهروندان قم را جستجو، مرور و حمایت کنید.
+        </p>
+      </div>
+
       {/* Filters */}
-      <div className="bg-card mb-4 flex flex-col gap-4 rounded-xl border p-5">
+      <div className="bg-card mb-4 flex flex-col gap-3 rounded-2xl border p-3">
         {/* Top row: search + map/refresh buttons */}
-        <div className="flex w-full items-center gap-3">
+        <div className="flex w-full items-center gap-2">
           <div className="relative flex-1">
-            <Search className="text-muted-foreground absolute top-3 right-3 h-4.5 w-4.5" />
+            <Search className="text-muted-foreground pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2" />
             <Input
               type="text"
               placeholder="جستجوی نیاز، ایده، محله..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-background pr-10"
+              className="bg-muted/60 focus-visible:bg-background h-11 rounded-full border-transparent pr-10"
             />
           </div>
           <Button
             variant={showMap ? "default" : "outline"}
             onClick={() => setShowMap(!showMap)}
-            className="whitespace-nowrap"
+            className="h-11 shrink-0 rounded-full px-3.5"
+            aria-label={showMap ? "مخفی‌سازی نقشه" : "نمایش نقشه"}
           >
             <Map />
-            <span>{showMap ? "مخفی‌سازی نقشه" : "نمایش نقشه"}</span>
+            <span className="hidden sm:inline">
+              {showMap ? "مخفی‌سازی نقشه" : "نمایش نقشه"}
+            </span>
           </Button>
           <Button
             variant="outline"
             onClick={onRefresh}
-            className="whitespace-nowrap"
+            className="h-11 shrink-0 rounded-full px-3.5"
+            aria-label="بروزرسانی"
           >
             <RefreshCcw />
-            <span>بروزرسانی</span>
+            <span className="hidden sm:inline">بروزرسانی</span>
           </Button>
         </div>
 
@@ -322,11 +340,12 @@ export default function ReportsDirectory({
       </div>
 
       {/* Category filter */}
-      <div className="-mx-4 mb-4 flex scrollbar-thin gap-2 overflow-x-auto px-4 pb-4">
+      <div className="-mx-4 mb-4 flex scrollbar-thin gap-2 overflow-x-auto px-4 pb-3 sm:mx-0 sm:px-0">
         <Button
           variant={activeCategory === "all" ? "default" : "outline"}
           onClick={() => setActiveCategory("all")}
-          className="shrink-0 rounded-full"
+          size="sm"
+          className="shrink-0"
         >
           همه دسته‌ها
         </Button>
@@ -335,7 +354,8 @@ export default function ReportsDirectory({
             key={idx}
             variant={activeCategory === cat ? "default" : "outline"}
             onClick={() => setActiveCategory(cat)}
-            className="shrink-0 rounded-full"
+            size="sm"
+            className="shrink-0"
           >
             {cat}
           </Button>
@@ -343,10 +363,10 @@ export default function ReportsDirectory({
       </div>
 
       {/* Display Directory Main Arena */}
-      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
         {/* Map — mobile: below filters (hidden by default); desktop: sidebar */}
         {showMap && (
-          <div className="border-border bg-card sticky top-24 order-1 h-[500px] overflow-hidden rounded-xl border max-lg:static lg:order-2 lg:col-span-5">
+          <div className="border-border bg-card sticky top-20 order-1 h-[500px] overflow-hidden rounded-2xl border max-lg:static lg:top-6 lg:order-2 lg:col-span-5">
             <MapComponent
               pickerMode={false}
               items={sorted}
@@ -360,10 +380,10 @@ export default function ReportsDirectory({
             showMap ? "lg:col-span-7" : "lg:col-span-12"
           }`}
         >
-          <div className="max-h-[600px] overflow-y-auto p-0.5 max-lg:max-h-none max-lg:overflow-visible">
+          <div>
             <div
               className={cn(
-                "grid grid-cols-1 gap-5",
+                "grid grid-cols-1 gap-3",
                 showMap ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3",
               )}
             >
@@ -377,13 +397,13 @@ export default function ReportsDirectory({
                     <Card
                       key={item.id}
                       className={cn(
-                        "report-card cursor-pointer overflow-hidden transition-all duration-300",
-                        "hover:shadow-sm",
-                        "border-border bg-card",
+                        "report-card bg-card cursor-pointer overflow-hidden rounded-2xl transition-colors duration-200",
+                        "hover:bg-muted/40",
+                        "border-border",
                       )}
                       onClick={() => setSelectedDetails(item)}
                     >
-                      <CardContent className="flex flex-col gap-2.5 px-5">
+                      <CardContent className="flex flex-col gap-2.5 px-4">
                         {/* Badge / Header row */}
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <Badge
@@ -408,35 +428,38 @@ export default function ReportsDirectory({
                         </div>
 
                         {/* Content */}
-                        <CardTitle className="text-foreground line-clamp-1 cursor-pointer text-sm font-extrabold">
+                        <CardTitle className="text-foreground line-clamp-1 cursor-pointer text-[14px] font-medium">
                           {item.title}
                         </CardTitle>
-                        <CardDescription className="text-muted-foreground line-clamp-2 min-h-[2lh] text-xs leading-relaxed">
+                        <CardDescription className="text-muted-foreground line-clamp-2 min-h-[2lh] text-[13px] leading-relaxed">
                           {item.description}
                         </CardDescription>
 
                         {/* Footer */}
-                        <div className="text-muted-foreground flex items-center justify-between text-[10px]">
-                          <span className="flex items-center gap-1 font-sans">
-                            <MapPin className="text-muted-foreground h-3.5 w-3.5" />
+                        <div className="text-muted-foreground mt-1 flex items-center justify-between text-[11px]">
+                          <span className="flex items-center gap-1.5">
+                            <MapPin className="size-3.5" />
                             {toPersianDigits(item.region)}
                           </span>
 
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
+                                size="sm"
                                 variant={
-                                  hasLikedStatus ? "destructive" : "outline"
+                                  hasLikedStatus ? "destructive" : "ghost"
                                 }
+                                className="h-7 gap-1.5 rounded-full px-2"
                                 onClick={(e) => handleLikeClick(e, item.id)}
                               >
                                 <Heart
                                   className={cn(
+                                    "size-3.5",
                                     hasLikedStatus && "fill-current",
                                   )}
                                 />
-                                <span className="font-bold">
-                                  {toPersianDigits(item.likes)} لایک
+                                <span className="font-medium">
+                                  {toPersianDigits(item.likes)}
                                 </span>
                               </Button>
                             </TooltipTrigger>
@@ -454,12 +477,12 @@ export default function ReportsDirectory({
                   );
                 })
               ) : (
-                <div className="border-border bg-card text-muted-foreground col-span-full rounded-xl border p-12 text-center">
-                  <AlertCircleIcon className="text-muted-foreground mx-auto mb-3 h-10 w-10" />
-                  <p className="text-foreground text-sm font-extrabold">
+                <div className="border-border bg-card text-muted-foreground col-span-full rounded-2xl border p-10 text-center">
+                  <AlertCircleIcon className="text-muted-foreground mx-auto mb-3 size-9" />
+                  <p className="text-foreground text-sm font-medium">
                     هیچ گزارش یا ایده‌ای یافت نشد.
                   </p>
-                  <p className="text-muted-foreground mt-1 text-xs font-bold">
+                  <p className="text-muted-foreground mt-1 text-[13px]">
                     اولین شهروندی باشید که گزارش جدیدی ارسال می‌کند!
                   </p>
                 </div>
@@ -533,46 +556,46 @@ export default function ReportsDirectory({
             </ResponsiveDialogTitle>
           </ResponsiveDialogHeader>
 
-          <div className="space-y-6">
+          <div className="space-y-5">
             <div>
-              <h3 className="text-foreground text-lg leading-snug font-extrabold">
+              <h3 className="text-foreground text-lg leading-snug font-semibold">
                 {selectedDetails?.title}
               </h3>
-              <span className="text-muted-foreground mt-1.5 block font-mono text-xs font-bold">
+              <span className="text-muted-foreground mt-1.5 block font-mono text-xs">
                 منطقه: {toPersianDigits(selectedDetails?.region ?? "")} |
                 ثبت‌کننده: {selectedDetails?.userName}
               </span>
             </div>
 
-            <p className="bg-muted text-foreground/70 rounded-xl border p-4 text-sm leading-relaxed font-semibold whitespace-pre-wrap">
+            <p className="bg-muted/60 text-foreground/80 rounded-2xl border p-4 text-sm leading-relaxed whitespace-pre-wrap">
               {selectedDetails?.description}
             </p>
 
             {selectedDetails?.adminResponse ? (
-              <div className="border-primary/30 from-primary/10 to-primary/5 relative rounded-xl border bg-gradient-to-br p-4">
-                <div className="border-primary/20 bg-primary/10 text-primary absolute top-3 left-3 rounded border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase">
+              <div className="bg-muted/60 relative rounded-2xl border p-4">
+                <div className="bg-background text-muted-foreground absolute top-3 left-3 rounded-full border px-2 py-0.5 font-mono text-[10px] font-medium">
                   پاسخ رسمی
                 </div>
-                <span className="text-primary mb-1 block text-xs font-extrabold">
+                <span className="text-foreground mb-1 block text-xs font-medium">
                   پاسخ رسمی شهرداری منطقه:
                 </span>
-                <p className="text-foreground/70 text-xs leading-relaxed font-medium whitespace-pre-line">
+                <p className="text-foreground/75 text-xs leading-relaxed whitespace-pre-line">
                   {selectedDetails.adminResponse}
                 </p>
               </div>
             ) : (
-              <div className="bg-muted text-muted-foreground/70 rounded-xl border p-3.5 text-center text-xs font-bold">
+              <div className="bg-muted/60 text-muted-foreground rounded-2xl border p-3.5 text-center text-xs">
                 این گزارش برای اعزام اکیپ آماده‌سازی در صف رسیدگی واحد روابط
                 عمومی شهرداری منطقه است.
               </div>
             )}
 
-            <div className="space-y-1.5">
-              <span className="text-foreground/70 flex items-center gap-1 text-xs font-bold">
-                <MapPin className="text-primary h-4 w-4" />
+            <div className="space-y-2">
+              <span className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
+                <MapPin className="text-foreground size-4" />
                 موقعیت فیزیکی روی نقشه شهر
               </span>
-              <div className="h-[200px] overflow-hidden rounded-xl border">
+              <div className="h-[200px] overflow-hidden rounded-2xl border">
                 <MapComponent
                   pickerMode={false}
                   items={selectedDetails ? [selectedDetails] : []}
@@ -583,11 +606,12 @@ export default function ReportsDirectory({
           </div>
 
           <ResponsiveDialogFooter className="flex items-center justify-between sm:justify-between">
-            <span className="text-muted-foreground font-mono text-[10px] font-bold">
+            <span className="text-muted-foreground font-mono text-[10px]">
               کد رهگیری: {toPersianDigits(selectedDetails?.id ?? "")}
             </span>
 
             <Button
+              size="sm"
               variant={
                 currentUser && selectedDetails?.likedByCurrentUser
                   ? "destructive"
@@ -599,6 +623,7 @@ export default function ReportsDirectory({
             >
               <Heart
                 className={cn(
+                  "size-4",
                   currentUser &&
                     selectedDetails?.likedByCurrentUser &&
                     "fill-current",
@@ -606,7 +631,6 @@ export default function ReportsDirectory({
               />
               <span>
                 {toPersianDigits(selectedDetails?.likes ?? 0)} لایک و تأیید
-                شهروندی
               </span>
             </Button>
           </ResponsiveDialogFooter>
