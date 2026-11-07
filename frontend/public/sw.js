@@ -1,6 +1,6 @@
 // Shahr Ara service worker — offline shell + cache-first static assets.
 // Vanilla Workbox-free SW; version bump invalidates old caches.
-const VERSION = "v2";
+const VERSION = "v3";
 const SHELL_CACHE = `shahr-ara-shell-${VERSION}`;
 const ASSET_CACHE = `shahr-ara-assets-${VERSION}`;
 const SHELL_URL = "/";

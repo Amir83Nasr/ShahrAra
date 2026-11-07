@@ -51,6 +51,27 @@ def get_notifications(
 
 
 @router.put(
+    "/read-all",
+    response_model=NotificationReadResponse,
+    summary="Mark all notifications as read",
+    description="Marks every unread notification of the signed-in user as read.",
+    operation_id="notifications_mark_all_read",
+    response_description="All currently unread notifications are marked as read.",
+    responses=error_responses(401),
+)
+def mark_all_notifications_read(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
+    db.query(Notification).filter(
+        Notification.user_phone == current_user.phone,
+        Notification.is_read.is_(False),
+    ).update({Notification.is_read: True}, synchronize_session=False)
+    db.commit()
+    return NotificationReadResponse(success=True)
+
+
+@router.put(
     "/{notification_id}/read",
     response_model=NotificationReadResponse,
     summary="Mark a notification as read",

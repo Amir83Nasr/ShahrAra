@@ -32,6 +32,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import LogoutModal from "@/components/LogoutModal";
+import NotificationsDialog from "@/components/NotificationsDialog";
 import { BrandMark } from "@/components/BrandMark";
 import { useApp } from "@/app/providers";
 import { FontOption } from "@/utils/fontUtils";
@@ -261,6 +262,7 @@ function SidebarBody({
             collapsed ? "flex-col gap-1" : "justify-end gap-1",
           )}
         >
+          <NotificationsDialog onNavigate={onNavigate} />
           <ModeToggle theme={theme} onThemeChange={toggleTheme} />
           <FontToggle font={font} onFontChange={setFont} />
         </div>

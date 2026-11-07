@@ -554,6 +554,58 @@ class TestNotifications:
         r = client.get("/api/v1/notifications", headers=headers)
         assert r.json() == []
 
+    def test_mark_all_notifications_read(self, client, sample_request_id, admin_token, user_token):
+        headers = {"Authorization": f"Bearer {user_token}"}
+        client.put(
+            f"/api/v1/requests/{sample_request_id}/status",
+            json={"status": "in_progress"},
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        client.put(
+            f"/api/v1/requests/{sample_request_id}/status",
+            json={"status": "resolved"},
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert len(client.get("/api/v1/notifications", headers=headers).json()) == 2
+
+        r = client.put("/api/v1/notifications/read-all", headers=headers)
+        assert r.status_code == 200
+        assert client.get("/api/v1/notifications", headers=headers).json() == []
+
+        read = client.get("/api/v1/notifications?includeRead=true", headers=headers).json()
+        assert len(read) == 2
+        assert all(item["isRead"] for item in read)
+
+    def test_mark_all_notifications_read_requires_token(self, client):
+        r = client.put("/api/v1/notifications/read-all")
+        assert r.status_code == 401
+
+    def test_mark_all_read_leaves_other_users_notifications(
+        self, client, sample_request_id, admin_token, user_token, token_for, sample_request_data
+    ):
+        other_token = token_for("09999999999")
+        other_headers = {"Authorization": f"Bearer {other_token}"}
+        r = client.post("/api/v1/requests", json=sample_request_data, headers=other_headers)
+        other_request_id = r.json()["request"]["id"]
+        client.put(
+            f"/api/v1/requests/{other_request_id}/status",
+            json={"status": "resolved"},
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+
+        headers = {"Authorization": f"Bearer {user_token}"}
+        client.put(
+            f"/api/v1/requests/{sample_request_id}/status",
+            json={"status": "in_progress"},
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert len(client.get("/api/v1/notifications", headers=headers).json()) == 1
+
+        client.put("/api/v1/notifications/read-all", headers=headers)
+
+        assert client.get("/api/v1/notifications", headers=headers).json() == []
+        assert len(client.get("/api/v1/notifications", headers=other_headers).json()) == 1
+
     def test_mark_other_users_notification_read_fails(
         self, client, sample_request_id, admin_token, user_token, token_for
     ):

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import Hero from "@/components/Hero";
+import StatsStrip from "@/components/StatsStrip";
 import {
   Card,
   CardContent,
@@ -185,6 +186,9 @@ export default function HomePage() {
   return (
     <>
       <Hero />
+      <section className="mx-auto max-w-5xl px-4 pb-4 sm:px-6">
+        <StatsStrip />
+      </section>
       <FeaturesSection />
       <HowItWorksSection />
       <CtaSection />

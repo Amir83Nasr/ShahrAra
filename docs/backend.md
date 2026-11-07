@@ -217,6 +217,7 @@ Ownership and state rules:
 | --- | --- | --- | --- |
 | `GET` | `/api/v1/notifications` | Bearer | Unread notifications, newest first |
 | `PUT` | `/api/v1/notifications/{id}/read` | Bearer | Mark one as read |
+| `PUT` | `/api/v1/notifications/read-all` | Bearer | Mark every unread notification as read |
 
 Pass `includeRead=true` to include notifications that were already read.
 

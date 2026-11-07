@@ -41,6 +41,16 @@ export interface RequestItem {
   likedBy?: string[];
 }
 
+export interface NotificationItem {
+  id: string;
+  userPhone: string;
+  message: string;
+  requestId?: string | null;
+  requestTitle?: string | null;
+  createdAt: string;
+  isRead: boolean;
+}
+
 export interface Stats {
   totalCount: number;
   problemsCount: number;

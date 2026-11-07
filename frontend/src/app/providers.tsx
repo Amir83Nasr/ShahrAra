@@ -14,7 +14,13 @@ import {
   useRef,
   useState,
 } from "react";
-import { User, RequestItem, RequestStatus, Stats } from "@/types";
+import {
+  NotificationItem,
+  User,
+  RequestItem,
+  RequestStatus,
+  Stats,
+} from "@/types";
 import {
   UNAUTHORIZED_EVENT,
   apiErrorMessage,
@@ -69,6 +75,11 @@ interface AppContextValue {
   apiError: string | null;
   dismissError: () => void;
   refresh: (options?: { force?: boolean; silent?: boolean }) => Promise<void>;
+  notifications: NotificationItem[];
+  notificationsLoading: boolean;
+  refreshNotifications: () => Promise<void>;
+  markNotificationRead: (id: string) => Promise<void>;
+  markAllNotificationsRead: () => Promise<void>;
   like: (id: string) => Promise<void>;
   updateStatus: (
     id: string,
@@ -114,6 +125,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [requests, setRequests] = useState<RequestItem[]>([]);
   const [stats, setStats] = useState<Stats>(INITIAL_STATS);
   const [loading, setLoading] = useState(true);
+  // Unread notifications only; the API already filters by the bearer token.
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
 
   // Mark session as ready after hydration; queueMicrotask keeps setState
   // out of the effect body (eslint react-hooks/set-state-in-effect).
@@ -190,6 +204,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(() => {
     setCurrentUser(null);
+    setNotifications([]);
     localStorage.removeItem("shahr_ara_user");
     localStorage.removeItem("shahr_ara_token");
     invalidateCache();
@@ -287,15 +302,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
       setApiError(null);
 
       try {
-        const userParam = currentUser
-          ? `?currentUserPhone=${currentUser.phone}`
-          : "";
         const token =
           currentUser?.token ?? localStorage.getItem("shahr_ara_token");
         const headers = authHeaders(token);
 
+        // The bearer token already tells the API who is viewing, so the phone
+        // number never needs to travel in the URL (or into access logs).
         const [reqData, statData] = await Promise.all([
-          apiFetch<RequestItem[]>(`/api/v1/requests${userParam}`, { headers }),
+          apiFetch<RequestItem[]>("/api/v1/requests", { headers }),
           apiFetch<Stats>("/api/v1/stats"),
         ]);
 
@@ -324,6 +338,74 @@ export function Providers({ children }: { children: React.ReactNode }) {
     const t = setTimeout(() => void refresh(), 0);
     return () => clearTimeout(t);
   }, [authReady, refresh]);
+
+  const refreshNotifications = useCallback(async () => {
+    const token = currentUser?.token ?? localStorage.getItem("shahr_ara_token");
+    if (!token) {
+      setNotifications([]);
+      return;
+    }
+
+    setNotificationsLoading(true);
+    try {
+      const data = await apiFetch<NotificationItem[]>("/api/v1/notifications", {
+        headers: authHeaders(token),
+      });
+      setNotifications(data);
+    } catch {
+      // The badge is non-critical; the global 401 handler still logs out.
+    } finally {
+      setNotificationsLoading(false);
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (!authReady) return;
+    // logout() already clears the list when the session ends.
+    if (!currentUser) return;
+    const t = setTimeout(() => void refreshNotifications(), 0);
+    return () => clearTimeout(t);
+  }, [authReady, currentUser, refreshNotifications]);
+
+  const markNotificationRead = useCallback(
+    async (id: string) => {
+      const token =
+        currentUser?.token ?? localStorage.getItem("shahr_ara_token");
+      if (!token) return;
+
+      const removed = notifications.find((n) => n.id === id);
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      try {
+        await apiFetch(`/api/v1/notifications/${id}/read`, {
+          method: "PUT",
+          headers: authHeaders(token),
+        });
+      } catch (err) {
+        if (removed) {
+          setNotifications((prev) => [removed, ...prev]);
+        }
+        setApiError(apiErrorMessage(err, "علامت‌گذاری اعلان انجام نشد."));
+      }
+    },
+    [currentUser, notifications],
+  );
+
+  const markAllNotificationsRead = useCallback(async () => {
+    const token = currentUser?.token ?? localStorage.getItem("shahr_ara_token");
+    if (!token) return;
+
+    const previous = notifications;
+    setNotifications([]);
+    try {
+      await apiFetch("/api/v1/notifications/read-all", {
+        method: "PUT",
+        headers: authHeaders(token),
+      });
+    } catch (err) {
+      setNotifications(previous);
+      setApiError(apiErrorMessage(err, "علامت‌گذاری اعلان‌ها انجام نشد."));
+    }
+  }, [currentUser, notifications]);
 
   const like = useCallback(
     async (id: string) => {
@@ -385,6 +467,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
       apiError,
       dismissError: () => setApiError(null),
       refresh,
+      notifications,
+      notificationsLoading,
+      refreshNotifications,
+      markNotificationRead,
+      markAllNotificationsRead,
       like,
       updateStatus,
       submitSuccess: () => {
@@ -406,6 +493,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
       loading,
       apiError,
       refresh,
+      notifications,
+      notificationsLoading,
+      refreshNotifications,
+      markNotificationRead,
+      markAllNotificationsRead,
       like,
       updateStatus,
     ],

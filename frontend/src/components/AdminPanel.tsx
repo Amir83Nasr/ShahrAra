@@ -35,6 +35,7 @@ import {
   TYPE_BADGE_CLASS,
 } from "../utils/requestBadges";
 import { cn } from "@/lib/utils";
+import StatsStrip from "@/components/StatsStrip";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -228,6 +229,8 @@ export default function AdminPanel({
           بروزرسانی لیست
         </Button>
       </div>
+
+      <StatsStrip variant="admin" className="mb-5" />
 
       <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
         {/* Left Column: List with Filters (7 columns on large desktop) */}
