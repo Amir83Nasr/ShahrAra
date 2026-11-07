@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from sqlalchemy.orm import Session
 
+from app.api.responses import error_responses
 from app.core.security import require_user
 from app.db.session import get_db
 from app.models.models import Notification, User
@@ -14,11 +15,18 @@ router = APIRouter(tags=["Notifications"])
 @router.get(
     "",
     response_model=list[NotificationResponse],
-    summary="Get notifications",
-    description="Get notifications for the authenticated user, ordered by newest first.",
+    summary="List notifications",
+    description="Notifications for the signed-in user, newest first. Unread-only by default.",
+    operation_id="notifications_list",
+    response_description="Notifications visible to the caller.",
+    responses=error_responses(401),
 )
 def get_notifications(
-    includeRead: bool = Query(False, alias="includeRead", description="Include read notifications"),
+    includeRead: bool = Query(
+        False,
+        alias="includeRead",
+        description="Include notifications that have already been read.",
+    ),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ):
@@ -45,12 +53,17 @@ def get_notifications(
 @router.put(
     "/{notification_id}/read",
     response_model=NotificationReadResponse,
-    summary="Mark notification as read",
-    description="Mark a single notification as read.",
-    responses={404: {"description": "اعلان مورد نظر یافت نشد"}},
+    summary="Mark a notification as read",
+    operation_id="notifications_mark_read",
+    response_description="The notification is now marked as read.",
+    responses=error_responses(401, 403, 404),
 )
 def mark_notification_read(
-    notification_id: str,
+    notification_id: str = Path(
+        ...,
+        description="Notification identifier.",
+        examples=["ntf_a1b2c3d4"],
+    ),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ):

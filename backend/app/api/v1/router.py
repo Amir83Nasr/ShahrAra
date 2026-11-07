@@ -20,7 +20,9 @@ ALL_STATUSES = ["submitted", "under_review", "in_progress", "resolved", "archive
     "/stats",
     response_model=StatsResponse,
     summary="Aggregate statistics",
-    description="Get total counts, breakdown by type, status, and category.",
+    description="Totals plus breakdowns by type, status, and category.",
+    operation_id="statistics_get",
+    response_description="Aggregate counters across all requests.",
     tags=["Statistics"],
 )
 def get_stats(db: Session = Depends(get_db)):

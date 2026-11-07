@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from sqlalchemy.orm import Session
 
+from app.api.responses import error_responses
 from app.core.security import get_current_user, require_admin, require_user
 from app.db.session import get_db
 from app.models.models import Like, Notification, Request, User
@@ -15,6 +17,8 @@ from app.schemas.schemas import (
     RequestCreate,
     RequestDeleteResponse,
     RequestResponse,
+    RequestStatus,
+    RequestType,
     RequestUpdate,
     StatusUpdate,
     StatusUpdateResponse,
@@ -27,40 +31,64 @@ router = APIRouter(tags=["Requests"])
 @router.get(
     "",
     response_model=list[RequestResponse] | PaginatedRequestResponse,
-    summary="List all requests",
-    description="Get all requests with optional search, type, category, status, userPhone, "
-    "likedByUser, date range, sort, and pagination filters. "
-    "When limit>0 returns paginated wrapper; when limit=0 returns flat list (backward compat).",
+    summary="List requests",
+    description="Browse requests with search, filters, sorting, and optional pagination. "
+    "Returns a flat list when `limit=0` and a paginated envelope when `limit>0`.",
+    operation_id="requests_list",
+    response_description="A flat list, or a paginated envelope when `limit` is greater than zero.",
+    responses=error_responses(422),
 )
 def get_requests(
-    search: str | None = Query(None, description="Search in title, description, and region"),
-    type: str | None = Query(None, description="Filter by type (problem / idea)"),
-    category: str | None = Query(None, description="Filter by category"),
-    status: str | None = Query(None, description="Filter by status"),
+    search: str | None = Query(
+        None,
+        description="Case-insensitive match on title, description, or region.",
+        examples=["pothole"],
+    ),
+    type: RequestType | None = Query(None, description="Filter by submission type."),
+    category: str | None = Query(
+        None,
+        description="Filter by category (exact match).",
+        examples=["Asphalt & Roads"],
+    ),
+    status: RequestStatus | None = Query(None, description="Filter by lifecycle state."),
     userPhone: str | None = Query(
-        None, alias="userPhone", description="Filter by user phone number"
+        None,
+        alias="userPhone",
+        description="Only requests submitted by this phone.",
+        examples=["09123456789"],
     ),
     currentUserPhone: str | None = Query(
         None,
         alias="currentUserPhone",
-        description="Phone of current user to compute likedByCurrentUser",
+        description="When set, each item includes `likedByCurrentUser` for this phone.",
+        examples=["09123456789"],
     ),
     likedByUser: str | None = Query(
         None,
         alias="likedByUser",
-        description="Return only requests liked by this user's phone",
+        description="Only requests liked by this phone.",
+        examples=["09123456789"],
     ),
-    limit: int = Query(0, ge=0, description="Max results (0 = no limit, return flat list)"),
-    offset: int = Query(0, ge=0, description="Number of results to skip"),
-    sort_by: str = Query("created_at", description="Sort field: created_at or likes"),
-    sort_order: str = Query("desc", description="Sort order: asc or desc"),
+    limit: int = Query(
+        0,
+        ge=0,
+        description="Page size. `0` disables pagination and returns a flat list.",
+        examples=[10],
+    ),
+    offset: int = Query(0, ge=0, description="Number of matches to skip.", examples=[0]),
+    sort_by: Literal["created_at", "likes"] = Query("created_at", description="Sort field."),
+    sort_order: Literal["asc", "desc"] = Query("desc", description="Sort direction."),
     start_date: datetime | None = Query(
         None,
         alias="startDate",
-        description="Filter by created_at >= this ISO date (e.g. 2025-06-01)",
+        description="Only include requests created on or after this date (ISO 8601).",
+        examples=["2025-06-01"],
     ),
     end_date: datetime | None = Query(
-        None, alias="endDate", description="Filter by created_at <= this ISO date (e.g. 2025-06-23)"
+        None,
+        alias="endDate",
+        description="Only include requests created on or before this date (end of day).",
+        examples=["2025-06-30"],
     ),
     db: Session = Depends(get_db),
 ):
@@ -73,11 +101,11 @@ def get_requests(
         )
 
     if type:
-        query = query.filter(Request.type == type)
+        query = query.filter(Request.type == type.value)
     if category:
         query = query.filter(Request.category == category)
     if status:
-        query = query.filter(Request.status == status)
+        query = query.filter(Request.status == status.value)
     if userPhone:
         query = query.filter(Request.user_phone == userPhone)
     if likedByUser:
@@ -125,9 +153,12 @@ def get_requests(
     "",
     response_model=CreateRequestResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Create a new request",
-    description="Submit a new urban problem or improvement idea with location coordinates.",
-    responses={400: {"description": "داده‌های ورودی نامعتبر است"}},
+    summary="Create a request",
+    description="Submit an urban problem or an improvement idea with map coordinates. "
+    "The owner is taken from the access token.",
+    operation_id="requests_create",
+    response_description="The newly created request.",
+    responses=error_responses(401, 422),
 )
 def create_request(
     request_data: RequestCreate,
@@ -160,15 +191,14 @@ def create_request(
     response_model=RequestResponse,
     summary="Update a request",
     description="Edit title, description, category, or region of your own request. "
-    "Only allowed for 'submitted' or 'under_review' status.",
-    responses={
-        403: {"description": "شما اجازه ویرایش این درخواست را ندارید"},
-        404: {"description": "درخواست مورد نظر یافت نشد"},
-    },
+    "Only allowed while the status is `submitted` or `under_review`.",
+    operation_id="requests_update",
+    response_description="The updated request.",
+    responses=error_responses(403, 404, 422),
 )
 def update_request(
-    request_id: str,
     update_data: RequestUpdate,
+    request_id: str = Path(..., description="Request identifier.", examples=["req_x1y2z3w4"]),
     db: Session = Depends(get_db),
     current_user: User | None = Depends(get_current_user),
 ):
@@ -217,14 +247,13 @@ def update_request(
     "/{request_id}",
     response_model=RequestDeleteResponse,
     summary="Delete a request",
-    description="Delete your own request. Only allowed for 'submitted' status.",
-    responses={
-        403: {"description": "شما اجازه حذف این درخواست را ندارید"},
-        404: {"description": "درخواست مورد نظر یافت نشد"},
-    },
+    description="Delete your own request. Only allowed while the status is `submitted`.",
+    operation_id="requests_delete",
+    response_description="The request was deleted.",
+    responses=error_responses(403, 404),
 )
 def delete_request(
-    request_id: str,
+    request_id: str = Path(..., description="Request identifier.", examples=["req_x1y2z3w4"]),
     db: Session = Depends(get_db),
     current_user: User | None = Depends(get_current_user),
 ):
@@ -258,10 +287,19 @@ def delete_request(
 @router.get(
     "/user/{user_phone}/stats",
     response_model=UserStatsResponse,
-    summary="Get user stats",
-    description="Total likes received on all user's requests and total request count.",
+    summary="Get user statistics",
+    description="Total likes received and total requests submitted by a phone number.",
+    operation_id="requests_user_stats",
+    response_description="Aggregate counters for the user.",
 )
-def get_user_stats(user_phone: str, db: Session = Depends(get_db)):
+def get_user_stats(
+    user_phone: str = Path(
+        ...,
+        description="Phone number of the citizen.",
+        examples=["09123456789"],
+    ),
+    db: Session = Depends(get_db),
+):
     user_requests = db.query(Request).filter(Request.user_phone == user_phone).all()
     total_likes = sum(r.likes for r in user_requests)
     return UserStatsResponse(
@@ -274,16 +312,15 @@ def get_user_stats(user_phone: str, db: Session = Depends(get_db)):
     "/{request_id}/status",
     response_model=StatusUpdateResponse,
     summary="Update request status (admin only)",
-    description="Change the status of a request. Requires admin Bearer token. "
-    "You can also add an admin response.",
-    responses={
-        403: {"description": "دسترسی نیازمند حساب مدیر است"},
-        404: {"description": "درخواست مورد نظر یافت نشد"},
-    },
+    description="Move a request through its lifecycle and optionally add an admin note. "
+    "The owner is notified automatically. Requires an admin token.",
+    operation_id="requests_update_status",
+    response_description="The updated request.",
+    responses=error_responses(403, 404, 422),
 )
 def update_status(
-    request_id: str,
     status_update: StatusUpdate,
+    request_id: str = Path(..., description="Request identifier.", examples=["req_x1y2z3w4"]),
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
@@ -329,12 +366,15 @@ def update_status(
 @router.post(
     "/{request_id}/like",
     response_model=LikeResponse,
-    summary="Toggle like on a request",
-    description="Like or unlike a request. Toggles per authenticated user.",
-    responses={404: {"description": "درخواست مورد نظر یافت نشد"}},
+    summary="Toggle a like",
+    description="Likes the request if the signed-in user has not liked it yet, "
+    "otherwise removes the like.",
+    operation_id="requests_toggle_like",
+    response_description="The request with the updated like count.",
+    responses=error_responses(401, 404),
 )
 def toggle_like(
-    request_id: str,
+    request_id: str = Path(..., description="Request identifier.", examples=["req_x1y2z3w4"]),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ):

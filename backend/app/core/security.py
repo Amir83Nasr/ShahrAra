@@ -16,8 +16,8 @@ security_scheme = HTTPBearer(
     scheme_name="JWT",
     bearerFormat="JWT",
     description=(
-        "Paste the `accessToken` returned by `/api/v1/auth/otp/verify` "
-        "or `/api/v1/auth/login/password`."
+        "Paste the `accessToken` returned by `/api/v1/auth/otp/verify` or "
+        "`/api/v1/auth/login/password`. Tokens are valid for 24 hours."
     ),
     auto_error=False,
 )

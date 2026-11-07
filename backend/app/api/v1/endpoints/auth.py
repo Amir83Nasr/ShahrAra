@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.api.responses import error_responses
 from app.core.config import (
     ADMIN_FIRST_NAME,
     ADMIN_LAST_NAME,
@@ -120,7 +121,10 @@ def _latest_otp(db: Session, phone: str) -> OtpCode | None:
     "/check-phone",
     response_model=CheckPhoneResponse,
     summary="Check phone registration state",
-    description="Returns whether the phone is already registered and whether it has a password set.",
+    description="Tells the client whether to continue with registration or password sign-in.",
+    operation_id="auth_check_phone",
+    response_description="Registration state for the phone.",
+    responses=error_responses(422),
 )
 def check_phone(body: CheckPhoneRequest, db: Session = Depends(get_db)):
     _ensure_admin(db, body.phone)
@@ -135,7 +139,11 @@ def check_phone(body: CheckPhoneRequest, db: Session = Depends(get_db)):
     "/otp/request",
     response_model=OtpRequestResponse,
     summary="Request a one-time code",
-    description="Generates a 6-digit code valid for OTP_EXPIRATION_MINUTES. In dev mode the code is returned in the response (devCode).",
+    description="Creates a six-digit code valid for the configured window (2 minutes by default). "
+    "In development the code is returned as `devCode` instead of being sent by SMS.",
+    operation_id="auth_request_otp",
+    response_description="The code was created.",
+    responses=error_responses(422),
 )
 def request_otp(body: OtpRequest, db: Session = Depends(get_db)):
     _ensure_admin(db, body.phone)
@@ -146,12 +154,11 @@ def request_otp(body: OtpRequest, db: Session = Depends(get_db)):
     "/otp/verify",
     response_model=LoginResponse,
     summary="Verify a one-time code",
-    description="Verifies the 6-digit code and returns an access token. "
-    "First-time users must also send `firstName`, `lastName`, and `nationalId` to complete registration.",
-    responses={
-        400: {"description": "کد نامعتبر/منقضی/مصرف‌شده یا اطلاعات ثبت‌نام ناقص"},
-        401: {"description": "کد تأیید وارد شده صحیح نیست"},
-    },
+    description="Verifies the code and returns an access token. "
+    "First-time users must also send `firstName`, `lastName`, and `nationalId`.",
+    operation_id="auth_verify_otp",
+    response_description="A valid access token and the citizen profile.",
+    responses=error_responses(400, 401, 422),
 )
 def verify_otp(body: OtpVerifyRequest, db: Session = Depends(get_db)):
     row = _latest_otp(db, body.phone)
@@ -231,8 +238,10 @@ def verify_otp(body: OtpVerifyRequest, db: Session = Depends(get_db)):
     "/login/password",
     summary="Log in with a password",
     description="Authenticates an account that already has a password set.",
+    operation_id="auth_login_password",
     response_model=LoginResponse,
-    responses={401: {"description": "شماره همراه یا رمز عبور اشتباه است"}},
+    response_description="A valid access token and the citizen profile.",
+    responses=error_responses(401, 422),
 )
 def login_password(body: PasswordLoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.phone == body.phone).first()
@@ -249,7 +258,11 @@ def login_password(body: PasswordLoginRequest, db: Session = Depends(get_db)):
     "/password",
     response_model=PasswordChangeResponse,
     summary="Set or change the account password",
-    responses={401: {"description": "رمز عبور فعلی صحیح نیست"}},
+    description="Sets a first password, or rotates an existing one. "
+    "Rotating requires `currentPassword`.",
+    operation_id="auth_change_password",
+    response_description="The password was updated.",
+    responses=error_responses(401, 422),
 )
 def change_password(
     body: PasswordChangeRequest,

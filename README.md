@@ -51,6 +51,10 @@ Base URL: `/api/v1` — routers: `auth`, `requests`, `notifications`.
 `GET /` returns a landing page for browsers and a JSON service descriptor for API clients
 (`Accept: application/json`). `GET /api` returns the same descriptor as JSON.
 
+Interactive reference: `/docs` (Swagger UI) and `/redoc`. The backend guide in
+[docs/backend.md](docs/backend.md) covers configuration, auth flows, conventions, and the
+endpoint reference.
+
 ## Testing
 
 ```bash

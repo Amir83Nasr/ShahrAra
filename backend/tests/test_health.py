@@ -43,3 +43,41 @@ class TestApiRoot:
         schema = r.json()
         assert schema["info"]["title"] == "ShahrAra API"
         assert {"JWT"} <= set(schema["components"]["securitySchemes"])
+
+
+class TestDocumentation:
+    def test_swagger_ui_is_branded(self, client):
+        r = client.get("/docs")
+        assert r.status_code == 200
+        assert "/docs/theme.css" in r.text
+        assert "/docs/favicon.svg" in r.text
+
+    def test_theme_and_favicon_are_served(self, client):
+        css = client.get("/docs/theme.css")
+        assert css.status_code == 200
+        assert css.headers["content-type"].startswith("text/css")
+
+        icon = client.get("/docs/favicon.svg")
+        assert icon.status_code == 200
+        assert icon.headers["content-type"].startswith("image/svg+xml")
+
+    def test_operation_ids_are_unique_and_stable(self, client):
+        schema = client.get("/openapi.json").json()
+        operation_ids = [
+            operation["operationId"]
+            for methods in schema["paths"].values()
+            for operation in methods.values()
+        ]
+        assert len(operation_ids) == len(set(operation_ids))
+        assert {"auth_verify_otp", "requests_list", "statistics_get"} <= set(operation_ids)
+
+    def test_openapi_documents_errors_and_filters(self, client):
+        schema = client.get("/openapi.json").json()
+        assert "ErrorResponse" in schema["components"]["schemas"]
+
+        parameters = {
+            parameter["name"]: parameter["schema"]
+            for parameter in schema["paths"]["/api/v1/requests"]["get"]["parameters"]
+        }
+        assert parameters["sort_by"]["enum"] == ["created_at", "likes"]
+        assert parameters["type"]["anyOf"][0]["$ref"].endswith("/RequestType")
