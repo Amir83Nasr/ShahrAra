@@ -65,7 +65,7 @@ function AlertDialogContent({
           "max-sm:data-closed:animate-out max-sm:data-closed:slide-out-to-bottom max-sm:data-closed:fade-out-0",
           // Desktop: centered modal — responsive widths to use available space
           "sm:start-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:border sm:rtl:translate-x-1/2",
-          "sm:data-[size=default]:max-w-md sm:data-[size=sm]:max-w-sm md:data-[size=default]:max-w-lg",
+          "sm:data-[size=default]:max-w-lg sm:data-[size=sm]:max-w-sm md:data-[size=default]:max-w-xl",
           "sm:data-open:animate-in sm:data-open:fade-in-0 sm:data-open:zoom-in-95",
           "sm:data-closed:animate-out sm:data-closed:fade-out-0 sm:data-closed:zoom-out-95",
           className,

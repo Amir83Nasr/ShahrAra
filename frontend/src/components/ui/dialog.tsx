@@ -67,7 +67,7 @@ function DialogContent({
           "max-sm:data-open:animate-in max-sm:data-open:slide-in-from-bottom max-sm:data-open:fade-in-0",
           "max-sm:data-closed:animate-out max-sm:data-closed:slide-out-to-bottom max-sm:data-closed:fade-out-0",
           // Desktop: centered modal — responsive widths to use available space
-          "sm:start-1/2 sm:top-1/2 sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:border md:max-w-xl lg:max-w-2xl sm:rtl:translate-x-1/2",
+          "sm:start-1/2 sm:top-1/2 sm:max-w-xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:border md:max-w-2xl lg:max-w-3xl sm:rtl:translate-x-1/2",
           "sm:data-open:animate-in sm:data-open:fade-in-0 sm:data-open:zoom-in-95",
           "sm:data-closed:animate-out sm:data-closed:fade-out-0 sm:data-closed:zoom-out-95",
           className,
