@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import LogoutModal from "@/components/LogoutModal";
 import NotificationsDialog from "@/components/NotificationsDialog";
-import { BrandMark } from "@/components/BrandMark";
 
 interface NavbarProps {
   currentUser: User | null;
@@ -68,8 +67,7 @@ export default function Navbar({
               asChild
               className="h-auto bg-transparent p-0 hover:bg-transparent focus-visible:bg-transparent active:bg-transparent dark:bg-transparent dark:hover:bg-transparent"
             >
-              <Link href="/" className="nav-logo flex items-center gap-3">
-                <BrandMark className="size-8 text-[15px]" />
+              <Link href="/" className="nav-logo flex items-center">
                 <span className="text-primary text-xl leading-tight font-extrabold tracking-tight">
                   شهرآرا
                 </span>

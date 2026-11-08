@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { RequestItem, User } from "../types";
@@ -44,14 +44,6 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -71,28 +63,6 @@ import {
   ResponsiveDialogTitle,
   ResponsiveDialogFooter,
 } from "@/components/ui/responsive-dialog";
-
-// compact page list with ellipsis: 1 … c-1 c c+1 … last
-function buildPageRange(
-  current: number,
-  total: number,
-): (number | "ellipsis")[] {
-  if (total <= 7) {
-    return Array.from({ length: total }, (_, i) => i + 1);
-  }
-  const pages = new Set<number>([1, total, current - 1, current, current + 1]);
-  const middle = [...pages]
-    .filter((p) => p >= 1 && p <= total)
-    .sort((a, b) => a - b);
-  const out: (number | "ellipsis")[] = [];
-  let prev = 0;
-  for (const p of middle) {
-    if (p - prev > 1) out.push("ellipsis");
-    out.push(p);
-    prev = p;
-  }
-  return out;
-}
 
 interface ReportsDirectoryProps {
   items: RequestItem[];
@@ -126,10 +96,11 @@ export default function ReportsDirectory({
   const [selectedDetails, setSelectedDetails] = useState<RequestItem | null>(
     null,
   );
-  const [currentPage, setCurrentPage] = useState(1);
-  const [prevFilters, setPrevFilters] = useState("");
   const PAGE_SIZE = 12;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [prevFilters, setPrevFilters] = useState("");
   const [filterRegion, setFilterRegion] = useState<string>("all");
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const filtered = filterRequests(items, {
     searchTerm,
@@ -142,22 +113,37 @@ export default function ReportsDirectory({
   });
 
   const sorted = sortRequests(filtered, sortBy);
+  const visibleItems = sorted.slice(0, visibleCount);
+  const hasMore = visibleCount < sorted.length;
 
-  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
-  const safePage = Math.min(currentPage, totalPages);
-  const pageItems = sorted.slice(
-    (safePage - 1) * PAGE_SIZE,
-    safePage * PAGE_SIZE,
-  );
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el || !hasMore) return;
 
-  const goToPage = (page: number) => {
-    setCurrentPage(Math.min(Math.max(1, page), totalPages));
-    document
-      .getElementById("shahr_ara_directory")
-      ?.scrollIntoView({ behavior: "smooth" });
-  };
+    const check = () => {
+      const isScrollable = el.scrollHeight > el.clientHeight + 1;
+      if (isScrollable) {
+        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 240) {
+          setVisibleCount((c) => Math.min(c + PAGE_SIZE, sorted.length));
+        }
+      } else {
+        const rect = el.getBoundingClientRect();
+        if (rect.bottom <= window.innerHeight + 240) {
+          setVisibleCount((c) => Math.min(c + PAGE_SIZE, sorted.length));
+        }
+      }
+    };
 
-  // Reset pagination on filter change (adjust state during render)
+    el.addEventListener("scroll", check, { passive: true });
+    window.addEventListener("scroll", check, { passive: true });
+    check();
+    return () => {
+      el.removeEventListener("scroll", check);
+      window.removeEventListener("scroll", check);
+    };
+  }, [hasMore, sorted.length, visibleItems.length, showMap]);
+
+  // Reset lazy-load window on filter/sort change (adjust state during render)
   const filterKey = [
     searchTerm,
     activeCategory,
@@ -169,8 +155,15 @@ export default function ReportsDirectory({
   ].join("|");
   if (filterKey !== prevFilters) {
     setPrevFilters(filterKey);
-    setCurrentPage(1);
+    setVisibleCount(PAGE_SIZE);
   }
+
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (el && el.scrollHeight > el.clientHeight + 1) {
+      el.scrollTo({ top: 0 });
+    }
+  }, [filterKey]);
 
   const handleLikeClick = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -360,7 +353,10 @@ export default function ReportsDirectory({
             showMap ? "lg:col-span-7" : "lg:col-span-12"
           }`}
         >
-          <div className="max-h-[600px] overflow-y-auto p-0.5 max-lg:max-h-none max-lg:overflow-visible">
+          <div
+            ref={scrollContainerRef}
+            className="max-h-[600px] overflow-y-auto p-0.5 max-lg:max-h-none max-lg:overflow-visible"
+          >
             <div
               className={cn(
                 "grid grid-cols-1 gap-5",
@@ -368,7 +364,7 @@ export default function ReportsDirectory({
               )}
             >
               {sorted.length > 0 ? (
-                pageItems.map((item) => {
+                visibleItems.map((item) => {
                   const hasLikedStatus = currentUser
                     ? item.likedByCurrentUser
                     : false;
@@ -465,45 +461,12 @@ export default function ReportsDirectory({
                 </div>
               )}
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="col-span-full pt-4">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          onClick={() => goToPage(safePage - 1)}
-                          disabled={safePage <= 1}
-                        />
-                      </PaginationItem>
-
-                      {buildPageRange(safePage, totalPages).map((p, i) =>
-                        p === "ellipsis" ? (
-                          <PaginationItem key={`e${i}`}>
-                            <span className="text-muted-foreground flex size-9 items-center justify-center">
-                              …
-                            </span>
-                          </PaginationItem>
-                        ) : (
-                          <PaginationItem key={p}>
-                            <PaginationLink
-                              isActive={p === safePage}
-                              onClick={() => goToPage(p)}
-                            >
-                              {toPersianDigits(p)}
-                            </PaginationLink>
-                          </PaginationItem>
-                        ),
-                      )}
-
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={() => goToPage(safePage + 1)}
-                          disabled={safePage >= totalPages}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
+              {hasMore && (
+                <div
+                  className="text-muted-foreground col-span-full py-4 text-center text-xs"
+                  aria-live="polite"
+                >
+                  در حال بارگذاری موارد بیشتر…
                 </div>
               )}
             </div>
