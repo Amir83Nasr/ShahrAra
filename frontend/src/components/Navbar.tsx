@@ -62,18 +62,6 @@ export default function Navbar({
       <nav className="border-border bg-background/90 sticky top-0 z-50 border-b backdrop-blur-xl">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            <Button
-              variant="ghost"
-              asChild
-              className="h-auto bg-transparent p-0 hover:bg-transparent focus-visible:bg-transparent active:bg-transparent dark:bg-transparent dark:hover:bg-transparent"
-            >
-              <Link href="/" className="nav-logo flex items-center">
-                <span className="text-primary text-xl leading-tight font-extrabold tracking-tight">
-                  شهرآرا
-                </span>
-              </Link>
-            </Button>
-
             {/* لینک‌ها — فقط دسکتاپ */}
             <div className="nav-links hidden items-center gap-2 md:flex">
               {navLinks.map(({ href, label, Icon }) => (
