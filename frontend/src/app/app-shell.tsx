@@ -51,8 +51,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <ErrorBoundary>{children}</ErrorBoundary>
         </main>
 
-
-
         {!isChromeless && (
           <div
             className="h-[calc(5rem+env(safe-area-inset-bottom))] md:hidden"
