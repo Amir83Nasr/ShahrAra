@@ -358,10 +358,11 @@
   }
 }
 
-/* Grid pattern overlay — sits between app background and content */
+/* Grid pattern overlay — sits between app background and content.
+   fixed (نه absolute) تا هنگام اسکرول صفحه ثابت بماند و فقط محتوا حرکت کند. */
 #shahr_ara_app_root::before {
   content: "";
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
