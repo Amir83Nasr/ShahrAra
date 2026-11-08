@@ -102,6 +102,8 @@ export default function LoginPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // فقط بعد از تلاش برای «ادامه» راهنمای شماره را نشان می‌دهیم.
+  const [phoneSubmitAttempted, setPhoneSubmitAttempted] = useState(false);
 
   // شمارش معکوس اعتبار کد یک‌بارمصرف (ثانیه)
   const [remaining, setRemaining] = useState(0);
@@ -166,18 +168,15 @@ export default function LoginPage() {
     }
   }, [authReady, currentUser, router]);
 
-  const isPhoneDirty = phone.length > 0;
   const isPhoneValid = /^09\d{9}$/.test(phone);
   // پیشوند اشتباه را فقط بعد از کامل‌شدن «۰۹» خطا می‌دانیم، نه وسط تایپ.
   const phoneHasWrongPrefix = phone.length >= 2 && !phone.startsWith("09");
-  const phoneState: HintState = !isPhoneDirty
-    ? "idle"
-    : isPhoneValid
-      ? "valid"
-      : phoneHasWrongPrefix
-        ? "invalid"
-        : "pending";
-  const phoneRemaining = Math.max(0, 11 - phone.length);
+
+  const phoneErrorMessage = !phone
+    ? "لطفا شماره همراه خود را وارد کنید."
+    : phoneHasWrongPrefix
+      ? `شماره همراه باید با ${toPersianDigits("09")} شروع شود.`
+      : `شماره همراه باید ${toPersianDigits("11")} رقم باشد.`;
 
   const isNationalIdDirty = nationalId.length > 0;
   const isNationalIdValid = /^\d{10}$/.test(nationalId);
@@ -258,10 +257,8 @@ export default function LoginPage() {
     setError(null);
 
     if (!isPhoneValid) {
-      setError(
-        "شماره موبایل وارد شده نامعتبر است. نمونه صحیح: " +
-          toPersianDigits("09123456789"),
-      );
+      // بدون پیام لحظه‌ای؛ فقط پس از زدن «ادامه» راهنمای اصلاح را نشان بده.
+      setPhoneSubmitAttempted(true);
       return;
     }
 
@@ -387,18 +384,16 @@ export default function LoginPage() {
     setCode("");
     setOtpInfo(null);
     setError(null);
+    setPhoneSubmitAttempted(false);
   };
 
+  // راهنمای شماره فقط بعد از زدن «ادامه» نمایش داده می‌شود؛ هنگام تایپ
+  // هیچ متن لحظه‌ای نشان نمی‌دهیم تا کاربر شماره را با آرامش وارد کند.
   const phoneHint =
-    phoneState === "idle" ? null : (
-      <ValidationHint state={phoneState}>
-        {phoneState === "valid"
-          ? "شماره همراه معتبر است"
-          : phoneState === "invalid"
-            ? "شماره همراه باید با ۰۹ شروع شود"
-            : `${toPersianDigits(phoneRemaining)} رقم دیگر وارد کنید`}
-      </ValidationHint>
-    );
+    phoneSubmitAttempted && !isPhoneValid ? (
+      <ValidationHint state="invalid">{phoneErrorMessage}</ValidationHint>
+    ) : null;
+  const phoneState: HintState = phoneHint ? "invalid" : "idle";
 
   const nationalIdHint = (
     <ValidationHint state={nationalIdState}>
@@ -406,7 +401,7 @@ export default function LoginPage() {
         ? "کد ملی معتبر است"
         : nationalIdState === "pending"
           ? `${toPersianDigits(nationalIdRemaining)} رقم دیگر وارد کنید`
-          : `۱۰ رقم عددی بدون خط تیره (مانند: ${toPersianDigits("0370000000")})`}
+          : `${toPersianDigits("10")} رقم عددی بدون خط تیره`}
     </ValidationHint>
   );
 
@@ -468,15 +463,15 @@ export default function LoginPage() {
                         id="phone"
                         type="tel"
                         inputMode="numeric"
-                        pattern="[0-9]*"
                         enterKeyHint="next"
-                        required
                         maxLength={11}
                         value={toPersianDigits(phone)}
                         onChange={(e) => {
                           const rawVal = toEnglishDigits(e.target.value);
                           const numbersOnly = rawVal.replace(/\D/g, "");
                           setPhone(numbersOnly.slice(0, 11));
+                          // با شروع دوبارهٔ تایپ، راهنما پنهان می‌شود.
+                          setPhoneSubmitAttempted(false);
                         }}
                         dir="rtl"
                         autoComplete="tel"
@@ -491,7 +486,7 @@ export default function LoginPage() {
                       <Button
                         type="submit"
                         className="h-12 w-full"
-                        disabled={loading || !isPhoneValid}
+                        disabled={loading}
                       >
                         {loading ? "در حال بررسی..." : "ادامه"}
                       </Button>
@@ -505,9 +500,7 @@ export default function LoginPage() {
                 <form onSubmit={handlePasswordSubmit}>
                   <FieldGroup>
                     <Field>
-                      <FieldLabel htmlFor="password">
-                        رمز عبور <span className="text-destructive">*</span>
-                      </FieldLabel>
+                      <FieldLabel htmlFor="password">رمز عبور</FieldLabel>
                       <Input
                         id="password"
                         type="password"
