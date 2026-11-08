@@ -59,37 +59,41 @@ export default function Navbar({
 
   return (
     <>
-      <nav className="border-border bg-background/90 sticky top-0 z-50 border-b backdrop-blur-xl">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
+      {/* هدر بالا — فقط دسکتاپ؛ موبایل فقط نوار پایین */}
+      <nav className="border-border/70 bg-background/80 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40 hidden border-b backdrop-blur-2xl md:block">
+        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+          <div className="flex h-14 items-center justify-between gap-2 md:h-16">
             {/* لینک‌ها — فقط دسکتاپ */}
-            <div className="nav-links hidden items-center gap-2 md:flex">
+            <div className="nav-links hidden items-center gap-1 md:flex">
               {navLinks.map(({ href, label, Icon }) => (
                 <Button
                   key={href}
                   variant="ghost"
                   asChild
                   className={cn(
-                    "gap-2 font-bold",
+                    "h-10 gap-2 rounded-full px-4 text-sm font-semibold",
                     isActive(href)
-                      ? "text-primary bg-primary/10"
+                      ? "bg-secondary text-secondary-foreground hover:bg-secondary"
                       : "text-muted-foreground",
                   )}
                 >
-                  <Link href={href}>
-                    <Icon />
+                  <Link
+                    href={href}
+                    aria-current={isActive(href) ? "page" : undefined}
+                  >
+                    <Icon className="size-4" />
                     <span>{label}</span>
                   </Link>
                 </Button>
               ))}
             </div>
 
-            <div className="nav-actions flex items-center gap-3">
+            <div className="nav-actions flex items-center gap-1.5 sm:gap-2">
               <NotificationsDialog />
               <ModeToggle theme={theme} onThemeChange={toggleTheme} />
 
               {/* یوزر / ورود — فقط دسکتاپ؛ موبایل از تب «حساب کاربری» نوار پایین میره پروفایل */}
-              <div className="hidden items-center gap-3 md:flex">
+              <div className="hidden items-center gap-2 md:flex">
                 {currentUser ? (
                   <DropdownMenu
                     dir="rtl"
@@ -97,14 +101,14 @@ export default function Navbar({
                     onOpenChange={setDropdownOpen}
                   >
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost">
-                        <UserRound />
-                        <span className="max-w-30 truncate font-extrabold lg:max-w-none">
+                      <Button variant="ghost" className="h-10 gap-2 px-3">
+                        <UserRound className="size-4" />
+                        <span className="max-w-30 truncate text-sm font-semibold lg:max-w-none">
                           {currentUser.firstName} {currentUser.lastName}
                         </span>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56 border">
+                    <DropdownMenuContent className="w-60 border">
                       <DropdownMenuLabel>
                         <div className="flex flex-col gap-1">
                           <span className="font-extrabold">
@@ -155,7 +159,7 @@ export default function Navbar({
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : (
-                  <Button variant="default" asChild>
+                  <Button variant="default" asChild className="h-10">
                     <Link href="/login">
                       <span>ورود / ثبت‌نام</span>
                     </Link>
@@ -167,39 +171,60 @@ export default function Navbar({
         </div>
       </nav>
 
-      {/* نوار پایین — فقط موبایل */}
-      <div className="bg-background/95 fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-50 rounded-2xl border shadow-lg backdrop-blur-xl md:hidden">
-        <div className="flex items-stretch justify-around">
+      {/* نوار پایین موبایل — سبک اپ ChatGPT: تمام‌عرض، شیشه‌ای، تَب فعال قرصی */}
+      <nav
+        aria-label="ناوبری اصلی موبایل"
+        className="border-border/70 bg-background/90 supports-[backdrop-filter]:bg-background/75 fixed inset-x-0 bottom-0 z-50 border-t backdrop-blur-2xl md:hidden"
+      >
+        <div className="pb-safe mx-auto flex max-w-md items-stretch justify-around px-2 pt-1.5">
           {[
             { href: "/", label: "خانه", Icon: House },
             { href: "/reports", label: "گزارش‌ها", Icon: ClipboardList },
             { href: "/submit", label: "ثبت", Icon: CirclePlus },
-            { href: "/profile", label: "حساب کاربری", Icon: UserRound },
-          ].map(({ href, label, Icon }) => (
-            <Button
-              key={href}
-              variant="ghost"
-              asChild
-              className={cn(
-                "h-auto flex-1 flex-col gap-1 rounded-none py-2 font-bold active:bg-transparent dark:active:bg-transparent",
-                isActive(href) ? "text-primary" : "text-muted-foreground",
-              )}
-            >
-              <Link href={href}>
+            { href: "/profile", label: "حساب", Icon: UserRound },
+            ...(currentUser?.isAdmin
+              ? [{ href: "/admin", label: "ادمین", Icon: Shield }]
+              : []),
+          ].map(({ href, label, Icon }) => {
+            const active = isActive(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "group flex min-w-0 flex-1 flex-col items-center gap-1 rounded-2xl px-1 py-1 transition-colors duration-150",
+                  active
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
                 <span
                   className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-xl transition-colors",
-                    isActive(href) && "bg-primary/10",
+                    "flex h-8 w-14 items-center justify-center rounded-full transition-colors duration-200",
+                    active ? "bg-foreground/10" : "bg-transparent",
                   )}
                 >
-                  <Icon className="size-5" />
+                  <Icon
+                    className={cn(
+                      "size-[22px] transition-transform duration-150 group-active:scale-90",
+                      active ? "stroke-[2.25]" : "stroke-[1.75]",
+                    )}
+                  />
                 </span>
-                <span className="text-[10px]">{label}</span>
+                <span
+                  className={cn(
+                    "truncate text-[10px] leading-none",
+                    active ? "font-bold" : "font-medium",
+                  )}
+                >
+                  {label}
+                </span>
               </Link>
-            </Button>
-          ))}
+            );
+          })}
         </div>
-      </div>
+      </nav>
 
       <LogoutModal
         open={confirmLogout}
