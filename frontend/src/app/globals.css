@@ -15,6 +15,13 @@
   min-height: 0;
 }
 
+/* Keep the package's "my location" button clear of MapLibre's
+   bottom-right attribution/navigation controls. */
+.map-display .lp-gps {
+  right: auto;
+  left: max(0.75rem, env(safe-area-inset-left));
+}
+
 /* فونت اصلی پروژه — پلاک (تمام وزن‌ها) */
 @font-face {
   font-family: "Pelak";

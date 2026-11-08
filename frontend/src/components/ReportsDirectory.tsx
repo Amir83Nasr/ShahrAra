@@ -11,7 +11,10 @@ import { useRouter } from "next/navigation";
 import { RequestItem, User } from "../types";
 
 // maplibre-gl touches `window` at import time; skip prerendering
-const MapComponent = dynamic(() => import("./MapComponent"), { ssr: false });
+const MapComponent = dynamic(() => import("./MapComponent"), {
+  ssr: false,
+  loading: () => <MapSkeleton />,
+});
 import { Heart, MapPin, AlertCircleIcon, Map, Search } from "lucide-react";
 import { toPersianDigits } from "../utils/numberUtils";
 import { REGIONS } from "../utils/regionUtils";
@@ -54,6 +57,12 @@ import {
   ResponsiveDialogTitle,
   ResponsiveDialogFooter,
 } from "@/components/ui/responsive-dialog";
+import {
+  LoadErrorState,
+  MapSkeleton,
+  ReportCardsSkeleton,
+} from "@/components/skeletons";
+import ReportsFullscreenMap from "@/components/ReportsFullscreenMap";
 
 interface ReportsDirectoryProps {
   items: RequestItem[];
@@ -62,14 +71,19 @@ interface ReportsDirectoryProps {
   onRefresh: () => void;
   theme?: "light" | "dark";
   initialCategory?: string;
+  loading?: boolean;
+  loadError?: string | null;
 }
 
 export default function ReportsDirectory({
   items,
   currentUser,
   onLike,
+  onRefresh,
   theme = "light",
   initialCategory = "all",
+  loading = false,
+  loadError = null,
 }: ReportsDirectoryProps) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
@@ -77,7 +91,7 @@ export default function ReportsDirectory({
   const [activeType, setActiveType] = useState<"all" | "problem" | "idea">(
     "all",
   );
-  const [showMap, setShowMap] = useState<boolean>(false);
+  const [mapOpen, setMapOpen] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<
     "newest" | "oldest" | "most_liked" | "least_liked"
   >("newest");
@@ -104,6 +118,23 @@ export default function ReportsDirectory({
   const visibleItems = sorted.slice(0, visibleCount);
   const hasMore = visibleCount < sorted.length;
 
+  // The fullscreen map applies its own region filter, so it receives every
+  // report that matches the other filters instead of the region-filtered list.
+  const mapItems = sortRequests(
+    filterRequests(items, {
+      searchTerm,
+      searchFields: ["title", "description", "region"],
+      category: activeCategory,
+      type: activeType,
+      startDate,
+    }),
+    sortBy,
+  );
+
+  // Skeleton only while we have nothing to show yet; refreshes keep the list
+  // on screen instead of replacing it with placeholders.
+  const isInitialLoading = loading && items.length === 0;
+
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (!el || !hasMore) return;
@@ -129,7 +160,7 @@ export default function ReportsDirectory({
       el.removeEventListener("scroll", check);
       window.removeEventListener("scroll", check);
     };
-  }, [hasMore, sorted.length, visibleItems.length, showMap]);
+  }, [hasMore, sorted.length, visibleItems.length]);
 
   // Reset lazy-load window on filter/sort change (adjust state during render)
   const filterKey = [
@@ -191,7 +222,7 @@ export default function ReportsDirectory({
     >
       {/* Filters */}
       <div className="bg-card mb-4 flex flex-col gap-3.5 rounded-2xl border p-4 sm:gap-4 sm:p-5">
-        {/* Top row: search + map/refresh buttons */}
+        {/* Top row: search + fullscreen map button */}
         <div className="flex w-full items-center gap-2.5">
           <div className="relative flex-1">
             <Search className="text-muted-foreground absolute top-1/2 right-3.5 size-4 -translate-y-1/2" />
@@ -204,14 +235,15 @@ export default function ReportsDirectory({
             />
           </div>
           <Button
-            variant={showMap ? "default" : "outline"}
-            onClick={() => setShowMap(!showMap)}
+            variant="outline"
+            onClick={() => setMapOpen(true)}
             className="h-11 w-11 shrink-0 px-0 sm:w-auto sm:px-4"
-            aria-label={showMap ? "مخفی‌سازی نقشه" : "نمایش نقشه"}
+            aria-label="نمایش نقشه"
+            title="نمایش نقشه"
           >
             <Map />
             <span className="hidden whitespace-nowrap sm:inline">
-              {showMap ? "مخفی‌سازی نقشه" : "نمایش نقشه"}
+              نمایش نقشه
             </span>
           </Button>
         </div>
@@ -293,34 +325,18 @@ export default function ReportsDirectory({
       </div>
 
       {/* Display Directory Main Arena */}
-      <div className="grid grid-cols-1 items-start gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-12 lg:grid-rows-1 lg:items-stretch lg:gap-8">
-        {/* Map — mobile: below filters (hidden by default); desktop: sidebar */}
-        {showMap && (
-          <div className="border-border bg-card sticky top-20 order-1 h-[420px] overflow-hidden rounded-2xl border max-lg:static sm:h-[500px] lg:order-2 lg:col-span-5 lg:h-auto">
-            <MapComponent
-              pickerMode={false}
-              items={sorted}
-              onSelectItem={(item) => setSelectedDetails(item)}
-              theme={theme}
-            />
-          </div>
-        )}
-        <div
-          className={`order-2 lg:order-1 lg:h-full lg:min-h-0 ${
-            showMap ? "lg:col-span-7" : "lg:col-span-12"
-          }`}
-        >
+      <div className="grid grid-cols-1 items-start gap-6 lg:min-h-0 lg:flex-1 lg:grid-rows-1 lg:items-stretch lg:gap-8">
+        <div className="lg:h-full lg:min-h-0">
           <div
             ref={scrollContainerRef}
             className="no-scrollbar p-0.5 lg:h-full lg:min-h-0 lg:overflow-y-auto"
           >
-            <div
-              className={cn(
-                "grid grid-cols-1 gap-3.5 sm:gap-5",
-                showMap ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3",
-              )}
-            >
-              {sorted.length > 0 ? (
+            <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+              {isInitialLoading ? (
+                <ReportCardsSkeleton count={6} />
+              ) : loadError && items.length === 0 ? (
+                <LoadErrorState message={loadError} onRetry={onRefresh} />
+              ) : sorted.length > 0 ? (
                 visibleItems.map((item) => {
                   const hasLikedStatus = currentUser
                     ? item.likedByCurrentUser
@@ -430,6 +446,18 @@ export default function ReportsDirectory({
           </div>
         </div>
       </div>
+
+      {/* Fullscreen map — click a report marker to see its details */}
+      <ReportsFullscreenMap
+        open={mapOpen}
+        onClose={() => setMapOpen(false)}
+        items={mapItems}
+        onSelectItem={setSelectedDetails}
+        theme={theme}
+        region={filterRegion}
+        onRegionChange={setFilterRegion}
+        escapeDisabled={!!selectedDetails}
+      />
 
       {/* Details Dialog */}
       <ResponsiveDialog

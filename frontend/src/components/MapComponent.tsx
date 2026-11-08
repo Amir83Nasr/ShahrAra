@@ -27,6 +27,8 @@ interface MapComponentProps {
   items?: RequestItem[];
   onSelectItem?: (item: RequestItem) => void;
   theme?: "light" | "dark";
+  /** Show the package's "my location" (GPS) control in display mode. */
+  locateButton?: boolean;
 }
 
 // Qom coordinates as starting default
@@ -49,6 +51,7 @@ export default function MapComponent({
   items = [],
   onSelectItem,
   theme,
+  locateButton = false,
 }: MapComponentProps) {
   // The picker is uncontrolled after mount, so remember the last emitted point
   // to avoid feeding the same coordinates back into the parent state.
@@ -154,7 +157,7 @@ export default function MapComponent({
       }}
       markers={venues}
       controls={{
-        gps: false,
+        gps: locateButton,
         confirmButton: false,
         searchTrigger: false,
         developers: false,
