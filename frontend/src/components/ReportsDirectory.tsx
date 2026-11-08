@@ -184,8 +184,9 @@ export default function ReportsDirectory({
   }, [items]);
 
   return (
+    // ارتفاع صفحه = یک ویوپورت منهای هدر (h-16 در دسکتاپ + ۱px حاشیه)
     <div
-      className="mx-auto max-w-7xl px-4 py-6 sm:py-8"
+      className="mx-auto flex max-w-7xl flex-col px-4 py-6 sm:py-8 lg:h-[calc(100dvh-4.0625rem)]"
       id="shahr_ara_directory"
     >
       {/* Filters */}
@@ -292,10 +293,10 @@ export default function ReportsDirectory({
       </div>
 
       {/* Display Directory Main Arena */}
-      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12 lg:gap-8">
+      <div className="grid grid-cols-1 items-start gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-12 lg:grid-rows-1 lg:items-stretch lg:gap-8">
         {/* Map — mobile: below filters (hidden by default); desktop: sidebar */}
         {showMap && (
-          <div className="border-border bg-card sticky top-20 order-1 h-[420px] overflow-hidden rounded-2xl border max-lg:static sm:h-[500px] lg:order-2 lg:col-span-5">
+          <div className="border-border bg-card sticky top-20 order-1 h-[420px] overflow-hidden rounded-2xl border max-lg:static sm:h-[500px] lg:order-2 lg:col-span-5 lg:h-auto">
             <MapComponent
               pickerMode={false}
               items={sorted}
@@ -305,13 +306,13 @@ export default function ReportsDirectory({
           </div>
         )}
         <div
-          className={`order-2 lg:order-1 ${
+          className={`order-2 lg:order-1 lg:h-full lg:min-h-0 ${
             showMap ? "lg:col-span-7" : "lg:col-span-12"
           }`}
         >
           <div
             ref={scrollContainerRef}
-            className="max-h-[600px] overflow-y-auto p-0.5 max-lg:max-h-none max-lg:overflow-visible"
+            className="no-scrollbar p-0.5 lg:h-full lg:min-h-0 lg:overflow-y-auto"
           >
             <div
               className={cn(
@@ -406,7 +407,7 @@ export default function ReportsDirectory({
                   );
                 })
               ) : (
-                <div className="border-border bg-card text-muted-foreground col-span-full rounded-2xl border p-12 text-center">
+                <div className="border-border bg-card text-muted-foreground col-span-full rounded-2xl border p-12 text-center lg:self-start">
                   <AlertCircleIcon className="text-muted-foreground mx-auto mb-3 h-10 w-10" />
                   <p className="text-foreground text-sm font-extrabold">
                     هیچ گزارش یا ایده‌ای یافت نشد.
