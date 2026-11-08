@@ -125,8 +125,8 @@ export function DatePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-3" align="end">
-        <div className="flex flex-col gap-3" dir="rtl">
-          {/* Year + Month row */}
+        <div className="flex flex-col gap-2 sm:flex-row" dir="rtl">
+          {/* Year + Month */}
           <div className="flex gap-2">
             <Select
               dir="rtl"
@@ -161,9 +161,9 @@ export function DatePicker({
               </SelectContent>
             </Select>
           </div>
-          {/* Day select */}
+          {/* Day */}
           <Select dir="rtl" onValueChange={handleDaySelect}>
-            <SelectTrigger className="h-10 w-full">
+            <SelectTrigger className="h-10 w-full sm:w-20">
               <SelectValue placeholder="روز" />
             </SelectTrigger>
             <SelectContent position="popper">
