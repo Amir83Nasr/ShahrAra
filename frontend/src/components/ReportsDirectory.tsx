@@ -12,18 +12,9 @@ import { RequestItem, User } from "../types";
 
 // maplibre-gl touches `window` at import time; skip prerendering
 const MapComponent = dynamic(() => import("./MapComponent"), { ssr: false });
-import {
-  Heart,
-  MapPin,
-  AlertCircleIcon,
-  Map,
-  Search,
-  ArrowUpDown,
-  RefreshCcw,
-} from "lucide-react";
+import { Heart, MapPin, AlertCircleIcon, Map, Search } from "lucide-react";
 import { toPersianDigits } from "../utils/numberUtils";
 import { REGIONS } from "../utils/regionUtils";
-import { CATEGORIES } from "../utils/categoryUtils";
 import { filterRequests, sortRequests } from "../utils/requestFilters";
 import {
   STATUS_LABELS,
@@ -77,13 +68,12 @@ export default function ReportsDirectory({
   items,
   currentUser,
   onLike,
-  onRefresh,
   theme = "light",
   initialCategory = "all",
 }: ReportsDirectoryProps) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeCategory, setActiveCategory] = useState<string>(initialCategory);
+  const [activeCategory] = useState<string>(initialCategory);
   const [activeType, setActiveType] = useState<"all" | "problem" | "idea">(
     "all",
   );
@@ -92,7 +82,6 @@ export default function ReportsDirectory({
     "newest" | "oldest" | "most_liked" | "least_liked"
   >("newest");
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [selectedDetails, setSelectedDetails] = useState<RequestItem | null>(
     null,
   );
@@ -109,7 +98,6 @@ export default function ReportsDirectory({
     type: activeType,
     region: filterRegion,
     startDate,
-    endDate,
   });
 
   const sorted = sortRequests(filtered, sortBy);
@@ -150,7 +138,6 @@ export default function ReportsDirectory({
     activeType,
     sortBy,
     startDate?.getTime(),
-    endDate?.getTime(),
     filterRegion,
   ].join("|");
   if (filterKey !== prevFilters) {
@@ -197,42 +184,40 @@ export default function ReportsDirectory({
   }, [items]);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8" id="shahr_ara_directory">
+    <div
+      className="mx-auto max-w-7xl px-4 py-6 sm:py-8"
+      id="shahr_ara_directory"
+    >
       {/* Filters */}
-      <div className="bg-card mb-4 flex flex-col gap-4 rounded-xl border p-5">
+      <div className="bg-card mb-4 flex flex-col gap-3.5 rounded-2xl border p-4 sm:gap-4 sm:p-5">
         {/* Top row: search + map/refresh buttons */}
-        <div className="flex w-full items-center gap-3">
+        <div className="flex w-full items-center gap-2.5">
           <div className="relative flex-1">
-            <Search className="text-muted-foreground absolute top-3 right-3 h-4.5 w-4.5" />
+            <Search className="text-muted-foreground absolute top-1/2 right-3.5 size-4 -translate-y-1/2" />
             <Input
               type="text"
               placeholder="جستجوی نیاز، ایده، محله..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-background pr-10"
+              className="h-11 rounded-full pr-10"
             />
           </div>
           <Button
             variant={showMap ? "default" : "outline"}
             onClick={() => setShowMap(!showMap)}
-            className="whitespace-nowrap"
+            className="h-11 w-11 shrink-0 px-0 sm:w-auto sm:px-4"
+            aria-label={showMap ? "مخفی‌سازی نقشه" : "نمایش نقشه"}
           >
             <Map />
-            <span>{showMap ? "مخفی‌سازی نقشه" : "نمایش نقشه"}</span>
-          </Button>
-          <Button
-            variant="outline"
-            onClick={onRefresh}
-            className="whitespace-nowrap"
-          >
-            <RefreshCcw />
-            <span>بروزرسانی</span>
+            <span className="hidden whitespace-nowrap sm:inline">
+              {showMap ? "مخفی‌سازی نقشه" : "نمایش نقشه"}
+            </span>
           </Button>
         </div>
 
         {/* Bottom row: selects on start, date pickers on end */}
-        <div className="flex w-full flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3">
+        <div className="flex w-full flex-col items-stretch justify-between gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="grid grid-cols-3 items-center gap-2 sm:flex sm:flex-wrap sm:gap-3">
             <Select
               dir="rtl"
               value={sortBy}
@@ -242,8 +227,7 @@ export default function ReportsDirectory({
                 )
               }
             >
-              <SelectTrigger className="w-32">
-                <ArrowUpDown />
+              <SelectTrigger className="w-full sm:w-40">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent position="popper">
@@ -263,7 +247,7 @@ export default function ReportsDirectory({
                 setActiveType(v as "all" | "problem" | "idea")
               }
             >
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-full sm:w-32">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent position="popper">
@@ -280,7 +264,7 @@ export default function ReportsDirectory({
               value={filterRegion}
               onValueChange={setFilterRegion}
             >
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-full sm:w-32">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent position="popper">
@@ -296,50 +280,22 @@ export default function ReportsDirectory({
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex w-full items-center gap-2 sm:w-auto">
             <DatePicker
               date={startDate}
               onSelect={setStartDate}
               placeholder="از تاریخ"
-              className="w-36"
-            />
-            <span className="text-muted-foreground text-xs">تا</span>
-            <DatePicker
-              date={endDate}
-              onSelect={setEndDate}
-              placeholder="تا تاریخ"
-              className="w-36"
+              className="w-full sm:w-40"
             />
           </div>
         </div>
       </div>
 
-      {/* Category filter */}
-      <div className="-mx-4 mb-4 flex scrollbar-thin gap-2 overflow-x-auto px-4 pb-4">
-        <Button
-          variant={activeCategory === "all" ? "default" : "outline"}
-          onClick={() => setActiveCategory("all")}
-          className="shrink-0 rounded-full"
-        >
-          همه دسته‌ها
-        </Button>
-        {CATEGORIES.map((cat, idx) => (
-          <Button
-            key={idx}
-            variant={activeCategory === cat ? "default" : "outline"}
-            onClick={() => setActiveCategory(cat)}
-            className="shrink-0 rounded-full"
-          >
-            {cat}
-          </Button>
-        ))}
-      </div>
-
       {/* Display Directory Main Arena */}
-      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12 lg:gap-8">
         {/* Map — mobile: below filters (hidden by default); desktop: sidebar */}
         {showMap && (
-          <div className="border-border bg-card sticky top-24 order-1 h-[500px] overflow-hidden rounded-xl border max-lg:static lg:order-2 lg:col-span-5">
+          <div className="border-border bg-card sticky top-20 order-1 h-[420px] overflow-hidden rounded-2xl border max-lg:static sm:h-[500px] lg:order-2 lg:col-span-5">
             <MapComponent
               pickerMode={false}
               items={sorted}
@@ -450,7 +406,7 @@ export default function ReportsDirectory({
                   );
                 })
               ) : (
-                <div className="border-border bg-card text-muted-foreground col-span-full rounded-xl border p-12 text-center">
+                <div className="border-border bg-card text-muted-foreground col-span-full rounded-2xl border p-12 text-center">
                   <AlertCircleIcon className="text-muted-foreground mx-auto mb-3 h-10 w-10" />
                   <p className="text-foreground text-sm font-extrabold">
                     هیچ گزارش یا ایده‌ای یافت نشد.
@@ -507,12 +463,12 @@ export default function ReportsDirectory({
               </span>
             </div>
 
-            <p className="bg-muted text-foreground/70 rounded-xl border p-4 text-sm leading-relaxed font-semibold whitespace-pre-wrap">
+            <p className="bg-muted text-foreground/70 rounded-2xl border p-4 text-sm leading-relaxed font-semibold whitespace-pre-wrap">
               {selectedDetails?.description}
             </p>
 
             {selectedDetails?.adminResponse ? (
-              <div className="border-primary/30 from-primary/10 to-primary/5 relative rounded-xl border bg-gradient-to-br p-4">
+              <div className="border-primary/30 from-primary/10 to-primary/5 relative rounded-2xl border bg-gradient-to-br p-4">
                 <div className="border-primary/20 bg-primary/10 text-primary absolute top-3 left-3 rounded border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase">
                   پاسخ رسمی
                 </div>
@@ -524,7 +480,7 @@ export default function ReportsDirectory({
                 </p>
               </div>
             ) : (
-              <div className="bg-muted text-muted-foreground/70 rounded-xl border p-3.5 text-center text-xs font-bold">
+              <div className="bg-muted text-muted-foreground/70 rounded-2xl border p-3.5 text-center text-xs font-bold">
                 این گزارش برای اعزام اکیپ آماده‌سازی در صف رسیدگی واحد روابط
                 عمومی شهرداری منطقه است.
               </div>
@@ -535,7 +491,7 @@ export default function ReportsDirectory({
                 <MapPin className="text-primary h-4 w-4" />
                 موقعیت فیزیکی روی نقشه شهر
               </span>
-              <div className="h-[200px] overflow-hidden rounded-xl border">
+              <div className="h-[200px] overflow-hidden rounded-2xl border">
                 <MapComponent
                   pickerMode={false}
                   items={selectedDetails ? [selectedDetails] : []}
