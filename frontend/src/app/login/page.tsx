@@ -1,9 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { AlertCircle, KeyRound, MessageSquare } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  KeyRound,
+  MessageSquare,
+} from "lucide-react";
 import { useApp } from "../providers";
 import { ModeToggle } from "@/components/mode-toggle";
 import { BrandMark } from "@/components/BrandMark";
@@ -41,6 +46,44 @@ interface OtpInfo {
 const FETCH_ERROR =
   "خطا در برقراری ارتباط با سرور. لطفا از روشن بودن سرور اطمینان حاصل کنید.";
 
+type HintState = "idle" | "pending" | "valid" | "invalid";
+
+/**
+ * راهنمای زیر هر ورودی: در حال تکمیل با رنگ خنثی، فقط خطای واقعی قرمز
+ * و مقدار صحیح سبز نمایش داده می‌شود (بدون قالب‌بندی شلوغ قبلی).
+ */
+function ValidationHint({
+  state,
+  children,
+}: {
+  state: HintState;
+  children: ReactNode;
+}) {
+  return (
+    <span
+      className={cn(
+        "flex items-start gap-1.5 text-xs leading-5 transition-colors",
+        state === "valid" && "text-status-resolved font-medium",
+        state === "invalid" && "text-destructive font-medium",
+        state === "pending" && "text-muted-foreground",
+        state === "idle" && "text-muted-foreground/80",
+      )}
+    >
+      {state === "valid" ? (
+        <CheckCircle2 className="mt-0.5 size-3.5 shrink-0" />
+      ) : state === "invalid" ? (
+        <AlertCircle className="mt-0.5 size-3.5 shrink-0" />
+      ) : (
+        <span
+          aria-hidden
+          className="mt-2 size-1 shrink-0 rounded-full bg-current opacity-40"
+        />
+      )}
+      <span className="text-balance">{children}</span>
+    </span>
+  );
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const { currentUser, authReady, loginSuccess, theme, setTheme } = useApp();
@@ -63,6 +106,44 @@ export default function LoginPage() {
   // شمارش معکوس اعتبار کد یک‌بارمصرف (ثانیه)
   const [remaining, setRemaining] = useState(0);
   const expiryRef = useRef<number | null>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
+  // حالت فشرده (کیبورد باز): لوگو حذف و فاصله‌ها کمتر می‌شود تا فرم در فضای
+  // باقی‌مانده جا شود.
+  const [compact, setCompact] = useState(false);
+
+  // روی موبایل ارتفاع صفحه را به ارتفاع واقعی ناحیهٔ دید (visual viewport) گره
+  // می‌زنیم؛ با باز شدن کیبورد، محتوا در همان فضای قابل‌دیدن وسط می‌ماند و
+  // فضای خالی بزرگ پایین صفحه ایجاد نمی‌شود.
+  useEffect(() => {
+    const el = pageRef.current;
+    const vv = window.visualViewport;
+    if (!el || !vv) return;
+
+    const mobileQuery = window.matchMedia("(max-width: 767px)");
+    const sync = () => {
+      // در حالت زوم، ارتفاع visual viewport کوچک‌تر می‌شود و نباید اعمال شود.
+      if (!mobileQuery.matches || vv.scale > 1.01) {
+        el.style.removeProperty("--login-vh");
+        setCompact(false);
+        return;
+      }
+      el.style.setProperty("--login-vh", `${Math.round(vv.height)}px`);
+      // اگر مرورگر پس از باز شدن کیبورد صفحه را جابه‌جا کرده باشد، به بالا
+      // برمی‌گردیم تا فضای خالی زیر فرم دیده نشود.
+      if (window.scrollY !== 0) window.scrollTo(0, 0);
+      // تفاوت محسوس با ارتفاع کامل پنجره یعنی کیبورد باز است.
+      setCompact(vv.height < window.innerHeight - 150);
+    };
+
+    sync();
+    vv.addEventListener("resize", sync);
+    mobileQuery.addEventListener("change", sync);
+    return () => {
+      vv.removeEventListener("resize", sync);
+      mobileQuery.removeEventListener("change", sync);
+      el.style.removeProperty("--login-vh");
+    };
+  }, []);
 
   // تایمر شمارش معکوس
   useEffect(() => {
@@ -87,10 +168,33 @@ export default function LoginPage() {
 
   const isPhoneDirty = phone.length > 0;
   const isPhoneValid = /^09\d{9}$/.test(phone);
-  const startsWith09 = phone.startsWith("09");
+  // پیشوند اشتباه را فقط بعد از کامل‌شدن «۰۹» خطا می‌دانیم، نه وسط تایپ.
+  const phoneHasWrongPrefix = phone.length >= 2 && !phone.startsWith("09");
+  const phoneState: HintState = !isPhoneDirty
+    ? "idle"
+    : isPhoneValid
+      ? "valid"
+      : phoneHasWrongPrefix
+        ? "invalid"
+        : "pending";
+  const phoneRemaining = Math.max(0, 11 - phone.length);
 
   const isNationalIdDirty = nationalId.length > 0;
   const isNationalIdValid = /^\d{10}$/.test(nationalId);
+  const nationalIdState: HintState = !isNationalIdDirty
+    ? "idle"
+    : isNationalIdValid
+      ? "valid"
+      : "pending";
+  const nationalIdRemaining = Math.max(0, 10 - nationalId.length);
+
+  const fieldToneClass = (state: HintState) =>
+    state === "valid"
+      ? "border-status-resolved ring-status-resolved/10 focus-visible:border-status-resolved focus-visible:ring-status-resolved/20 ring-2"
+      : state === "invalid"
+        ? "border-destructive ring-destructive/10 focus-visible:border-destructive focus-visible:ring-destructive/20 ring-2"
+        : "";
+
   const isNewUser = check !== null && !check.exists;
 
   const extractUser = (result: Record<string, unknown>): User => {
@@ -285,33 +389,25 @@ export default function LoginPage() {
     setError(null);
   };
 
-  const phoneHint = !isPhoneDirty ? null : isPhoneValid ? (
-    <span className="border-status-resolved/10 bg-status-resolved/5 text-status-resolved flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10.5px] font-bold">
-      ✓ شماره همراه معتبر و صحیح است
-    </span>
-  ) : !startsWith09 ? (
-    <span className="border-destructive/10 bg-destructive/5 text-destructive rounded-full border px-2.5 py-1 text-[10.5px] font-bold">
-      خطا: شماره همراه حتماً باید با ۰۹ آغاز شود
-    </span>
-  ) : (
-    <span className="border-status-in-progress/10 bg-status-in-progress/5 text-status-in-progress rounded-full border px-2.5 py-1 text-[10.5px] font-bold">
-      در حال تکمیل... ({toPersianDigits(phone.length)} از ۱۱ رقم وارد شده)
-    </span>
-  );
+  const phoneHint =
+    phoneState === "idle" ? null : (
+      <ValidationHint state={phoneState}>
+        {phoneState === "valid"
+          ? "شماره همراه معتبر است"
+          : phoneState === "invalid"
+            ? "شماره همراه باید با ۰۹ شروع شود"
+            : `${toPersianDigits(phoneRemaining)} رقم دیگر وارد کنید`}
+      </ValidationHint>
+    );
 
-  const nationalIdHint = !isNationalIdDirty ? (
-    <span className="bg-muted text-muted-foreground rounded-full px-2.5 py-1 text-[10.5px] font-medium">
-      ۱۰ رقم عددی معتبر بدون خط تیره (مانند: {toPersianDigits("0370000000")})
-    </span>
-  ) : isNationalIdValid ? (
-    <span className="border-status-resolved/10 bg-status-resolved/5 text-status-resolved flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10.5px] font-bold">
-      ✓ کد ملی معتبر و صحیح است
-    </span>
-  ) : (
-    <span className="border-destructive/10 bg-destructive/5 text-destructive rounded-full border px-2.5 py-1 text-[10.5px] font-bold">
-      کد ملی ۱۰ رقمی ناقص است (در حال حاضر: {toPersianDigits(nationalId.length)}{" "}
-      رقم)
-    </span>
+  const nationalIdHint = (
+    <ValidationHint state={nationalIdState}>
+      {nationalIdState === "valid"
+        ? "کد ملی معتبر است"
+        : nationalIdState === "pending"
+          ? `${toPersianDigits(nationalIdRemaining)} رقم دیگر وارد کنید`
+          : `۱۰ رقم عددی بدون خط تیره (مانند: ${toPersianDigits("0370000000")})`}
+    </ValidationHint>
   );
 
   const stepDescription =
@@ -324,19 +420,27 @@ export default function LoginPage() {
           : `کد تأیید ارسال‌شده به ${toPersianDigits(phone)} را وارد کنید.`;
 
   return (
-    <div className="grid min-h-svh md:grid-cols-2">
+    <div
+      ref={pageRef}
+      className="grid h-[calc(var(--login-vh,100svh)-env(safe-area-inset-top))] md:h-auto md:min-h-svh md:grid-cols-2"
+    >
       {/* ── فرم ──────────────────────────────────────────── */}
-      <div className="relative flex flex-col p-6 md:p-10">
-        <div className="absolute end-4 top-4">
+      <div className="relative flex min-h-0 flex-col px-6 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] md:p-10">
+        <div className="absolute end-4 top-4 z-10">
           <ModeToggle theme={theme} onThemeChange={setTheme} />
         </div>
 
-        <div className="flex flex-1 items-center justify-center">
-          <div className="w-full max-w-xs">
-            <FieldGroup className="gap-6">
+        <div className="flex min-h-0 flex-1 overflow-y-auto">
+          <div className="m-auto w-full max-w-xs py-4 md:py-6">
+            <FieldGroup className={cn("gap-5 md:gap-6", compact && "gap-4")}>
               <div className="flex flex-col items-center gap-1 text-center">
-                <BrandMark className="mb-3 size-12 text-xl" />
-                <h1 className="text-2xl font-extrabold">
+                {!compact && <BrandMark className="mb-3 size-12 text-xl" />}
+                <h1
+                  className={cn(
+                    "text-2xl font-extrabold",
+                    compact && "text-xl",
+                  )}
+                >
                   {step === "otp" && isNewUser
                     ? "تکمیل ثبت‌نام"
                     : "ورود به شهرآرا"}
@@ -362,26 +466,23 @@ export default function LoginPage() {
                       <FieldLabel htmlFor="phone">شماره همراه</FieldLabel>
                       <Input
                         id="phone"
-                        type="text"
+                        type="tel"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        enterKeyHint="next"
                         required
                         maxLength={11}
                         value={toPersianDigits(phone)}
                         onChange={(e) => {
                           const rawVal = toEnglishDigits(e.target.value);
                           const numbersOnly = rawVal.replace(/\D/g, "");
-                          setPhone(numbersOnly);
+                          setPhone(numbersOnly.slice(0, 11));
                         }}
                         dir="rtl"
                         autoComplete="tel"
-                        className={cn(
-                          !isPhoneDirty
-                            ? ""
-                            : isPhoneValid
-                              ? "border-status-resolved ring-status-resolved/10 focus-visible:border-status-resolved focus-visible:ring-status-resolved/20 ring-2"
-                              : "border-destructive ring-destructive/10 focus-visible:border-destructive focus-visible:ring-destructive/20 ring-2",
-                        )}
+                        className={cn(fieldToneClass(phoneState))}
                         aria-invalid={
-                          isPhoneDirty && !isPhoneValid ? true : undefined
+                          phoneState === "invalid" ? true : undefined
                         }
                       />
                       <FieldDescription>{phoneHint}</FieldDescription>
@@ -560,30 +661,21 @@ export default function LoginPage() {
                           </FieldLabel>
                           <Input
                             id="nationalId"
-                            type="text"
+                            type="tel"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
                             required
                             maxLength={10}
                             value={toPersianDigits(nationalId)}
                             onChange={(e) => {
                               const rawVal = toEnglishDigits(e.target.value);
                               const numbersOnly = rawVal.replace(/\D/g, "");
-                              setNationalId(numbersOnly);
+                              setNationalId(numbersOnly.slice(0, 10));
                             }}
                             placeholder={toPersianDigits("0370000000")}
                             dir="rtl"
                             autoComplete="off"
-                            className={cn(
-                              !isNationalIdDirty
-                                ? ""
-                                : isNationalIdValid
-                                  ? "border-status-resolved ring-status-resolved/10 focus-visible:border-status-resolved focus-visible:ring-status-resolved/20 ring-2"
-                                  : "border-destructive ring-destructive/10 focus-visible:border-destructive focus-visible:ring-destructive/20 ring-2",
-                            )}
-                            aria-invalid={
-                              isNationalIdDirty && !isNationalIdValid
-                                ? true
-                                : undefined
-                            }
+                            className={cn(fieldToneClass(nationalIdState))}
                           />
                           <FieldDescription>{nationalIdHint}</FieldDescription>
                         </Field>
