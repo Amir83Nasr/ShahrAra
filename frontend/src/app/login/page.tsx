@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { useApp } from "../providers";
 import { ModeToggle } from "@/components/mode-toggle";
-import { BrandMark } from "@/components/BrandMark";
 import { User } from "../../types";
 import { toPersianDigits, toEnglishDigits } from "@/utils/numberUtils";
 import { cn } from "@/lib/utils";
@@ -109,7 +108,7 @@ export default function LoginPage() {
   const [remaining, setRemaining] = useState(0);
   const expiryRef = useRef<number | null>(null);
   const pageRef = useRef<HTMLDivElement>(null);
-  // حالت فشرده (کیبورد باز): لوگو حذف و فاصله‌ها کمتر می‌شود تا فرم در فضای
+  // حالت فشرده (کیبورد باز): فاصله‌ها کمتر می‌شود تا فرم در فضای
   // باقی‌مانده جا شود.
   const [compact, setCompact] = useState(false);
 
@@ -429,7 +428,6 @@ export default function LoginPage() {
           <div className="m-auto w-full max-w-xs py-4 md:py-6">
             <FieldGroup className={cn("gap-5 md:gap-6", compact && "gap-4")}>
               <div className="flex flex-col items-center gap-1 text-center">
-                {!compact && <BrandMark className="mb-3 size-12 text-xl" />}
                 <h1
                   className={cn(
                     "text-2xl font-extrabold",
