@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import AppShell from "./app-shell";
 import PWARegister from "@/components/PWARegister";
+import { THEME_INIT_SCRIPT } from "@/lib/theme-color";
 
 export const metadata: Metadata = {
   title: "شهرآرا",
@@ -33,11 +34,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  // رنگ نوار مرورگر/PWA؛ مقدار واقعی هنگام سوییچ تم در providers به‌روز می‌شود.
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f8fafd" },
-    { media: "(prefers-color-scheme: dark)", color: "#151f29" },
-  ],
+  // viewport-fit=cover برای فعال‌شدن env(safe-area-inset-*) در آی‌فون لازم است.
+  // توجه: themeColor را عمداً اینجا تعریف نمی‌کنیم؛ متادیتای viewport در هر
+  // جابه‌جایی بین صفحات دوباره رندر می‌شود و رنگ نوار مرورگر را به مقدار
+  // ترجیح سیستم برمی‌گرداند (پرش رنگ). این متا در layout و providers مدیریت
+  // می‌شود تا همیشه هم‌رنگ تم انتخاب‌شدهٔ کاربر بماند.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -66,6 +68,13 @@ export default function RootLayout({
 
   return (
     <html lang="fa" dir="rtl" suppressHydrationWarning>
+      <head>
+        {/* رنگ نوار مرورگر/PWA را اسکریپت زیر قبل از اولین رنگ‌آمیزی می‌سازد؛
+            عمداً در JSX رندر نمی‌شود تا React هنگام hydration نسخهٔ تازه‌ای از
+            آن نسازد و دو متای theme-color هم‌زمان (یکی با رنگ اشتباه) نداشته
+            باشیم. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="bg-background text-foreground min-h-dvh">
         <PWARegister />
         <Providers>

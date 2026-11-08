@@ -11,7 +11,6 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import {
@@ -32,13 +31,49 @@ import {
   setCachedData,
   invalidateCache,
 } from "@/utils/apiCache";
+import { THEME_COLORS } from "@/lib/theme-color";
 
 const REQ_CACHE_KEY = "requests";
 const STATS_CACHE_KEY = "stats";
 
-// Should match the transition-duration in globals.css (300ms). The small
-// buffer lets the final frame paint before the helper class is removed.
-const THEME_TRANSITION_MS = 320;
+/**
+ * اعمال فوری تم روی DOM: کلاس‌های تم، رنگ نوار مرورگر/PWA و color-scheme.
+ * عمداً هیچ گذاری در کار نیست تا کل صفحه و رابط مرورگر در یک فریم و هم‌زمان
+ * رنگ عوض کنند (گذار ۳۰۰ میلی‌ثری روی همهٔ عناصر باعث کندی می‌شد).
+ */
+function applyThemeToDom(theme: "light" | "dark") {
+  const root = document.documentElement;
+  const isDark = theme === "dark";
+
+  root.classList.toggle("dark", isDark);
+  if (document.body) {
+    document.body.classList.toggle("dark", isDark);
+  }
+
+  // نوار مرورگر/PWA هم‌رنگ تم انتخاب‌شده (نه ترجیح سیستم‌عامل). این متا
+  // عمداً از viewport در layout حذف شده تا جابه‌جایی بین صفحات آن را بازنویسی
+  // نکند و رنگ نوار مرورگر نپرد.
+  const themeColor = isDark ? THEME_COLORS.dark : THEME_COLORS.light;
+  const themeColorMetas = document.querySelectorAll<HTMLMetaElement>(
+    'meta[name="theme-color"]',
+  );
+  if (themeColorMetas.length === 0) {
+    const meta = document.createElement("meta");
+    meta.setAttribute("name", "theme-color");
+    meta.setAttribute("content", themeColor);
+    document.head.appendChild(meta);
+  } else {
+    themeColorMetas.forEach((meta, index) => {
+      if (index === 0) {
+        meta.setAttribute("content", themeColor);
+      } else {
+        // هر متای تکراری (مثلاً بازماندهٔ رندر قبلی) حذف می‌شود تا مرورگر
+        // رنگ درست را از دست ندهد.
+        meta.remove();
+      }
+    });
+  }
+}
 
 const INITIAL_STATS: Stats = {
   totalCount: 0,
@@ -64,6 +99,8 @@ interface AppContextValue {
   requests: RequestItem[];
   stats: Stats;
   loading: boolean;
+  /** Last list-fetch failure; cleared as soon as a fetch succeeds again. */
+  loadError: string | null;
   apiError: string | null;
   dismissError: () => void;
   refresh: (options?: { force?: boolean; silent?: boolean }) => Promise<void>;
@@ -96,17 +133,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
   // render): the first render must match the server HTML, so defaults here
   // and saved values applied in the effect below.
   const [theme, setThemeState] = useState<"light" | "dark">("light");
-  const themeTransitionTimer = useRef<number | null>(null);
-
-  // Never leave the transition helper class behind (e.g. on unmount).
-  useEffect(() => {
-    return () => {
-      if (themeTransitionTimer.current !== null) {
-        window.clearTimeout(themeTransitionTimer.current);
-      }
-      document.documentElement.classList.remove("theme-transition");
-    };
-  }, []);
 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   // Avoid rendering auth-gated UI until localStorage session restored
@@ -116,6 +142,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [requests, setRequests] = useState<RequestItem[]>([]);
   const [stats, setStats] = useState<Stats>(INITIAL_STATS);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   // Unread notifications only; the API already filters by the bearer token.
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
@@ -152,21 +179,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const root = document.documentElement;
-    if (theme === "dark") {
-      root.classList.add("dark");
-      document.body.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-      document.body.classList.remove("dark");
-    }
-    // نوار مرورگر/PWA هم‌رنگ تم فعلی
-    const themeColor = theme === "dark" ? "#151f29" : "#f8fafd";
-    document
-      .querySelectorAll('meta[name="theme-color"]')
-      .forEach((meta) => meta.setAttribute("content", themeColor));
-    // Wait for the restore pass above, else first run clobbers saved value
+    // Wait for the restore pass above (and the pre-paint inline script) before
+    // touching the DOM, otherwise the default light theme would clobber the
+    // saved one and the toolbar/background would flash.
     if (!authReady) return;
+
+    applyThemeToDom(theme);
     localStorage.setItem("shahr_ara_theme", theme);
   }, [theme, authReady]);
 
@@ -224,34 +242,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   const setTheme = useCallback((next: "light" | "dark") => {
     const root = document.documentElement;
-    const reduceMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
 
-    // Add the helper class *before* the state change so the browser sees the
-    // new colors as a transition target rather than an instant repaint.
-    if (reduceMotion) {
-      if (themeTransitionTimer.current !== null) {
-        window.clearTimeout(themeTransitionTimer.current);
-        themeTransitionTimer.current = null;
-      }
-      root.classList.remove("theme-transition");
-    } else {
-      root.classList.add("theme-transition");
-      // Force a style flush so the helper class is part of the "before-change"
-      // style; otherwise the color change may land in the same style
-      // recalculation and the browser skips the animation.
-      void root.offsetWidth;
-      if (themeTransitionTimer.current !== null) {
-        window.clearTimeout(themeTransitionTimer.current);
-      }
-      themeTransitionTimer.current = window.setTimeout(() => {
-        root.classList.remove("theme-transition");
-        themeTransitionTimer.current = null;
-      }, THEME_TRANSITION_MS);
-    }
-
+    // برای یک فریم همهٔ گذارها را خاموش می‌کنیم تا عناصری که transition محلی
+    // دارند (دکمه‌ها، بج‌ها، ...) هم هم‌زمان با بقیهٔ صفحه رنگ عوض کنند.
+    root.classList.add("theme-switching");
+    applyThemeToDom(next);
     setThemeState(next);
+
+    // بعد از رنگ‌آمیزی فریم جدید کلاس کمکی را برمی‌داریم.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        root.classList.remove("theme-switching");
+      });
+    });
   }, []);
 
   const refresh = useCallback(
@@ -265,6 +268,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         if (cachedReqs && cachedStats) {
           setRequests(cachedReqs.data);
           setStats(cachedStats.data);
+          setLoadError(null);
           if (!silent) setLoading(false);
           if (cachedReqs.isFresh && cachedStats.isFresh) return;
           // Stale → revalidate silently in background below
@@ -273,6 +277,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
       if (!silent) setLoading(true);
       setApiError(null);
+      setLoadError(null);
 
       try {
         const token =
@@ -290,13 +295,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
         setStats(statData);
         setCachedData(REQ_CACHE_KEY, reqData);
         setCachedData(STATS_CACHE_KEY, statData);
+        setLoadError(null);
       } catch (err) {
-        setApiError(
-          apiErrorMessage(
-            err,
-            "در دریافت اطلاعات از سرور مشکلی پیش آمد. لطفاً بعداً تلاش کنید.",
-          ),
+        const message = apiErrorMessage(
+          err,
+          "در دریافت اطلاعات از سرور مشکلی پیش آمد. لطفاً بعداً تلاش کنید.",
         );
+        setApiError(message);
+        setLoadError(message);
       } finally {
         if (!silent) setLoading(false);
       }
@@ -435,6 +441,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       requests,
       stats,
       loading,
+      loadError,
       apiError,
       dismissError: () => setApiError(null),
       refresh,
@@ -460,6 +467,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       requests,
       stats,
       loading,
+      loadError,
       apiError,
       refresh,
       notifications,
