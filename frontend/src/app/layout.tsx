@@ -66,7 +66,7 @@ export default function RootLayout({
 
   return (
     <html lang="fa" dir="rtl" suppressHydrationWarning>
-      <body className="bg-background text-foreground min-h-screen">
+      <body className="bg-background text-foreground min-h-dvh">
         <PWARegister />
         <Providers>
           <AppShell>{children}</AppShell>
