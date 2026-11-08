@@ -108,8 +108,8 @@ export default function LoginPage() {
   const [remaining, setRemaining] = useState(0);
   const expiryRef = useRef<number | null>(null);
   const pageRef = useRef<HTMLDivElement>(null);
-  // حالت فشرده (کیبورد باز): فاصله‌ها کمتر می‌شود تا فرم در فضای
-  // باقی‌مانده جا شود.
+  // حالت فشرده (کیبورد باز): فاصله‌ها کمتر و فرم به سمت کیبورد می‌آید تا
+  // فضای خالی بالای کیبورد کم شود.
   const [compact, setCompact] = useState(false);
 
   // روی موبایل ارتفاع صفحه را به ارتفاع واقعی ناحیهٔ دید (visual viewport) گره
@@ -419,21 +419,28 @@ export default function LoginPage() {
       className="grid h-[calc(var(--login-vh,100svh)-env(safe-area-inset-top))] md:h-auto md:min-h-svh md:grid-cols-2"
     >
       {/* ── فرم ──────────────────────────────────────────── */}
-      <div className="relative flex min-h-0 flex-col px-6 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] md:p-10">
+      <div
+        className={cn(
+          "relative flex min-h-0 flex-col px-6 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] md:p-10",
+          compact && "pt-4 pb-5",
+        )}
+      >
         <div className="absolute end-4 top-4 z-10">
           <ModeToggle theme={theme} onThemeChange={setTheme} />
         </div>
 
         <div className="flex min-h-0 flex-1 overflow-y-auto">
-          <div className="m-auto w-full max-w-xs py-4 md:py-6">
+          <div
+            className={cn(
+              "m-auto w-full max-w-xs py-4 md:py-6",
+              // با باز شدن کیبورد، فرم به پایین (نزدیک کیبورد) می‌چسبد تا
+              // فضای خالی بالای کیبورد کمتر شود.
+              compact && "mt-auto mb-0 py-2",
+            )}
+          >
             <FieldGroup className={cn("gap-5 md:gap-6", compact && "gap-4")}>
               <div className="flex flex-col items-center gap-1 text-center">
-                <h1
-                  className={cn(
-                    "text-2xl font-extrabold",
-                    compact && "text-xl",
-                  )}
-                >
+                <h1 className="text-2xl font-extrabold">
                   {step === "otp" && isNewUser
                     ? "تکمیل ثبت‌نام"
                     : "ورود به شهرآرا"}
