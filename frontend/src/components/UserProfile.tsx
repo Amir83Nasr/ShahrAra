@@ -317,24 +317,18 @@ export default function UserProfile({
   const isSectionPage = section !== undefined;
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
-      <div className="mb-5 hidden md:block">
-        <h1 className="text-foreground text-xl font-semibold tracking-tight">
-          پروفایل
-        </h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          درخواست‌ها، لایک‌ها و تنظیمات حساب خود را مدیریت کنید.
-        </p>
-      </div>
-
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       {/* بخش‌های پروفایل — فقط موبایل (در صفحه /profile) */}
       {!isSectionPage && (
         <div className="flex flex-col gap-3 md:hidden">
           {/* کارت کاربر */}
-          <div className="bg-card overflow-hidden rounded-2xl border">
-            <div className="flex items-center gap-3 px-4 py-3">
-              <span className="bg-secondary text-secondary-foreground flex size-9 shrink-0 items-center justify-center rounded-full">
-                <UserRound className="size-[18px]" strokeWidth={1.75} />
+          <div className="bg-card overflow-hidden rounded-3xl border shadow-sm">
+            <div className="flex items-center gap-3 px-4 py-2.5">
+              <span className="bg-muted flex h-9 w-9 shrink-0 items-center justify-center rounded-xl">
+                <UserRound
+                  className="text-muted-foreground h-4.5 w-4.5"
+                  strokeWidth={1.75}
+                />
               </span>
               <span className="flex flex-1 flex-col items-start gap-0.5">
                 <span className="text-foreground flex items-center gap-2 text-sm font-semibold">
@@ -400,18 +394,18 @@ export default function UserProfile({
               e.currentTarget.blur();
               setConfirmLogout(true);
             }}
-            className="bg-card flex w-full cursor-pointer items-center gap-3 rounded-2xl border px-4 py-2.5"
+            className="border-destructive/15 bg-card flex w-full cursor-pointer items-center gap-3 rounded-2xl border px-4 py-2.5 shadow-sm"
           >
-            <span className="bg-muted flex size-9 shrink-0 items-center justify-center rounded-full">
+            <span className="bg-destructive/10 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl">
               <LogOut
-                className="text-destructive size-[18px]"
+                className="text-destructive h-4.5 w-4.5"
                 strokeWidth={1.75}
               />
             </span>
-            <span className="text-destructive flex-1 text-start text-sm font-medium">
+            <span className="text-destructive flex-1 text-start text-sm font-semibold">
               خروج از حساب
             </span>
-            <ChevronLeft className="text-muted-foreground/40 size-4 shrink-0" />
+            <ChevronLeft className="text-muted-foreground/40 h-4 w-4 shrink-0" />
           </button>
         </div>
       )}
@@ -454,22 +448,22 @@ export default function UserProfile({
                 <ChevronRight />
               </Link>
             </Button>
-            <h2 className="text-foreground text-lg font-medium">
+            <h2 className="text-foreground text-lg font-bold">
               {SECTION_TITLES[section]}
             </h2>
           </div>
         )}
         <TabsList className="hidden gap-x-2 md:flex">
-          <TabsTrigger value="my" className="flex-1 px-4 font-medium">
-            <ClipboardList className="ml-1.5 size-4" />
+          <TabsTrigger value="my" className="flex-1 px-4 font-bold">
+            <ClipboardList className="ml-1.5 h-4 w-4" />
             درخواست‌های من
           </TabsTrigger>
-          <TabsTrigger value="liked" className="flex-1 px-4 font-medium">
-            <Heart className="ml-1.5 size-4" />
+          <TabsTrigger value="liked" className="flex-1 px-4 font-bold">
+            <Heart className="ml-1.5 h-4 w-4" />
             لایک کرده‌ام
           </TabsTrigger>
-          <TabsTrigger value="security" className="flex-1 px-4 font-medium">
-            <KeyRound className="ml-1.5 size-4" />
+          <TabsTrigger value="security" className="flex-1 px-4 font-bold">
+            <KeyRound className="ml-1.5 h-4 w-4" />
             امنیت
           </TabsTrigger>
         </TabsList>
@@ -478,18 +472,18 @@ export default function UserProfile({
         {activeSubTab !== "security" && (
           <div
             className={cn(
-              "bg-card mt-3 mb-6 flex flex-col gap-3 rounded-2xl border p-3 sm:flex-row sm:items-center",
+              "bg-card mt-3 mb-6 flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center",
               !isSectionPage && "hidden md:flex",
             )}
           >
             <div className="relative w-full sm:flex-1">
-              <Search className="text-muted-foreground pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2" />
+              <Search className="text-muted-foreground absolute top-1/2 right-3 size-4 -translate-y-1/2" />
               <Input
                 type="text"
                 placeholder="جستجوی عنوان، توضیحات..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-muted/60 focus-visible:bg-background h-11 rounded-full border-transparent pr-10"
+                className="bg-background pr-10"
               />
             </div>
             <div className="grid grid-cols-3 gap-3 sm:flex sm:gap-3">
@@ -595,7 +589,7 @@ export default function UserProfile({
           <Card className="mx-auto max-w-md">
             <CardContent className="flex flex-col gap-4">
               <div>
-                <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                <CardTitle className="flex items-center gap-2 text-sm font-bold">
                   <KeyRound className="text-primary h-4 w-4" />
                   رمز عبور حساب
                 </CardTitle>
@@ -630,7 +624,7 @@ export default function UserProfile({
               >
                 {currentUser.hasPassword && (
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-foreground text-xs font-medium">
+                    <label className="text-foreground text-xs font-bold">
                       رمز عبور فعلی <span className="text-destructive">*</span>
                     </label>
                     <Input
@@ -645,7 +639,7 @@ export default function UserProfile({
                 )}
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-foreground text-xs font-medium">
+                  <label className="text-foreground text-xs font-bold">
                     رمز عبور جدید <span className="text-destructive">*</span>
                   </label>
                   <Input
@@ -663,7 +657,7 @@ export default function UserProfile({
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-foreground text-xs font-medium">
+                  <label className="text-foreground text-xs font-bold">
                     تکرار رمز عبور جدید{" "}
                     <span className="text-destructive">*</span>
                   </label>
@@ -693,15 +687,13 @@ export default function UserProfile({
       >
         <ResponsiveDialogContent className="max-w-lg">
           <ResponsiveDialogHeader>
-            <ResponsiveDialogTitle className="text-lg font-medium">
+            <ResponsiveDialogTitle className="text-lg font-bold">
               ویرایش درخواست
             </ResponsiveDialogTitle>
           </ResponsiveDialogHeader>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-foreground text-xs font-medium">
-                عنوان
-              </label>
+              <label className="text-foreground text-xs font-bold">عنوان</label>
               <Input
                 type="text"
                 value={editTitle}
@@ -710,7 +702,7 @@ export default function UserProfile({
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-foreground text-xs font-medium">
+              <label className="text-foreground text-xs font-bold">
                 توضیحات
               </label>
               <Textarea
@@ -721,7 +713,7 @@ export default function UserProfile({
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-foreground text-xs font-medium">
+              <label className="text-foreground text-xs font-bold">
                 دسته‌بندی
               </label>
               <Input
@@ -773,7 +765,7 @@ export default function UserProfile({
 
           <div className="space-y-6">
             <div>
-              <h3 className="text-foreground text-lg leading-snug font-medium">
+              <h3 className="text-foreground text-lg leading-snug font-bold">
                 {syncedDetails?.title}
               </h3>
               <span className="text-muted-foreground mt-1.5 block font-mono text-xs font-semibold">
@@ -785,35 +777,35 @@ export default function UserProfile({
               </span>
             </div>
 
-            <p className="bg-muted/60 text-foreground/80 rounded-2xl border p-4 text-sm leading-relaxed whitespace-pre-wrap">
+            <p className="bg-muted text-foreground/70 rounded-xl border p-4 text-sm leading-relaxed font-semibold whitespace-pre-wrap">
               {syncedDetails?.description}
             </p>
 
             {syncedDetails?.adminResponse ? (
-              <div className="bg-muted/60 relative rounded-2xl border p-4">
-                <div className="bg-background text-muted-foreground absolute top-3 left-3 rounded-full border px-2 py-0.5 font-mono text-[10px] font-medium">
+              <div className="border-primary/30 from-primary/10 to-primary/5 relative rounded-xl border bg-linear-to-br p-4">
+                <div className="border-primary/20 bg-primary/10 text-primary absolute top-3 left-3 rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase">
                   پاسخ رسمی
                 </div>
-                <span className="text-foreground mb-1 block text-xs font-medium">
+                <span className="text-primary mb-1 block text-xs font-bold">
                   پاسخ رسمی شهرداری منطقه:
                 </span>
-                <p className="text-foreground/75 text-xs leading-relaxed whitespace-pre-line">
+                <p className="text-foreground/70 text-xs leading-relaxed font-medium whitespace-pre-line">
                   {syncedDetails.adminResponse}
                 </p>
               </div>
             ) : (
-              <div className="bg-muted/60 text-muted-foreground rounded-2xl border p-3.5 text-center text-xs">
+              <div className="bg-muted text-muted-foreground/70 rounded-xl border p-3.5 text-center text-xs font-semibold">
                 این گزارش برای اعزام اکیپ آماده‌سازی در صف رسیدگی واحد روابط
                 عمومی شهرداری منطقه است.
               </div>
             )}
 
-            <div className="space-y-2">
-              <span className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
-                <MapPin className="text-foreground size-4" />
+            <div className="space-y-1.5">
+              <span className="text-foreground/70 flex items-center gap-1 text-xs font-semibold">
+                <MapPin className="text-primary h-4 w-4" />
                 موقعیت فیزیکی روی نقشه شهر
               </span>
-              <div className="h-50 overflow-hidden rounded-2xl border">
+              <div className="h-50 overflow-hidden rounded-xl border">
                 <MapComponent
                   pickerMode={false}
                   items={syncedDetails ? [syncedDetails] : []}
@@ -882,8 +874,8 @@ function ProfileMenuCard({
   items: ProfileMenuItem[];
 }) {
   return (
-    <div className="bg-card overflow-hidden rounded-2xl border">
-      <div className="text-muted-foreground border-b px-4 py-2.5 text-start text-[12px] font-medium">
+    <div className="bg-card overflow-hidden rounded-3xl border shadow-sm">
+      <div className="text-muted-foreground border-b px-4 py-2.5 text-start text-[13px] font-medium">
         {title}
       </div>
       <div>
@@ -892,33 +884,33 @@ function ProfileMenuCard({
             <Link
               key={key}
               href={href}
-              className="hover:bg-muted/60 flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 transition-colors"
+              className="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5"
             >
               <span
                 className={cn(
-                  "flex size-9 shrink-0 items-center justify-center rounded-full",
-                  active ? "bg-foreground text-background" : "bg-muted",
+                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+                  active ? "bg-primary/10" : "bg-muted",
                 )}
               >
                 <Icon
                   className={cn(
-                    "size-[18px]",
-                    active ? "" : "text-muted-foreground",
+                    "h-4.5 w-4.5",
+                    active ? "text-primary" : "text-muted-foreground",
                   )}
                   strokeWidth={1.75}
                 />
               </span>
               <span className="flex flex-1 flex-col items-start gap-0.5">
-                <span className="text-foreground text-sm font-medium">
+                <span className="text-foreground text-sm font-semibold">
                   {label}
                 </span>
                 {sub && (
-                  <span className="text-muted-foreground text-[11px]">
+                  <span className="text-muted-foreground text-[11px] font-semibold">
                     {sub}
                   </span>
                 )}
               </span>
-              <ChevronLeft className="text-muted-foreground/40 size-4 shrink-0" />
+              <ChevronLeft className="text-muted-foreground/40 h-4 w-4 shrink-0" />
             </Link>
           );
         })}
@@ -953,9 +945,9 @@ function RequestGrid({
   handleDeleteConfirm,
 }: RequestGridProps) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {requests.length === 0 && (
-        <div className="text-muted-foreground col-span-full py-16 text-center text-sm">
+        <div className="text-muted-foreground col-span-full py-16 text-center text-sm font-semibold">
           {emptyMessage}
         </div>
       )}
@@ -964,20 +956,21 @@ function RequestGrid({
         <Card
           key={req.id}
           className={cn(
-            "report-card bg-card cursor-pointer overflow-hidden rounded-2xl border transition-colors duration-200",
-            "hover:bg-muted/40",
+            "report-card cursor-pointer overflow-hidden transition-all duration-300",
+            "hover:shadow-sm",
+            "border-border bg-card",
             selectedDetailsId === req.id &&
-              "border-foreground ring-foreground/15 ring-2",
+              "border-primary ring-primary/40 ring-2",
           )}
           onClick={() => setSelectedDetails(req)}
         >
-          <CardContent className="flex flex-col gap-2.5 px-4">
+          <CardContent className="flex flex-col gap-2.5 px-5">
             {/* Badge / Header row */}
             <div className="flex flex-wrap items-start justify-between gap-2">
               <Badge
                 variant="outline"
                 className={cn(
-                  "border text-[10px] font-medium",
+                  "border text-[10px] font-semibold",
                   TYPE_BADGE_CLASS[req.type],
                 )}
               >
@@ -986,7 +979,7 @@ function RequestGrid({
               <Badge
                 variant="outline"
                 className={cn(
-                  "border text-[10px] font-medium",
+                  "border text-[10px] font-semibold",
                   STATUS_BADGE_CLASS[req.status],
                 )}
               >
@@ -995,18 +988,18 @@ function RequestGrid({
             </div>
 
             {/* Title */}
-            <CardTitle className="text-foreground line-clamp-1 cursor-pointer text-[14px] font-medium">
+            <CardTitle className="text-foreground line-clamp-1 cursor-pointer text-sm font-bold">
               {req.title}
             </CardTitle>
 
             {/* Description */}
-            <CardDescription className="text-muted-foreground line-clamp-2 min-h-[2lh] text-[13px] leading-relaxed">
+            <CardDescription className="text-muted-foreground line-clamp-2 min-h-[2lh] text-xs leading-relaxed">
               {req.description}
             </CardDescription>
 
             {/* Footer */}
-            <div className="text-muted-foreground mt-1 flex items-center justify-between text-[11px]">
-              <span className="font-medium">
+            <div className="text-muted-foreground flex items-center justify-between text-[10px]">
+              <span className="font-semibold">
                 {toPersianDigits(
                   new Date(req.createdAt).toLocaleDateString("fa-IR"),
                 )}

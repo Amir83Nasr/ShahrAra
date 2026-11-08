@@ -124,15 +124,15 @@ export default function RequestForm({
 
   if (!currentUser) {
     return (
-      <div className="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-16 text-center sm:px-6">
-        <div className="border-border bg-card flex min-h-[380px] w-full flex-col items-center justify-center rounded-2xl border p-8 md:p-12">
-          <div className="text-foreground bg-muted mb-6 flex size-14 items-center justify-center rounded-full">
-            <MapPin className="size-7" />
+      <div className="mx-auto max-w-4xl px-4 py-12 text-center">
+        <div className="border-border bg-card flex min-h-[400px] flex-col items-center justify-center rounded-2xl border p-8 transition-colors md:p-12">
+          <div className="text-primary border-primary/20 bg-primary/10 mb-6 flex h-16 w-16 items-center justify-center rounded-full border">
+            <MapPin className="h-8 w-8" />
           </div>
-          <h2 className="text-foreground mb-2 text-xl font-semibold tracking-tight">
+          <h2 className="text-foreground mb-3 text-2xl font-extrabold">
             ثبت گزارش مشکل یا ایده شهری
           </h2>
-          <p className="text-muted-foreground mx-auto mb-7 max-w-md text-sm leading-relaxed">
+          <p className="text-muted-foreground mx-auto mb-8 max-w-md text-sm leading-relaxed font-medium">
             برای مشارکت در زیباتر کردن شهرمان و گزارش مسائل معابر، فضای سبز،
             روشنایی یا دیگر خدمات شهری، ابتدا باید وارد حساب کاربری خود شوید تا
             درخواستتان مستقیماً به دست مسئولان مربوطه برسد.
@@ -146,35 +146,35 @@ export default function RequestForm({
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6">
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
+    <div className="mx-auto max-w-5xl px-4 py-8">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
         {/* Helper Instructions Column */}
-        <div className="form-helper form-section order-last flex flex-col gap-4 lg:order-first lg:col-span-4">
-          <div className="border-border bg-card rounded-2xl border p-4 transition-colors">
-            <h3 className="text-foreground mb-3 flex items-center gap-2 text-sm font-medium">
-              <Lightbulb className="text-muted-foreground size-4" />
+        <div className="form-helper form-section order-last flex flex-col gap-6 lg:order-first lg:col-span-4">
+          <div className="border-border bg-card rounded-xl border p-5 transition-colors">
+            <h3 className="text-primary border-border mb-3.5 flex items-center gap-2 pb-2.5 text-sm font-extrabold">
+              <Lightbulb className="text-primary h-4 w-4" />
               تفاوت گزارش مشکل و ایده چیست؟
             </h3>
 
-            <div className="space-y-3">
-              <div className="bg-muted/50 rounded-xl border p-3">
+            <div className="space-y-4">
+              <div className="hover:border-destructive/20 border-destructive/10 bg-destructive/5 rounded-lg border p-3.5 transition-all">
                 <span className="text-destructive flex items-center gap-1.5 text-xs font-medium">
-                  <AlertTriangle className="size-3.5" />
+                  <AlertTriangle className="h-3.5 w-3.5" />
                   گزارش مشکلات شهری
                 </span>
-                <p className="text-muted-foreground mt-1 text-[11.5px] leading-relaxed">
+                <p className="lines-relaxed text-muted-foreground mt-1 text-[11.5px] leading-relaxed font-normal">
                   مسائلی که نیاز به تعمیر فوری شهرداری دارند؛ مانند نارسایی
                   آسفالت، خاموشی چراغ خیابان‌ها، تجمیع زباله، خرابی سطل‌ها و سد
                   معبر.
                 </p>
               </div>
 
-              <div className="bg-muted/50 rounded-xl border p-3">
+              <div className="hover:border-type-idea/20 border-type-idea/10 bg-type-idea/5 rounded-lg border p-3.5 transition-all">
                 <span className="text-type-idea flex items-center gap-1.5 text-xs font-medium">
-                  <Lightbulb className="size-3.5" />
+                  <Lightbulb className="h-3.5 w-3.5" />
                   ارسال ایده‌های نوآورانه
                 </span>
-                <p className="text-muted-foreground mt-1 text-[11.5px] leading-relaxed">
+                <p className="lines-relaxed text-muted-foreground mt-1 text-[11.5px] leading-relaxed font-normal">
                   پیشنهادها و طرح‌های خلاقانه‌ای که هوشمندسازی و زیبایی بصری
                   شهرآرا را ارتقا می‌دهد؛ مانند دیوار سبز، سطل‌های پلاستیکی
                   هوشمند، بهبود مبلمان شهری و مناسب‌سازی عبور توان‌یابان.
@@ -183,14 +183,14 @@ export default function RequestForm({
             </div>
           </div>
 
-          <div className="border-border bg-card rounded-2xl border p-4 transition-all">
-            <span className="text-muted-foreground mb-2 block text-[11px] font-medium">
+          <div className="border-border bg-card rounded-xl border p-5 transition-all">
+            <span className="text-muted-foreground mb-2 block font-mono text-xs tracking-wider uppercase">
               مرحله ۲: انتخاب موقعیت
             </span>
-            <h4 className="text-foreground text-xs font-medium">
+            <h4 className="text-foreground text-xs font-semibold">
               چگونه لوکیشن دقیق را انتخاب کنیم؟
             </h4>
-            <p className="text-muted-foreground mt-2 text-[11px] leading-relaxed">
+            <p className="text-muted-foreground mt-2.5 text-[11px] leading-relaxed font-normal">
               با استفاده از نقشه روبرو، دکمه نشانگر را به سمت محل دقیق عارضه یا
               اجرای ایده جابجا کنید. پس از رها کردن پین، منطقه شهرداری مربوطه به
               صورت کاملاً خودکار مشخص خواهد شد.
@@ -199,13 +199,16 @@ export default function RequestForm({
         </div>
 
         {/* Form Container Column */}
-        <div className="form-main form-section border-border bg-card relative overflow-hidden rounded-2xl border p-4 transition-all sm:p-6 lg:col-span-8">
-          <div className="border-border mb-5 border-b pb-4">
-            <span className="text-muted-foreground text-[11px] font-medium">
+        <div className="form-main form-section border-border bg-card relative overflow-hidden rounded-2xl border p-4 transition-all sm:p-6 md:p-8 lg:col-span-8">
+          <div className="bg-primary/5 absolute top-0 right-0 h-32 w-32 rounded-full blur-3xl" />
+          <div className="bg-primary/5 absolute bottom-0 left-0 h-28 w-28 rounded-full blur-3xl" />
+
+          <div className="form-main-section border-border mb-6 pb-5">
+            <span className="text-primary font-mono text-[10px] font-semibold tracking-wide uppercase sm:text-xs">
               سامانه مشارکت شهری
             </span>
-            <h2 className="text-foreground mt-1 text-lg font-semibold tracking-tight sm:text-xl">
-              ثبت گزارش یا ایده جدید
+            <h2 className="text-foreground mt-1 text-lg font-bold sm:text-2xl">
+              ثبت پیگیری و مشارکت جدید
             </h2>
           </div>
 
@@ -235,7 +238,7 @@ export default function RequestForm({
 
             {/* Request Type Selector */}
             <div className="form-main-section flex flex-col gap-2">
-              <label className="text-muted-foreground text-xs font-medium">
+              <label className="text-muted-foreground text-xs font-bold">
                 نوع گزارش خود را مشخص کنید
               </label>
               <RadioGroup
@@ -245,22 +248,22 @@ export default function RequestForm({
               >
                 <label
                   className={cn(
-                    "flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 py-3 text-xs font-medium transition-colors duration-150 sm:gap-2.5 sm:px-4 sm:text-sm",
+                    "flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-semibold transition-all duration-200 sm:gap-2.5 sm:px-4 sm:py-3 sm:text-sm",
                     type === "problem"
-                      ? "border-foreground bg-foreground text-background"
-                      : "border-border text-muted-foreground hover:bg-muted",
+                      ? "border-destructive/50 bg-destructive/10 text-destructive ring-destructive/10 ring-1"
+                      : "border-border text-muted-foreground hover:border-muted-foreground",
                   )}
                 >
                   <RadioGroupItem value="problem" className="sr-only" />
-                  <AlertTriangle className="size-4 shrink-0" />
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
                   <span>گزارش مشکل</span>
                 </label>
                 <label
                   className={cn(
-                    "flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 py-3 text-xs font-medium transition-colors duration-150 sm:gap-2.5 sm:px-4 sm:text-sm",
+                    "flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-semibold transition-all duration-200 sm:gap-2.5 sm:px-4 sm:py-3 sm:text-sm",
                     type === "idea"
-                      ? "border-foreground bg-foreground text-background"
-                      : "border-border text-muted-foreground hover:bg-muted",
+                      ? "border-type-idea/50 bg-type-idea/10 text-type-idea ring-type-idea/10 ring-1"
+                      : "border-border text-muted-foreground hover:border-muted-foreground",
                   )}
                 >
                   <RadioGroupItem value="idea" className="sr-only" />
@@ -274,7 +277,7 @@ export default function RequestForm({
             <div className="form-main-section grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="flex flex-col gap-1.5">
                 <label className="text-muted-foreground flex items-center gap-1 text-xs font-medium">
-                  <Tag className="text-muted-foreground size-3.5" />
+                  <Tag className="text-primary h-3.5 w-3.5" />
                   موضوع درخواست <span className="text-destructive">*</span>
                 </label>
                 <Input
@@ -288,11 +291,11 @@ export default function RequestForm({
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-muted-foreground flex items-center gap-1 text-xs font-medium">
-                  <MessageSquare className="text-muted-foreground size-3.5" />
+                  <MessageSquare className="text-primary h-3.5 w-3.5" />
                   دسته‌بندی مربوطه <span className="text-destructive">*</span>
                 </label>
                 <Select dir="rtl" value={category} onValueChange={setCategory}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent position="popper" align="end">
@@ -312,7 +315,7 @@ export default function RequestForm({
             {/* Description Area */}
             <div className="form-main-section flex flex-col gap-1.5">
               <label className="text-muted-foreground flex items-center gap-1 text-xs font-medium">
-                <AlignRight className="text-muted-foreground size-3.5" />
+                <AlignRight className="text-primary h-3.5 w-3.5" />
                 توضیحات تکمیلی <span className="text-destructive">*</span>
               </label>
               <Textarea
@@ -327,12 +330,12 @@ export default function RequestForm({
             {/* Interactive Picker Map */}
             <div className="form-main-section flex flex-col gap-2">
               <label className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
-                <MapPin className="text-muted-foreground size-4" />
+                <MapPin className="text-primary h-4 w-4" />
                 موقعیت جغرافیایی روی نقشه{" "}
                 <span className="text-destructive">*</span>
               </label>
 
-              <div className="border-border bg-card relative h-[400px] w-full overflow-hidden rounded-2xl border">
+              <div className="border-border bg-card relative h-[400px] w-full overflow-hidden rounded-xl border">
                 <MapComponent
                   pickerMode={true}
                   selectedCoordinates={coords}
@@ -345,11 +348,11 @@ export default function RequestForm({
             {/* Detected Region — auto-filled from map, user can override */}
             <div className="form-main-section flex flex-col gap-1.5">
               <label className="text-muted-foreground flex items-center gap-1 text-xs font-medium">
-                <MapPin className="text-muted-foreground size-3.5" />
+                <MapPin className="text-primary h-3.5 w-3.5" />
                 منطقه شهری <span className="text-destructive">*</span>
               </label>
               <Select dir="rtl" value={region} onValueChange={setRegion}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent position="popper" align="end">
@@ -371,12 +374,7 @@ export default function RequestForm({
 
             {/* Action Submit */}
 
-            <Button
-              type="submit"
-              size="lg"
-              className="w-full sm:w-auto"
-              disabled={loading || success}
-            >
+            <Button type="submit" disabled={loading || success}>
               <Send />
               <span>
                 {loading

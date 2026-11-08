@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AlertCircle, KeyRound, MessageSquare } from "lucide-react";
 import { useApp } from "../providers";
 import { ModeToggle } from "@/components/mode-toggle";
-import { BrandMark } from "@/components/BrandMark";
 import { User } from "../../types";
 import { toPersianDigits, toEnglishDigits } from "@/utils/numberUtils";
 import { cn } from "@/lib/utils";
@@ -286,15 +285,15 @@ export default function LoginPage() {
   };
 
   const phoneHint = !isPhoneDirty ? null : isPhoneValid ? (
-    <span className="border-status-resolved/10 bg-status-resolved/5 text-status-resolved flex items-center gap-1 rounded-md border px-2.5 py-1 text-[10.5px] font-medium">
+    <span className="border-status-resolved/10 bg-status-resolved/5 text-status-resolved flex items-center gap-1 rounded-md border px-2.5 py-1 text-[10.5px] font-bold">
       ✓ شماره همراه معتبر و صحیح است
     </span>
   ) : !startsWith09 ? (
-    <span className="border-destructive/10 bg-destructive/5 text-destructive rounded-md border px-2.5 py-1 text-[10.5px] font-medium">
+    <span className="border-destructive/10 bg-destructive/5 text-destructive rounded-md border px-2.5 py-1 text-[10.5px] font-bold">
       خطا: شماره همراه حتماً باید با ۰۹ آغاز شود
     </span>
   ) : (
-    <span className="border-status-in-progress/10 bg-status-in-progress/5 text-status-in-progress rounded-md border px-2.5 py-1 text-[10.5px] font-medium">
+    <span className="border-status-in-progress/10 bg-status-in-progress/5 text-status-in-progress rounded-md border px-2.5 py-1 text-[10.5px] font-bold">
       در حال تکمیل... ({toPersianDigits(phone.length)} از ۱۱ رقم وارد شده)
     </span>
   );
@@ -304,11 +303,11 @@ export default function LoginPage() {
       ۱۰ رقم عددی معتبر بدون خط تیره (مانند: {toPersianDigits("0370000000")})
     </span>
   ) : isNationalIdValid ? (
-    <span className="border-status-resolved/10 bg-status-resolved/5 text-status-resolved flex items-center gap-1 rounded-md border px-2.5 py-1 text-[10.5px] font-medium">
+    <span className="border-status-resolved/10 bg-status-resolved/5 text-status-resolved flex items-center gap-1 rounded-md border px-2.5 py-1 text-[10.5px] font-bold">
       ✓ کد ملی معتبر و صحیح است
     </span>
   ) : (
-    <span className="border-destructive/10 bg-destructive/5 text-destructive rounded-md border px-2.5 py-1 text-[10.5px] font-medium">
+    <span className="border-destructive/10 bg-destructive/5 text-destructive rounded-md border px-2.5 py-1 text-[10.5px] font-bold">
       کد ملی ۱۰ رقمی ناقص است (در حال حاضر: {toPersianDigits(nationalId.length)}{" "}
       رقم)
     </span>
@@ -324,29 +323,23 @@ export default function LoginPage() {
           : `کد تأیید ارسال‌شده به ${toPersianDigits(phone)} را وارد کنید.`;
 
   return (
-    <div className="bg-background relative flex min-h-svh flex-col">
+    <div className="grid min-h-svh md:grid-cols-2">
       {/* ── فرم ──────────────────────────────────────────── */}
-      <div className="relative flex flex-1 flex-col p-5 sm:p-8">
-        <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <BrandMark className="size-6 text-[12px]" />
-            <span className="text-foreground text-[15px] font-semibold">
-              شهرآرا
-            </span>
-          </Link>
+      <div className="relative flex flex-col p-6 md:p-10">
+        <div className="absolute end-4 top-4">
           <ModeToggle theme={theme} onThemeChange={setTheme} />
         </div>
 
-        <div className="flex flex-1 items-center justify-center py-10">
-          <div className="w-full max-w-sm">
+        <div className="flex flex-1 items-center justify-center">
+          <div className="w-full max-w-xs">
             <FieldGroup className="gap-6">
-              <div className="flex flex-col items-center gap-2 text-center">
-                <h1 className="text-xl font-semibold tracking-tight">
+              <div className="flex flex-col items-center gap-1 text-center">
+                <h1 className="text-2xl font-extrabold">
                   {step === "otp" && isNewUser
                     ? "تکمیل ثبت‌نام"
                     : "ورود به شهرآرا"}
                 </h1>
-                <p className="text-muted-foreground max-w-xs text-sm leading-relaxed text-balance">
+                <p className="text-muted-foreground text-sm text-balance">
                   {stepDescription}
                 </p>
               </div>
@@ -469,7 +462,7 @@ export default function LoginPage() {
                         <AlertDescription className="text-status-resolved/90">
                           کد تأیید شما:{" "}
                           <span
-                            className="font-mono text-base font-semibold"
+                            className="font-mono text-base font-extrabold"
                             dir="ltr"
                           >
                             {toPersianDigits(otpInfo.devCode)}
@@ -479,7 +472,7 @@ export default function LoginPage() {
                     )}
 
                     {/* ── بخش مستقل کد تأیید ───────────────────── */}
-                    <section className="bg-muted/40 mb-2 rounded-2xl border p-4">
+                    <section className="bg-muted/30 mb-2 rounded-lg border p-4">
                       <Field className="items-center">
                         <FieldLabel htmlFor="otp-code">کد تأیید</FieldLabel>
                         {/* dir=ltr: ترتیب خانه‌ها و فیلد مخفی باید یکسان باشد وگرنه کد برعکس ذخیره می‌شود */}
@@ -496,7 +489,7 @@ export default function LoginPage() {
                                 <InputOTPSlot
                                   key={i}
                                   index={i}
-                                  className="bg-background h-12 w-11 text-lg"
+                                  className="bg-background h-11 w-10 text-lg"
                                   renderChar={(ch) => toPersianDigits(ch)}
                                 />
                               ))}
@@ -506,10 +499,10 @@ export default function LoginPage() {
                       </Field>
                       <div className="mt-3 flex items-center justify-between gap-2 text-sm">
                         <div className="flex items-center gap-2">
-                          <span className="text-muted-foreground font-medium">
+                          <span className="text-muted-foreground font-bold">
                             اعتبار کد:
                           </span>
-                          <span className="font-mono font-medium tabular-nums">
+                          <span className="font-mono font-bold tabular-nums">
                             {toPersianDigits(remaining)} ثانیه
                           </span>
                         </div>
@@ -625,6 +618,20 @@ export default function LoginPage() {
               )}
             </FieldGroup>
           </div>
+        </div>
+      </div>
+
+      {/* ── تصویر ────────────────────────────────────────── */}
+      <div className="relative hidden p-2 md:order-first md:block xl:p-4">
+        <div className="bg-muted relative h-full w-full overflow-hidden rounded-3xl">
+          <Image
+            src="/assets/login-3in4.jpg"
+            alt="ماکت شهر و تیم شهرسازی"
+            fill
+            sizes="50vw"
+            priority
+            className="object-cover dark:opacity-80"
+          />
         </div>
       </div>
     </div>

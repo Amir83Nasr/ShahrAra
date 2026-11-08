@@ -49,9 +49,7 @@ export default function LogoutModal({
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
         <DrawerHeader className="gap-1 text-center">
-          <DrawerTitle className="text-xl font-medium">
-            خروج از حساب
-          </DrawerTitle>
+          <DrawerTitle className="text-xl font-bold">خروج از حساب</DrawerTitle>
           <DrawerDescription className="text-balance">
             آیا مطمئن هستید که می‌خواهید از حساب خود خارج شوید؟
           </DrawerDescription>
@@ -80,7 +78,7 @@ export default function LogoutModal({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent size="sm">
         <AlertDialogHeader className="gap-1">
-          <AlertDialogTitle className="text-xl font-medium">
+          <AlertDialogTitle className="text-xl font-bold">
             خروج از حساب
           </AlertDialogTitle>
           <AlertDialogDescription className="text-balance">

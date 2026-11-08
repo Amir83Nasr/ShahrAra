@@ -4,24 +4,6 @@ import "./globals.css";
 import { Providers } from "./providers";
 import AppShell from "./app-shell";
 import PWARegister from "@/components/PWARegister";
-import {
-  FONT_OPTIONS,
-  FONT_STORAGE_KEY,
-  LEGACY_FONT_VALUES,
-} from "@/utils/fontUtils";
-
-// Pre-hydration font restore: avoids a visible font swap for returning users.
-// مقادیر قدیمی فونت‌ها هم به گزینه معتبر فعلی مهاجرت داده می‌شوند.
-const LEGACY_FONT_MAP = Object.fromEntries(
-  LEGACY_FONT_VALUES.map((value) => [value, "default"]),
-);
-const FONT_RESTORE_SCRIPT = `try{var s=localStorage.getItem(${JSON.stringify(
-  FONT_STORAGE_KEY,
-)}),m=${JSON.stringify(LEGACY_FONT_MAP)},f=m[s]||s;if(${JSON.stringify(
-  FONT_OPTIONS.map((option) => option.value),
-)}.indexOf(f)>-1){document.documentElement.dataset.font=f;if(f!==s)localStorage.setItem(${JSON.stringify(
-  FONT_STORAGE_KEY,
-)},f)}}catch(e){}`;
 
 export const metadata: Metadata = {
   title: "شهرآرا",
@@ -53,8 +35,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   // رنگ نوار مرورگر/PWA؛ مقدار واقعی هنگام سوییچ تم در providers به‌روز می‌شود.
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#212121" },
+    { media: "(prefers-color-scheme: light)", color: "#f8fafd" },
+    { media: "(prefers-color-scheme: dark)", color: "#151f29" },
   ],
 };
 
@@ -84,10 +66,6 @@ export default function RootLayout({
 
   return (
     <html lang="fa" dir="rtl" suppressHydrationWarning>
-      <head>
-        {/* برگرداندن فونت انتخاب‌شده پیش از رندر، برای جلوگیری از پرش فونت */}
-        <script dangerouslySetInnerHTML={{ __html: FONT_RESTORE_SCRIPT }} />
-      </head>
       <body className="bg-background text-foreground min-h-screen">
         <PWARegister />
         <Providers>

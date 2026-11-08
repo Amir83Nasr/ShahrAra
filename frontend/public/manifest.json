@@ -9,8 +9,8 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "background_color": "#f8fafd",
+  "theme_color": "#0080c6",
   "categories": ["government", "social", "utilities"],
   "icons": [
     {

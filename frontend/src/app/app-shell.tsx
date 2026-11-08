@@ -20,21 +20,22 @@ import {
 } from "@/components/ui/alert-dialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-// Shared chrome + global auth modal + API error alert.
+// Shared chrome + global API error alert.
 // Every page renders inside this shell via the root layout.
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { currentUser, theme, setTheme, apiError, dismissError, logout } =
     useApp();
   const pathname = usePathname();
 
-  // صفحات بدون پوسته (مثل لاگین) — فقط محتوا
+  // صفحات بدون هدر (مثل لاگین) — فقط محتوا
   const isChromeless = pathname.startsWith("/login");
 
   return (
-    <TooltipProvider delayDuration={400}>
+    <TooltipProvider delayDuration={800}>
       <div
-        className="bg-background text-foreground relative z-0 flex min-h-dvh flex-col transition-colors duration-300 md:flex-row"
+        className="bg-background text-foreground relative z-0 flex min-h-screen flex-col justify-between transition-colors duration-300"
         id="shahr_ara_app_root"
+        // جلوگیری از درگ تصاویر و لوگوها (Firefox از -webkit-user-drag پیروی نمی‌کند)
         onDragStart={(e) => e.preventDefault()}
       >
         {!isChromeless && (
@@ -46,11 +47,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           />
         )}
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <main className="flex-1">
-            <ErrorBoundary>{children}</ErrorBoundary>
-          </main>
-        </div>
+        <main className="flex-1">
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </main>
+
+
+
+        {!isChromeless && (
+          <div
+            className="h-[calc(5rem+env(safe-area-inset-bottom))] md:hidden"
+            aria-hidden
+          />
+        )}
 
         <AlertDialog
           open={!!apiError}

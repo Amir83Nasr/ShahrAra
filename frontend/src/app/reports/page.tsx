@@ -14,18 +14,16 @@ function ReportsContent() {
   const { requests, currentUser, like, refresh, theme } = useApp();
   const searchParams = useSearchParams();
   const category = searchParams.get("category") ?? "all";
-  const query = searchParams.get("q") ?? "";
 
   return (
     <ReportsDirectory
-      key={`${category}-${query}`}
+      key={category}
       items={requests}
       currentUser={currentUser}
       onLike={like}
       onRefresh={() => refresh({ force: true })}
       theme={theme}
       initialCategory={category}
-      initialSearch={query}
     />
   );
 }

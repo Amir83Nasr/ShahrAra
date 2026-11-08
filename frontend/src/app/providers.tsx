@@ -32,12 +32,6 @@ import {
   setCachedData,
   invalidateCache,
 } from "@/utils/apiCache";
-import {
-  DEFAULT_FONT,
-  FONT_STORAGE_KEY,
-  FontOption,
-  normalizeFontOption,
-} from "@/utils/fontUtils";
 
 const REQ_CACHE_KEY = "requests";
 const STATS_CACHE_KEY = "stats";
@@ -67,8 +61,6 @@ interface AppContextValue {
   logout: () => void;
   theme: "light" | "dark";
   setTheme: (theme: "light" | "dark") => void;
-  font: FontOption;
-  setFont: (font: FontOption) => void;
   requests: RequestItem[];
   stats: Stats;
   loading: boolean;
@@ -104,7 +96,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
   // render): the first render must match the server HTML, so defaults here
   // and saved values applied in the effect below.
   const [theme, setThemeState] = useState<"light" | "dark">("light");
-  const [font, setFontState] = useState<FontOption>(DEFAULT_FONT);
   const themeTransitionTimer = useRef<number | null>(null);
 
   // Never leave the transition helper class behind (e.g. on unmount).
@@ -136,12 +127,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
       const savedTheme = localStorage.getItem("shahr_ara_theme");
       if (savedTheme === "dark" || savedTheme === "light") {
         setThemeState(savedTheme);
-      }
-      const savedFont = localStorage.getItem(FONT_STORAGE_KEY);
-      // مهاجرت مقادیر قدیمی («پلاک»، «مربع»، «دیدار») به تنظیم فعلی
-      const restoredFont = normalizeFontOption(savedFont);
-      if (restoredFont) {
-        setFontState(restoredFont);
       }
       try {
         const savedUser = JSON.parse(
@@ -176,7 +161,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       document.body.classList.remove("dark");
     }
     // نوار مرورگر/PWA هم‌رنگ تم فعلی
-    const themeColor = theme === "dark" ? "#212121" : "#ffffff";
+    const themeColor = theme === "dark" ? "#151f29" : "#f8fafd";
     document
       .querySelectorAll('meta[name="theme-color"]')
       .forEach((meta) => meta.setAttribute("content", themeColor));
@@ -184,14 +169,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
     if (!authReady) return;
     localStorage.setItem("shahr_ara_theme", theme);
   }, [theme, authReady]);
-
-  useEffect(() => {
-    // Wait for the restore pass so the pre-hydration script's value is not
-    // clobbered by the default font on the first frame.
-    if (!authReady) return;
-    document.documentElement.dataset.font = font;
-    localStorage.setItem(FONT_STORAGE_KEY, font);
-  }, [font, authReady]);
 
   const loginSuccess = useCallback((user: User) => {
     setCurrentUser(user);
@@ -275,10 +252,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
     }
 
     setThemeState(next);
-  }, []);
-
-  const setFont = useCallback((next: FontOption) => {
-    setFontState(next);
   }, []);
 
   const refresh = useCallback(
@@ -459,8 +432,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
       logout,
       theme,
       setTheme,
-      font,
-      setFont,
       requests,
       stats,
       loading,
@@ -486,8 +457,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
       logout,
       theme,
       setTheme,
-      font,
-      setFont,
       requests,
       stats,
       loading,
