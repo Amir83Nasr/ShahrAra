@@ -394,7 +394,7 @@ export default function UserProfile({
               e.currentTarget.blur();
               setConfirmLogout(true);
             }}
-            className="border-destructive/15 bg-card flex w-full cursor-pointer items-center gap-3 rounded-2xl border px-4 py-2.5 shadow-sm"
+            className="border-destructive/15 bg-card flex w-full cursor-pointer items-center gap-3 rounded-2xl border px-4 py-2.5 shadow-sm transition duration-150 ease-out active:translate-y-px active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:translate-y-0 motion-reduce:active:scale-100"
           >
             <span className="bg-destructive/10 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl">
               <LogOut

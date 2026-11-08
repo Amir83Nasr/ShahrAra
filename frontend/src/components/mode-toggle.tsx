@@ -19,6 +19,8 @@ export function ModeToggle({
       <TooltipTrigger asChild>
         <Button
           variant="ghost"
+          size="icon"
+          className="relative"
           aria-pressed={theme === "dark"}
           aria-label={
             theme === "light" ? "تغییر به حالت تاریک" : "تغییر به حالت روشن"

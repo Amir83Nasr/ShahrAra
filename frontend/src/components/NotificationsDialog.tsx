@@ -131,7 +131,7 @@ export default function NotificationsDialog({
                     <button
                       type="button"
                       onClick={() => openNotification(notification)}
-                      className="hover:bg-muted/60 flex w-full items-start gap-3 rounded-xl border p-3 text-start transition-colors"
+                      className="hover:bg-muted/60 flex w-full items-start gap-3 rounded-xl border p-3 text-start transition duration-150 ease-out active:translate-y-px active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:translate-y-0 motion-reduce:active:scale-100"
                     >
                       <span className="bg-muted text-foreground flex size-8 shrink-0 items-center justify-center rounded-full">
                         <MessageSquare className="size-4" />

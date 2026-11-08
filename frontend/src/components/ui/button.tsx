@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
  * - همهٔ حالت‌ها با گردی کامل (rounded-full) و ارتفاع ۳۶/۴۰ پیکسل
  */
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-transparent bg-clip-padding text-sm leading-none font-medium whitespace-nowrap transition-colors outline-none select-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:opacity-40 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-transparent bg-clip-padding text-sm leading-none font-medium whitespace-nowrap outline-none select-none transition duration-150 ease-out focus-visible:ring-2 focus-visible:ring-ring/30 active:translate-y-px active:scale-[0.96] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:translate-y-0 motion-reduce:active:scale-100 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -27,7 +27,7 @@ const buttonVariants = cva(
           "text-foreground hover:bg-accent hover:text-accent-foreground active:bg-accent/80 aria-expanded:bg-accent",
         destructive:
           "text-destructive hover:bg-destructive/10 active:bg-destructive/15 focus-visible:ring-destructive/30",
-        link: "h-auto rounded-none px-0 text-foreground underline-offset-4 hover:underline",
+        link: "h-auto rounded-none px-0 text-foreground underline-offset-4 hover:underline active:scale-100 active:translate-y-0",
       },
       size: {
         default:
