@@ -5,9 +5,13 @@ import { Providers } from "./providers";
 import AppShell from "./app-shell";
 import PWARegister from "@/components/PWARegister";
 import { THEME_INIT_SCRIPT } from "@/lib/theme-color";
+import { SITE_TITLE, SITE_TITLE_TEMPLATE } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "شهرآرا",
+  title: {
+    default: SITE_TITLE,
+    template: SITE_TITLE_TEMPLATE,
+  },
   description: "سامانه هوشمند ثبت و ارتقای مطالبات و ایده‌های مردمی",
   applicationName: "شهرآرا",
   manifest: "/manifest.json",
