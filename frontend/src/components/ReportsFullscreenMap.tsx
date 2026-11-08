@@ -51,12 +51,17 @@ export default function ReportsFullscreenMap({
       if (event.key === "Escape" && !escapeDisabled) onClose();
     };
 
-    const previousOverflow = document.body.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousRootOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
+    // Some browsers keep the page scrollbar on <html>, which would stay
+    // visible at the side of the fixed fullscreen overlay.
+    document.documentElement.style.overflow = "hidden";
     document.addEventListener("keydown", onKeyDown);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousRootOverflow;
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [open, escapeDisabled, onClose]);
@@ -71,7 +76,7 @@ export default function ReportsFullscreenMap({
 
   return createPortal(
     <div
-      className="bg-background fixed inset-0 z-50 flex flex-col pt-[env(safe-area-inset-top)]"
+      className="bg-background fixed inset-0 z-50 flex flex-col overflow-hidden pt-[env(safe-area-inset-top)]"
       dir="rtl"
       role="dialog"
       aria-modal="true"
@@ -111,7 +116,7 @@ export default function ReportsFullscreenMap({
         />
 
         {/* Region filter — click a region to see only its reports */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/35 to-transparent pt-3 pb-10">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 pt-3">
           <div
             className="no-scrollbar pointer-events-auto flex gap-2 overflow-x-auto px-3 pb-0.5"
             role="group"

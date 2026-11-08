@@ -22,6 +22,12 @@
   left: max(0.75rem, env(safe-area-inset-left));
 }
 
+/* Reports open their details card on click, so the package's own marker
+   popup is redundant (and overlaps the pins on small screens). */
+.map-display .lp-venue-pop-wrap {
+  display: none;
+}
+
 /* فونت اصلی پروژه — پلاک (تمام وزن‌ها) */
 @font-face {
   font-family: "Pelak";
