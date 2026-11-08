@@ -316,7 +316,7 @@ export default function ReportsDirectory({
           >
             <div
               className={cn(
-                "grid grid-cols-1 gap-5",
+                "grid grid-cols-1 gap-3.5 sm:gap-5",
                 showMap ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3",
               )}
             >
@@ -336,7 +336,7 @@ export default function ReportsDirectory({
                       )}
                       onClick={() => setSelectedDetails(item)}
                     >
-                      <CardContent className="flex flex-col gap-2.5 px-5">
+                      <CardContent className="flex flex-col gap-2.5 px-4 sm:px-5">
                         {/* Badge / Header row */}
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <Badge

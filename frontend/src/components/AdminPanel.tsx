@@ -204,7 +204,7 @@ export default function AdminPanel({
     <div className="mx-auto max-w-7xl px-4 py-8" id="shahr_ara_admin_panel">
       <div className="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
         <div className="flex items-center gap-4">
-          <div className="border-primary/30 bg-primary/10 text-primary flex h-12 w-12 items-center justify-center rounded-lg border">
+          <div className="border-primary/30 bg-primary/10 text-primary flex size-12 items-center justify-center rounded-full border">
             <Shield className="h-6 w-6" />
           </div>
           <div>
@@ -233,16 +233,16 @@ export default function AdminPanel({
         {/* Left Column: List with Filters (7 columns on large desktop) */}
         <div className="flex flex-col gap-6 lg:col-span-7">
           {/* Active Filters / Search */}
-          <div className="border-border bg-card flex flex-col gap-4 rounded-xl border p-5">
+          <div className="border-border bg-card flex flex-col gap-4 rounded-2xl border p-4 sm:p-5">
             {/* Search row */}
             <div className="relative">
-              <Search className="text-muted-foreground absolute top-3 right-3.5 h-4 w-4" />
+              <Search className="text-muted-foreground absolute top-1/2 right-3.5 size-4 -translate-y-1/2" />
               <Input
                 type="text"
                 placeholder="جستجوی درخواست‌ها (عنوان، توضیحات، نام شهروند ارائه‌دهنده...)"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-background pr-10"
+                className="h-11 rounded-full pr-10"
               />
             </div>
 
@@ -437,7 +437,7 @@ export default function AdminPanel({
                 );
               })
             ) : (
-              <div className="border-border bg-card text-muted-foreground rounded-xl border p-10 text-center">
+              <div className="border-border bg-card text-muted-foreground rounded-2xl border p-10 text-center">
                 <Filter className="text-muted-foreground mx-auto mb-3 h-8 w-8" />
                 <p className="text-xs font-semibold">
                   هیچ موردی منطبق با فیلترهای بالا یافت نشد.
@@ -489,7 +489,7 @@ export default function AdminPanel({
         {/* Right Column: Detailed Response Dashboard (5 columns on desktop) */}
         <div className="h-full lg:col-span-5">
           {selectedItem ? (
-            <Card className="border-border bg-card rounded-xl border">
+            <Card className="border-border bg-card rounded-2xl border">
               {/* Header */}
               <div className="flex items-start justify-between gap-4 px-(--card-spacing)">
                 <div className="space-y-1">
@@ -529,7 +529,7 @@ export default function AdminPanel({
                 <CardTitle className="text-foreground text-base font-extrabold">
                   {selectedItem.title}
                 </CardTitle>
-                <div className="border-border bg-muted/30 text-foreground/80 rounded-lg border p-3.5 text-xs leading-relaxed whitespace-pre-line">
+                <div className="border-border bg-muted/30 text-foreground/80 rounded-xl border p-3.5 text-xs leading-relaxed whitespace-pre-line">
                   {selectedItem.description}
                 </div>
               </div>
@@ -548,7 +548,7 @@ export default function AdminPanel({
               </div>
 
               {/* Citizen Info */}
-              <div className="border-border bg-muted/20 mx-(--card-spacing) rounded-lg border p-3.5">
+              <div className="border-border bg-muted/20 mx-(--card-spacing) rounded-xl border p-3.5">
                 <div className="flex items-center gap-2 pb-2">
                   <User className="text-primary h-4 w-4" />
                   <span className="text-foreground text-xs font-bold">
@@ -584,7 +584,7 @@ export default function AdminPanel({
                   <MapPin className="text-primary h-3.5 w-3.5" />
                   موقعیت جغرافیایی
                 </span>
-                <div className="border-border bg-background h-[180px] overflow-hidden rounded-lg border">
+                <div className="border-border bg-background h-[180px] overflow-hidden rounded-2xl border">
                   <MapComponent
                     pickerMode={false}
                     items={[selectedItem]}
@@ -607,7 +607,7 @@ export default function AdminPanel({
                 )}
 
                 {saveSuccess && (
-                  <div className="border-type-idea/20 bg-type-idea/10 text-type-idea flex items-center gap-2 rounded-lg border p-2.5 text-xs">
+                  <div className="border-type-idea/20 bg-type-idea/10 text-type-idea flex items-center gap-2 rounded-xl border p-2.5 text-xs">
                     <CheckCircle className="h-4 w-4 shrink-0" />
                     <span>بروزرسانی با موفقیت اعمال شد!</span>
                   </div>
@@ -663,7 +663,7 @@ export default function AdminPanel({
               </form>
             </Card>
           ) : (
-            <Card className="border-border bg-card flex h-full min-h-[400px] flex-col items-center justify-center rounded-xl border text-center">
+            <Card className="border-border bg-card flex h-full min-h-[400px] flex-col items-center justify-center rounded-2xl border text-center">
               <CardContent className="p-6">
                 <MessageSquare className="text-muted-foreground/50 mx-auto mb-4 h-10 w-10" />
                 <h3 className="text-foreground mb-1 text-sm font-bold">

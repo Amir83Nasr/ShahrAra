@@ -146,18 +146,18 @@ export default function RequestForm({
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
         {/* Helper Instructions Column */}
         <div className="form-helper form-section order-last flex flex-col gap-6 lg:order-first lg:col-span-4">
-          <div className="border-border bg-card rounded-xl border p-5 transition-colors">
+          <div className="border-border bg-card rounded-2xl border p-5 transition-colors">
             <h3 className="text-primary border-border mb-3.5 flex items-center gap-2 pb-2.5 text-sm font-extrabold">
               <Lightbulb className="text-primary h-4 w-4" />
               تفاوت گزارش مشکل و ایده چیست؟
             </h3>
 
             <div className="space-y-4">
-              <div className="hover:border-destructive/20 border-destructive/10 bg-destructive/5 rounded-lg border p-3.5 transition-all">
+              <div className="hover:border-destructive/20 border-destructive/10 bg-destructive/5 rounded-xl border p-3.5 transition-all">
                 <span className="text-destructive flex items-center gap-1.5 text-xs font-medium">
                   <AlertTriangle className="h-3.5 w-3.5" />
                   گزارش مشکلات شهری
@@ -169,7 +169,7 @@ export default function RequestForm({
                 </p>
               </div>
 
-              <div className="hover:border-type-idea/20 border-type-idea/10 bg-type-idea/5 rounded-lg border p-3.5 transition-all">
+              <div className="hover:border-type-idea/20 border-type-idea/10 bg-type-idea/5 rounded-xl border p-3.5 transition-all">
                 <span className="text-type-idea flex items-center gap-1.5 text-xs font-medium">
                   <Lightbulb className="h-3.5 w-3.5" />
                   ارسال ایده‌های نوآورانه
@@ -183,7 +183,7 @@ export default function RequestForm({
             </div>
           </div>
 
-          <div className="border-border bg-card rounded-xl border p-5 transition-all">
+          <div className="border-border bg-card rounded-2xl border p-5 transition-all">
             <span className="text-muted-foreground mb-2 block font-mono text-xs tracking-wider uppercase">
               مرحله ۲: انتخاب موقعیت
             </span>
@@ -248,7 +248,7 @@ export default function RequestForm({
               >
                 <label
                   className={cn(
-                    "flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-semibold transition-all duration-200 sm:gap-2.5 sm:px-4 sm:py-3 sm:text-sm",
+                    "flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-semibold transition-all duration-200 sm:gap-2.5 sm:px-4 sm:py-3 sm:text-sm",
                     type === "problem"
                       ? "border-destructive/50 bg-destructive/10 text-destructive ring-destructive/10 ring-1"
                       : "border-border text-muted-foreground hover:border-muted-foreground",
@@ -260,7 +260,7 @@ export default function RequestForm({
                 </label>
                 <label
                   className={cn(
-                    "flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-semibold transition-all duration-200 sm:gap-2.5 sm:px-4 sm:py-3 sm:text-sm",
+                    "flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-semibold transition-all duration-200 sm:gap-2.5 sm:px-4 sm:py-3 sm:text-sm",
                     type === "idea"
                       ? "border-type-idea/50 bg-type-idea/10 text-type-idea ring-type-idea/10 ring-1"
                       : "border-border text-muted-foreground hover:border-muted-foreground",
@@ -335,7 +335,7 @@ export default function RequestForm({
                 <span className="text-destructive">*</span>
               </label>
 
-              <div className="border-border bg-card relative h-[400px] w-full overflow-hidden rounded-xl border">
+              <div className="border-border bg-card relative h-[360px] w-full overflow-hidden rounded-2xl border sm:h-[400px]">
                 <MapComponent
                   pickerMode={true}
                   selectedCoordinates={coords}
@@ -374,7 +374,11 @@ export default function RequestForm({
 
             {/* Action Submit */}
 
-            <Button type="submit" disabled={loading || success}>
+            <Button
+              type="submit"
+              disabled={loading || success}
+              className="h-12 w-full"
+            >
               <Send />
               <span>
                 {loading

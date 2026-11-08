@@ -66,7 +66,7 @@ export default function NotificationsDialog({
     <>
       <Button
         variant="ghost"
-        size="icon-sm"
+        size="icon"
         onClick={() => handleOpenChange(true)}
         aria-label={
           unreadCount > 0

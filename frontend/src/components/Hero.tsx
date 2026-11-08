@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 export default function Hero() {
   return (
     <div
-      className="relative overflow-hidden py-12 sm:py-16 md:py-24"
+      className="relative overflow-hidden py-10 sm:py-14 md:py-20"
       id="shahr_ara_hero"
     >
       <div className="relative z-10 mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
@@ -30,15 +30,15 @@ export default function Hero() {
         </div>
 
         {/* Hero centered layout */}
-        <div className="mx-auto flex max-w-3xl flex-col items-center gap-6">
-          <h1 className="text-foreground relative text-2xl leading-snug font-extrabold sm:text-3xl sm:leading-snug lg:text-4xl lg:leading-normal">
+        <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 sm:gap-6">
+          <h1 className="text-foreground relative text-[26px] leading-snug font-extrabold sm:text-3xl sm:leading-snug lg:text-4xl lg:leading-normal">
             همراه با شهرداری در ساختن <br />
             <span className="text-primary font-extrabold">
               شهری پویاتر و زیباتر
             </span>
           </h1>
 
-          <p className="text-muted-foreground max-w-2xl text-sm leading-relaxed font-normal sm:text-base sm:leading-8">
+          <p className="text-muted-foreground max-w-2xl text-[13px] leading-relaxed font-normal sm:text-base sm:leading-8">
             سامانه هوشمند{" "}
             <strong className="text-primary font-extrabold">شهرآرا</strong> پلی
             ارتباطی و دوسویه برای ارسال فوری گزارش مشکلات شهری (خرابی معابر، سد
@@ -48,15 +48,19 @@ export default function Hero() {
           </p>
 
           {/* Quick Action Buttons */}
-          <div className="flex w-full flex-col gap-3 pt-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-5">
-            <Button asChild className="w-full sm:w-auto">
+          <div className="flex w-full flex-col gap-2.5 pt-1 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-5 sm:pt-3">
+            <Button asChild className="h-12 w-full sm:h-11 sm:w-auto">
               <Link href="/submit">
                 <span>شروع مشارکت فردی و ثبت گزارش</span>
                 <ArrowLeft />
               </Link>
             </Button>
 
-            <Button variant="outline" asChild className="w-full sm:w-auto">
+            <Button
+              variant="outline"
+              asChild
+              className="h-12 w-full sm:h-11 sm:w-auto"
+            >
               <Link href="/reports">
                 <Map />
                 <span>پایش زنده گزارش‌های قم</span>

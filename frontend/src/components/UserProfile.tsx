@@ -322,9 +322,9 @@ export default function UserProfile({
       {!isSectionPage && (
         <div className="flex flex-col gap-3 md:hidden">
           {/* کارت کاربر */}
-          <div className="bg-card overflow-hidden rounded-3xl border shadow-sm">
+          <div className="bg-card overflow-hidden rounded-2xl border">
             <div className="flex items-center gap-3 px-4 py-2.5">
-              <span className="bg-muted flex h-9 w-9 shrink-0 items-center justify-center rounded-xl">
+              <span className="bg-muted flex size-9 shrink-0 items-center justify-center rounded-full">
                 <UserRound
                   className="text-muted-foreground h-4.5 w-4.5"
                   strokeWidth={1.75}
@@ -396,7 +396,7 @@ export default function UserProfile({
             }}
             className="border-destructive/15 bg-card flex w-full cursor-pointer items-center gap-3 rounded-2xl border px-4 py-2.5 shadow-sm transition duration-150 ease-out active:translate-y-px active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:translate-y-0 motion-reduce:active:scale-100"
           >
-            <span className="bg-destructive/10 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl">
+            <span className="bg-destructive/10 flex size-9 shrink-0 items-center justify-center rounded-full">
               <LogOut
                 className="text-destructive h-4.5 w-4.5"
                 strokeWidth={1.75}
@@ -472,7 +472,7 @@ export default function UserProfile({
         {activeSubTab !== "security" && (
           <div
             className={cn(
-              "bg-card mt-3 mb-6 flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center",
+              "bg-card mt-3 mb-6 flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center",
               !isSectionPage && "hidden md:flex",
             )}
           >
@@ -483,7 +483,7 @@ export default function UserProfile({
                 placeholder="جستجوی عنوان، توضیحات..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-background pr-10"
+                className="h-11 rounded-full pr-10"
               />
             </div>
             <div className="grid grid-cols-3 gap-3 sm:flex sm:gap-3">
@@ -777,12 +777,12 @@ export default function UserProfile({
               </span>
             </div>
 
-            <p className="bg-muted text-foreground/70 rounded-xl border p-4 text-sm leading-relaxed font-semibold whitespace-pre-wrap">
+            <p className="bg-muted text-foreground/70 rounded-2xl border p-4 text-sm leading-relaxed font-semibold whitespace-pre-wrap">
               {syncedDetails?.description}
             </p>
 
             {syncedDetails?.adminResponse ? (
-              <div className="border-primary/30 from-primary/10 to-primary/5 relative rounded-xl border bg-linear-to-br p-4">
+              <div className="border-primary/30 from-primary/10 to-primary/5 relative rounded-2xl border bg-linear-to-br p-4">
                 <div className="border-primary/20 bg-primary/10 text-primary absolute top-3 left-3 rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase">
                   پاسخ رسمی
                 </div>
@@ -794,7 +794,7 @@ export default function UserProfile({
                 </p>
               </div>
             ) : (
-              <div className="bg-muted text-muted-foreground/70 rounded-xl border p-3.5 text-center text-xs font-semibold">
+              <div className="bg-muted text-muted-foreground/70 rounded-2xl border p-3.5 text-center text-xs font-semibold">
                 این گزارش برای اعزام اکیپ آماده‌سازی در صف رسیدگی واحد روابط
                 عمومی شهرداری منطقه است.
               </div>
@@ -805,7 +805,7 @@ export default function UserProfile({
                 <MapPin className="text-primary h-4 w-4" />
                 موقعیت فیزیکی روی نقشه شهر
               </span>
-              <div className="h-50 overflow-hidden rounded-xl border">
+              <div className="h-[200px] overflow-hidden rounded-2xl border sm:h-[220px]">
                 <MapComponent
                   pickerMode={false}
                   items={syncedDetails ? [syncedDetails] : []}
@@ -874,7 +874,7 @@ function ProfileMenuCard({
   items: ProfileMenuItem[];
 }) {
   return (
-    <div className="bg-card overflow-hidden rounded-3xl border shadow-sm">
+    <div className="bg-card overflow-hidden rounded-2xl border">
       <div className="text-muted-foreground border-b px-4 py-2.5 text-start text-[13px] font-medium">
         {title}
       </div>
@@ -888,7 +888,7 @@ function ProfileMenuCard({
             >
               <span
                 className={cn(
-                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+                  "flex size-9 shrink-0 items-center justify-center rounded-full",
                   active ? "bg-primary/10" : "bg-muted",
                 )}
               >
@@ -945,7 +945,7 @@ function RequestGrid({
   handleDeleteConfirm,
 }: RequestGridProps) {
   return (
-    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-3.5 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
       {requests.length === 0 && (
         <div className="text-muted-foreground col-span-full py-16 text-center text-sm font-semibold">
           {emptyMessage}
@@ -964,7 +964,7 @@ function RequestGrid({
           )}
           onClick={() => setSelectedDetails(req)}
         >
-          <CardContent className="flex flex-col gap-2.5 px-5">
+          <CardContent className="flex flex-col gap-2.5 px-4 sm:px-5">
             {/* Badge / Header row */}
             <div className="flex flex-wrap items-start justify-between gap-2">
               <Badge

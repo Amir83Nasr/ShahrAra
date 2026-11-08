@@ -187,7 +187,8 @@
   --chart-3: oklch(0.5 0.16 275);
   --chart-4: oklch(0.62 0.11 190);
   --chart-5: oklch(0.65 0.14 70);
-  --radius: 0.625rem;
+  /* مقیاس گردی شبیه اپ ChatGPT: ۸ / ۱۰ / ۱۲ / ۱۷ / ۲۲ / ۲۶ پیکسل */
+  --radius: 0.75rem;
   --sidebar: oklch(0.975 0.008 246);
   --sidebar-foreground: oklch(0.21 0.02 255);
   --sidebar-primary: oklch(0.52 0.145 242);
@@ -349,16 +350,17 @@
   .scrollbar-gutter-stable {
     scrollbar-gutter: stable;
   }
-  /* سایهٔ نرم و لایه‌ای برای کارت‌ها — عمق ملایم بدون شلوغی بصری */
+  /* سایهٔ بسیار ملایم برای کارت‌ها — مثل اپ ChatGPT، عمق با حاشیه ساخته
+     می‌شود نه با سایهٔ سنگین */
   [data-slot="card"] {
     box-shadow:
-      0 1px 2px color-mix(in oklch, var(--foreground) 5%, transparent),
-      0 10px 30px -18px color-mix(in oklch, var(--foreground) 14%, transparent);
+      0 1px 2px color-mix(in oklch, var(--foreground) 4%, transparent),
+      0 8px 24px -20px color-mix(in oklch, var(--foreground) 12%, transparent);
   }
   .dark [data-slot="card"] {
     box-shadow:
-      0 1px 2px rgb(0 0 0 / 35%),
-      0 16px 40px -24px rgb(0 0 0 / 55%);
+      0 1px 2px rgb(0 0 0 / 30%),
+      0 12px 32px -24px rgb(0 0 0 / 50%);
   }
   /* هایلایت متن انتخاب‌شده — پس‌زمینه آبی برند و متن هم‌رنگ آن.
      چون از متغیرهای تم استفاده می‌کند، در حالت روشن و تاریک خودکار است. */
@@ -414,4 +416,20 @@
       color-mix(in oklch, var(--primary) 12%, transparent) 1px,
       transparent 1px
     );
+}
+
+/* ── App utilities (ChatGPT-like mobile shell) ─────────────────── */
+
+/* اسکرول افقی بدون نوار اسکرول — برای ردیف چیپ‌ها و تب‌ها */
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* فاصلهٔ امن پایین صفحه (آی‌فون) */
+@utility pb-safe {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
 }

@@ -61,9 +61,9 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "bg-popover text-popover-foreground border-border fixed z-50 grid w-full gap-6 p-6 text-sm shadow-xl duration-150 outline-none",
+          "bg-popover text-popover-foreground border-border fixed z-50 grid w-full gap-5 p-5 text-sm shadow-xl duration-150 outline-none sm:gap-6 sm:p-6",
           // Mobile: bottom sheet
-          "max-sm:right-0 max-sm:bottom-0 max-sm:left-0 max-sm:max-w-full max-sm:rounded-t-3xl max-sm:border-t",
+          "max-sm:right-0 max-sm:bottom-0 max-sm:left-0 max-sm:max-w-full max-sm:rounded-t-[1.75rem] max-sm:border-t max-sm:pb-[max(1.5rem,env(safe-area-inset-bottom))]",
           "max-sm:data-open:animate-in max-sm:data-open:slide-in-from-bottom max-sm:data-open:fade-in-0",
           "max-sm:data-closed:animate-out max-sm:data-closed:slide-out-to-bottom max-sm:data-closed:fade-out-0",
           // Desktop: centered modal — responsive widths to use available space

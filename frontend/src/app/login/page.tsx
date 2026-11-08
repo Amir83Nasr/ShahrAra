@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { AlertCircle, KeyRound, MessageSquare } from "lucide-react";
 import { useApp } from "../providers";
 import { ModeToggle } from "@/components/mode-toggle";
+import { BrandMark } from "@/components/BrandMark";
 import { User } from "../../types";
 import { toPersianDigits, toEnglishDigits } from "@/utils/numberUtils";
 import { cn } from "@/lib/utils";
@@ -285,29 +286,29 @@ export default function LoginPage() {
   };
 
   const phoneHint = !isPhoneDirty ? null : isPhoneValid ? (
-    <span className="border-status-resolved/10 bg-status-resolved/5 text-status-resolved flex items-center gap-1 rounded-md border px-2.5 py-1 text-[10.5px] font-bold">
+    <span className="border-status-resolved/10 bg-status-resolved/5 text-status-resolved flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10.5px] font-bold">
       ✓ شماره همراه معتبر و صحیح است
     </span>
   ) : !startsWith09 ? (
-    <span className="border-destructive/10 bg-destructive/5 text-destructive rounded-md border px-2.5 py-1 text-[10.5px] font-bold">
+    <span className="border-destructive/10 bg-destructive/5 text-destructive rounded-full border px-2.5 py-1 text-[10.5px] font-bold">
       خطا: شماره همراه حتماً باید با ۰۹ آغاز شود
     </span>
   ) : (
-    <span className="border-status-in-progress/10 bg-status-in-progress/5 text-status-in-progress rounded-md border px-2.5 py-1 text-[10.5px] font-bold">
+    <span className="border-status-in-progress/10 bg-status-in-progress/5 text-status-in-progress rounded-full border px-2.5 py-1 text-[10.5px] font-bold">
       در حال تکمیل... ({toPersianDigits(phone.length)} از ۱۱ رقم وارد شده)
     </span>
   );
 
   const nationalIdHint = !isNationalIdDirty ? (
-    <span className="bg-muted text-muted-foreground rounded-md px-2.5 py-1 text-[10.5px] font-medium">
+    <span className="bg-muted text-muted-foreground rounded-full px-2.5 py-1 text-[10.5px] font-medium">
       ۱۰ رقم عددی معتبر بدون خط تیره (مانند: {toPersianDigits("0370000000")})
     </span>
   ) : isNationalIdValid ? (
-    <span className="border-status-resolved/10 bg-status-resolved/5 text-status-resolved flex items-center gap-1 rounded-md border px-2.5 py-1 text-[10.5px] font-bold">
+    <span className="border-status-resolved/10 bg-status-resolved/5 text-status-resolved flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10.5px] font-bold">
       ✓ کد ملی معتبر و صحیح است
     </span>
   ) : (
-    <span className="border-destructive/10 bg-destructive/5 text-destructive rounded-md border px-2.5 py-1 text-[10.5px] font-bold">
+    <span className="border-destructive/10 bg-destructive/5 text-destructive rounded-full border px-2.5 py-1 text-[10.5px] font-bold">
       کد ملی ۱۰ رقمی ناقص است (در حال حاضر: {toPersianDigits(nationalId.length)}{" "}
       رقم)
     </span>
@@ -334,6 +335,7 @@ export default function LoginPage() {
           <div className="w-full max-w-xs">
             <FieldGroup className="gap-6">
               <div className="flex flex-col items-center gap-1 text-center">
+                <BrandMark className="mb-3 size-12 text-xl" />
                 <h1 className="text-2xl font-extrabold">
                   {step === "otp" && isNewUser
                     ? "تکمیل ثبت‌نام"
@@ -387,7 +389,7 @@ export default function LoginPage() {
                     <Field>
                       <Button
                         type="submit"
-                        className="w-full"
+                        className="h-12 w-full"
                         disabled={loading || !isPhoneValid}
                       >
                         {loading ? "در حال بررسی..." : "ادامه"}
@@ -413,13 +415,12 @@ export default function LoginPage() {
                         onChange={(e) => setPassword(e.target.value)}
                         dir="ltr"
                         autoComplete="current-password"
-                        className="bg-background"
                       />
                     </Field>
                     <Field>
                       <Button
                         type="submit"
-                        className="w-full"
+                        className="h-12 w-full"
                         disabled={loading}
                       >
                         {loading ? "در حال ورود به سامانه..." : "ورود"}
@@ -430,7 +431,7 @@ export default function LoginPage() {
                       <Button
                         type="button"
                         variant="outline"
-                        className="w-full"
+                        className="h-12 w-full"
                         onClick={() => requestOtp()}
                         disabled={loading}
                       >
@@ -472,7 +473,7 @@ export default function LoginPage() {
                     )}
 
                     {/* ── بخش مستقل کد تأیید ───────────────────── */}
-                    <section className="bg-muted/30 mb-2 rounded-lg border p-4">
+                    <section className="bg-muted/30 mb-2 rounded-2xl border p-4">
                       <Field className="items-center">
                         <FieldLabel htmlFor="otp-code">کد تأیید</FieldLabel>
                         {/* dir=ltr: ترتیب خانه‌ها و فیلد مخفی باید یکسان باشد وگرنه کد برعکس ذخیره می‌شود */}
@@ -489,7 +490,7 @@ export default function LoginPage() {
                                 <InputOTPSlot
                                   key={i}
                                   index={i}
-                                  className="bg-background h-11 w-10 text-lg"
+                                  className="h-12 w-11 text-lg"
                                   renderChar={(ch) => toPersianDigits(ch)}
                                 />
                               ))}

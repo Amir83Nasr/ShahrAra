@@ -8,12 +8,12 @@ import { cn } from "@/lib/utils";
 
 /**
  * دکمه‌های اپ ChatGPT:
- * - دکمهٔ اصلی: قرصی، مشکی در تم روشن و سفید در تم تاریک
- * - دکمه‌های ثانویه: خاکستری ملایم بدون سایه
- * - همهٔ حالت‌ها با گردی کامل (rounded-full) و ارتفاع ۳۶/۴۰ پیکسل
+ * - همهٔ دکمه‌ها قرصی‌شکل (rounded-full) با گردی کامل
+ * - ارتفاع ۴۰px پیش‌فرض، ۳۲px کوچک و ۴۸px بزرگ برای لمس راحت در موبایل
+ * - دکمه‌های آیکونی دایره‌ای و هم‌اندازه
  */
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-transparent bg-clip-padding text-sm leading-none font-medium whitespace-nowrap outline-none select-none transition duration-150 ease-out focus-visible:ring-2 focus-visible:ring-ring/30 active:translate-y-px active:scale-[0.96] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:translate-y-0 motion-reduce:active:scale-100 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-transparent bg-clip-padding text-sm leading-none font-medium whitespace-nowrap outline-none select-none transition duration-150 ease-out focus-visible:ring-2 focus-visible:ring-ring/40 active:translate-y-px active:scale-[0.96] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:translate-y-0 motion-reduce:active:scale-100 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -31,13 +31,13 @@ const buttonVariants = cva(
       },
       size: {
         default:
-          "h-9 px-4 has-data-[icon=inline-end]:pe-3 has-data-[icon=inline-start]:ps-3",
+          "h-10 px-4 has-data-[icon=inline-end]:pe-3 has-data-[icon=inline-start]:ps-3",
         sm: "h-8 px-3 text-xs has-data-[icon=inline-end]:pe-2.5 has-data-[icon=inline-start]:ps-2.5 [&_svg:not([class*='size-'])]:size-3.5",
-        lg: "h-11 px-5 text-[15px] has-data-[icon=inline-end]:pe-4 has-data-[icon=inline-start]:ps-4",
-        icon: "size-9 p-0",
+        lg: "h-12 px-6 text-[15px] has-data-[icon=inline-end]:pe-5 has-data-[icon=inline-start]:ps-5",
+        icon: "size-10 p-0",
         "icon-xs": "size-7 p-0 [&_svg:not([class*='size-'])]:size-3.5",
         "icon-sm": "size-8 p-0 [&_svg:not([class*='size-'])]:size-4",
-        "icon-lg": "size-10 p-0",
+        "icon-lg": "size-12 p-0",
       },
     },
     defaultVariants: {

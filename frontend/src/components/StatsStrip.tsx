@@ -78,13 +78,16 @@ export default function StatsStrip({
 
   return (
     <div
-      className={cn("grid grid-cols-2 gap-3 sm:grid-cols-4", className)}
+      className={cn(
+        "grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3",
+        className,
+      )}
       aria-label="آمار مشارکت شهروندان"
     >
       {items.map(({ label, value, Icon }) => (
         <div
           key={label}
-          className="border-border bg-card rounded-2xl border px-4 py-3"
+          className="border-border bg-card rounded-2xl border px-3.5 py-3 sm:px-4"
         >
           <div className="text-muted-foreground flex items-center gap-1.5 text-[11px] font-medium">
             <Icon className="size-3.5 shrink-0" />

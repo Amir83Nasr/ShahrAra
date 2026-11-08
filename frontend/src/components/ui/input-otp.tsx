@@ -31,7 +31,7 @@ function InputOTPGroup({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="input-otp-group"
       className={cn(
-        "has-aria-invalid:border-destructive has-aria-invalid:ring-destructive/20 flex items-center rounded-xl has-aria-invalid:ring-3",
+        "has-aria-invalid:border-destructive has-aria-invalid:ring-destructive/20 flex items-center rounded-2xl has-aria-invalid:ring-3",
         className,
       )}
       {...props}
@@ -56,7 +56,7 @@ function InputOTPSlot({
       data-slot="input-otp-slot"
       data-active={isActive}
       className={cn(
-        "border-input aria-invalid:border-destructive data-[active=true]:border-ring data-[active=true]:ring-ring/20 dark:bg-muted/30 relative flex size-9 items-center justify-center border-y border-r text-sm transition-all outline-none first:rounded-l-xl first:border-l last:rounded-r-xl data-[active=true]:z-10 data-[active=true]:ring-3",
+        "border-input aria-invalid:border-destructive data-[active=true]:border-ring data-[active=true]:ring-ring/20 dark:bg-muted/30 relative flex size-9 items-center justify-center border-y border-r text-sm transition-all outline-none first:rounded-l-2xl first:border-l last:rounded-r-2xl data-[active=true]:z-10 data-[active=true]:ring-3",
         className,
       )}
       {...props}

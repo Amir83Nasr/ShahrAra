@@ -57,10 +57,10 @@ const FEATURES = [
 
 function FeaturesSection() {
   return (
-    <section className="bg-muted/30 border-t border-b py-16">
+    <section className="bg-muted/30 border-t border-b py-12 sm:py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-10 text-center">
-          <h2 className="text-foreground text-2xl font-extrabold">
+        <div className="mb-8 text-center sm:mb-10">
+          <h2 className="text-foreground text-xl font-extrabold sm:text-2xl">
             چرا شهرآرا؟
           </h2>
           <p className="text-muted-foreground mx-auto mt-2 max-w-2xl text-sm leading-relaxed">
@@ -69,13 +69,16 @@ function FeaturesSection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
           {FEATURES.map(({ icon: Icon, title, description }) => (
-            <Card key={title} className="border-border bg-card h-full py-6">
-              <CardContent className="flex h-full flex-col gap-3 px-6">
+            <Card
+              key={title}
+              className="border-border bg-card h-full py-5 sm:py-6"
+            >
+              <CardContent className="flex h-full flex-col gap-3 px-5 sm:px-6">
                 <div className="flex items-center gap-3">
-                  <div className="bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
-                    <Icon className="h-5 w-5" />
+                  <div className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-full">
+                    <Icon className="size-5" />
                   </div>
                   <CardTitle className="text-foreground text-sm font-extrabold">
                     {title}
@@ -118,9 +121,9 @@ const STEPS = [
 
 function HowItWorksSection() {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-      <div className="mb-10 text-center">
-        <h2 className="text-foreground text-2xl font-extrabold">
+    <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+      <div className="mb-8 text-center sm:mb-10">
+        <h2 className="text-foreground text-xl font-extrabold sm:text-2xl">
           فرآیند کار چگونه است؟
         </h2>
         <p className="text-muted-foreground mx-auto mt-2 max-w-2xl text-sm leading-relaxed">
@@ -128,7 +131,7 @@ function HowItWorksSection() {
         </p>
       </div>
 
-      <div className="relative grid grid-cols-1 gap-8 md:grid-cols-3">
+      <div className="relative grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
         {STEPS.map(({ icon: Icon, title, description }, idx) => (
           <div
             key={title}
@@ -159,22 +162,22 @@ function HowItWorksSection() {
 
 function CtaSection() {
   return (
-    <section className="mx-auto max-w-3xl px-4 pb-24 text-center sm:px-6 lg:px-8">
-      <h2 className="text-foreground text-2xl font-extrabold sm:text-3xl">
+    <section className="mx-auto max-w-3xl px-4 pb-14 text-center sm:px-6 sm:pb-20 lg:px-8">
+      <h2 className="text-foreground text-xl font-extrabold sm:text-2xl md:text-3xl">
         امروز شهروند اثرگذار شوید
       </h2>
-      <p className="text-muted-foreground mx-auto mt-4 max-w-xl text-sm leading-relaxed sm:text-base">
+      <p className="text-muted-foreground mx-auto mt-3 max-w-xl text-sm leading-relaxed sm:mt-4 sm:text-base">
         هر گزارش، گامی برای بهبود شهر است. همین حالا مشکل محله خود را ثبت کنید
         یا ایده‌ای برای زیباتر شدن قم به اشتراک بگذارید.
       </p>
-      <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-        <Button asChild className="w-full sm:w-auto">
+      <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:mt-8 sm:flex-row">
+        <Button asChild className="h-12 w-full sm:w-auto">
           <Link href="/submit">
             <span>ثبت گزارش یا ایده</span>
             <ArrowLeft />
           </Link>
         </Button>
-        <Button variant="outline" asChild className="w-full sm:w-auto">
+        <Button variant="outline" asChild className="h-12 w-full sm:w-auto">
           <Link href="/reports">
             <span>مشاهده گزارش‌ها</span>
           </Link>
