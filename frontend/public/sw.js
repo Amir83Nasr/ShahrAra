@@ -1,9 +1,12 @@
 // Shahr Ara service worker — offline shell + cache-first static assets.
 // Vanilla Workbox-free SW; version bump invalidates old caches.
-const VERSION = "v3";
+const VERSION = "v4";
 const SHELL_CACHE = `shahr-ara-shell-${VERSION}`;
 const ASSET_CACHE = `shahr-ara-assets-${VERSION}`;
 const SHELL_URL = "/";
+
+// فقط منابع immutable کش‌شدنی‌اند؛ HTML و payloadهای RSC هرگز.
+const IMMUTABLE_PREFIXES = ["/_next/static/", "/assets/", "/icons/"];
 
 // ─── INSTALL ─────────────────────────────────────────────────────
 
@@ -50,6 +53,17 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // درخواست‌های RSC ناوبری سمت کلاینت (App Router) نباید کش شوند: بازپخش
+  // استریم‌های موجودی از کش باعث خطاهای flight سبک
+  // «chunk.reason.enqueueModel is not a function» می‌شود — همیشه شبکه.
+  if (
+    request.headers.has("RSC") ||
+    request.headers.has("Next-Router-State-Tree") ||
+    request.headers.has("Next-Router-Prefetch")
+  ) {
+    return;
+  }
+
   // Navigation: network-first, fall back to cached shell (offline).
   if (request.mode === "navigate") {
     event.respondWith(
@@ -63,6 +77,12 @@ self.addEventListener("fetch", (event) => {
           caches.match(request).then((hit) => hit || caches.match(SHELL_URL)),
         ),
     );
+    return;
+  }
+
+  // Only immutable build/font/icon assets participate in the cache-first
+  // branch; everything else (HTML, dev files, other fetches) goes to network.
+  if (!IMMUTABLE_PREFIXES.some((prefix) => url.pathname.startsWith(prefix))) {
     return;
   }
 

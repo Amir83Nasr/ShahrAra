@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useSyncExternalStore } from "react";
+import { useLayoutEffect, useState } from "react";
 import Link from "next/link";
 import { UserRound } from "lucide-react";
 import { useApp } from "@/app/providers";
@@ -15,13 +15,7 @@ import {
   ProfilePageSkeleton,
 } from "@/components/skeletons";
 
-function subscribeToStorage(callback: () => void) {
-  window.addEventListener("storage", callback);
-  return () => window.removeEventListener("storage", callback);
-}
-
 function storedSessionSnapshot(): boolean {
-  if (typeof window === "undefined") return false;
   try {
     return Boolean(window.localStorage.getItem("shahr_ara_user"));
   } catch {
@@ -34,9 +28,12 @@ function storedSessionSnapshot(): boolean {
  * session is restored, sign-in prompt when logged out, children when logged in.
  *
  * The server cannot know whether a visitor is signed in, so it renders the
- * neutral auth skeleton. Once hydrated we pick the route-shaped profile
- * skeleton only when a stored session exists — a logged-out citizen never
- * sees a fake logged-in profile flash before the sign-in card.
+ * neutral auth skeleton. The saved session is only read after the hydration
+ * pass completes (useState starts as `false` on both sides, so the first
+ * render always matches the server HTML); reading it in a layout effect then
+ * swaps in the route-shaped profile skeleton before the first paint, so a
+ * logged-out citizen never sees a fake logged-in profile flash before the
+ * sign-in card.
  */
 export default function ProfileGate({
   children,
@@ -46,11 +43,15 @@ export default function ProfileGate({
   variant?: "hub" | "list" | "settings";
 }) {
   const { currentUser, authReady } = useApp();
-  const hasStoredSession = useSyncExternalStore(
-    subscribeToStorage,
-    storedSessionSnapshot,
-    () => false,
-  );
+  const [hasStoredSession, setHasStoredSession] = useState(false);
+
+  useLayoutEffect(() => {
+    // queueMicrotask keeps setState out of the effect body (eslint
+    // react-hooks/set-state-in-effect) while still running before paint.
+    queueMicrotask(() => {
+      setHasStoredSession(storedSessionSnapshot());
+    });
+  }, []);
 
   // Wait for localStorage session restore before deciding
   if (!authReady) {

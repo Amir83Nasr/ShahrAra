@@ -5,6 +5,7 @@ import { Providers } from "./providers";
 import AppShell from "./app-shell";
 import PWARegister from "@/components/PWARegister";
 import { THEME_INIT_SCRIPT } from "@/lib/theme-color";
+import InlineScript from "@/components/inline-script";
 import { SITE_TITLE, SITE_TITLE_TEMPLATE } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -77,7 +78,7 @@ export default function RootLayout({
             عمداً در JSX رندر نمی‌شود تا React هنگام hydration نسخهٔ تازه‌ای از
             آن نسازد و دو متای theme-color هم‌زمان (یکی با رنگ اشتباه) نداشته
             باشیم. */}
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <InlineScript html={THEME_INIT_SCRIPT} />
       </head>
       <body className="bg-background text-foreground min-h-dvh">
         <PWARegister />
