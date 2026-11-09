@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/responsive-dialog";
 import { formatPersian } from "@/utils/persianDate";
 import { toPersianDigits } from "@/utils/numberUtils";
+import { NotificationsSkeleton } from "@/components/skeletons";
 
 interface NotificationsDialogProps {
   /** Close the mobile drawer when a notification opens another page. */
@@ -53,6 +54,10 @@ export default function NotificationsDialog({
     void markNotificationRead(notification.id);
     setOpen(false);
     onNavigate?.();
+    if (notification.requestId) {
+      router.push(`/reports/${encodeURIComponent(notification.requestId)}`);
+      return;
+    }
     if (notification.requestTitle) {
       router.push(
         `/reports?q=${encodeURIComponent(notification.requestTitle)}`,
@@ -110,10 +115,7 @@ export default function NotificationsDialog({
 
           <div className="-mx-1 max-h-[60vh] overflow-y-auto px-1">
             {notificationsLoading && unreadCount === 0 ? (
-              <div className="text-muted-foreground flex flex-col items-center gap-2 py-10 text-xs">
-                <span className="border-muted border-t-foreground size-5 animate-spin rounded-full border-2" />
-                در حال دریافت اعلان‌ها…
-              </div>
+              <NotificationsSkeleton />
             ) : unreadCount === 0 ? (
               <div className="text-muted-foreground flex flex-col items-center gap-2 py-10 text-center">
                 <Inbox className="size-8 opacity-60" />

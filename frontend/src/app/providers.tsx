@@ -11,6 +11,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
@@ -93,6 +94,8 @@ interface AppContextValue {
   currentUser: User | null;
   authReady: boolean;
   loginSuccess: (user: User) => void;
+  /** Merge a fresh profile response into the session (avatar, name, ...). */
+  updateUser: (patch: Partial<User>) => void;
   logout: () => void;
   theme: "light" | "dark";
   setTheme: (theme: "light" | "dark") => void;
@@ -140,6 +143,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [apiError, setApiError] = useState<string | null>(null);
 
   const [requests, setRequests] = useState<RequestItem[]>([]);
+  // Latest list for optimistic rollbacks inside callbacks (state itself is
+  // stale inside the memoized handler).
+  const requestsRef = useRef<RequestItem[]>(requests);
   const [stats, setStats] = useState<Stats>(INITIAL_STATS);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -195,6 +201,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
       localStorage.setItem("shahr_ara_token", user.token);
     }
     invalidateCache();
+  }, []);
+
+  const updateUser = useCallback((patch: Partial<User>) => {
+    setCurrentUser((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, ...patch };
+      localStorage.setItem("shahr_ara_user", JSON.stringify(next));
+      return next;
+    });
   }, []);
 
   const logout = useCallback(() => {
@@ -318,6 +333,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(t);
   }, [authReady, refresh]);
 
+  // Keep the rollback snapshot in sync with every list update.
+  useEffect(() => {
+    requestsRef.current = requests;
+  }, [requests]);
+
   const refreshNotifications = useCallback(async () => {
     const token = currentUser?.token ?? localStorage.getItem("shahr_ara_token");
     if (!token) {
@@ -391,6 +411,26 @@ export function Providers({ children }: { children: React.ReactNode }) {
       const token =
         currentUser?.token ?? localStorage.getItem("shahr_ara_token");
       if (!token) return;
+
+      // Optimistic toggle: cards and the report page should react instantly.
+      // On failure the previous snapshot is restored and the error is shown.
+      const snapshot = requestsRef.current.find((r) => r.id === id);
+      if (snapshot) {
+        setRequests((prev) =>
+          prev.map((r) =>
+            r.id === id
+              ? {
+                  ...r,
+                  likedByCurrentUser: !r.likedByCurrentUser,
+                  likes: r.likedByCurrentUser
+                    ? Math.max(0, r.likes - 1)
+                    : r.likes + 1,
+                }
+              : r,
+          ),
+        );
+      }
+
       try {
         const updatedReq = await apiFetch<{
           success: boolean;
@@ -407,6 +447,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
           invalidateCache();
         }
       } catch (err) {
+        if (snapshot) {
+          setRequests((prev) => prev.map((r) => (r.id === id ? snapshot : r)));
+        }
         setApiError(apiErrorMessage(err, "ثبت لایک انجام نشد."));
       }
     },
@@ -435,6 +478,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       currentUser,
       authReady,
       loginSuccess,
+      updateUser,
       logout,
       theme,
       setTheme,
@@ -461,6 +505,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       currentUser,
       authReady,
       loginSuccess,
+      updateUser,
       logout,
       theme,
       setTheme,

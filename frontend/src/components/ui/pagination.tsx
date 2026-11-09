@@ -73,11 +73,11 @@ function PaginationPrevious({
     <PaginationLink
       aria-label="صفحه قبلی"
       size="default"
-      className={cn("gap-1 pr-2.5", className)}
+      className={cn("gap-1 px-2.5", className)}
       {...props}
     >
       <ChevronRight className="size-4" />
-      <span>قبلی</span>
+      <span className="hidden sm:inline">قبلی</span>
     </PaginationLink>
   );
 }
@@ -90,10 +90,10 @@ function PaginationNext({
     <PaginationLink
       aria-label="صفحه بعدی"
       size="default"
-      className={cn("gap-1 pl-2.5", className)}
+      className={cn("gap-1 px-2.5", className)}
       {...props}
     >
-      <span>بعدی</span>
+      <span className="hidden sm:inline">بعدی</span>
       <ChevronLeft className="size-4" />
     </PaginationLink>
   );

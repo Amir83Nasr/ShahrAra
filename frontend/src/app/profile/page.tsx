@@ -10,7 +10,7 @@ import UserProfile from "@/components/UserProfile";
 import { useApp } from "../providers";
 
 export default function ProfilePage() {
-  const { currentUser, requests, like, refresh } = useApp();
+  const { currentUser, requests, refresh } = useApp();
 
   return (
     <ProfileGate>
@@ -18,7 +18,6 @@ export default function ProfilePage() {
         <UserProfile
           currentUser={currentUser}
           requests={requests}
-          onLike={like}
           onRefresh={() => refresh({ force: true })}
         />
       )}

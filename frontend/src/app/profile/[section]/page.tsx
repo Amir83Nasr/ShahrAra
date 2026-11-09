@@ -11,30 +11,33 @@ import ProfileGate from "@/components/ProfileGate";
 import UserProfile from "@/components/UserProfile";
 import { useApp } from "../../providers";
 
-const SECTIONS = ["my", "liked", "security"] as const;
+const SECTIONS = ["my", "liked", "settings"] as const;
 
 export default function ProfileSectionPage() {
-  const { currentUser, requests, like, refresh } = useApp();
+  const { currentUser, requests, refresh } = useApp();
   const params = useParams<{ section: string }>();
   const router = useRouter();
 
   const section = params.section as (typeof SECTIONS)[number];
   const valid = SECTIONS.includes(section);
 
-  // Unknown section → back to profile hub
+  // Older links to the password tab now live inside the settings section.
   useEffect(() => {
+    if (params.section === "security") {
+      router.replace("/profile/settings");
+      return;
+    }
     if (!valid) router.replace("/profile");
-  }, [valid, router]);
+  }, [valid, params.section, router]);
 
   if (!valid) return null;
 
   return (
-    <ProfileGate>
+    <ProfileGate variant={section === "settings" ? "settings" : "list"}>
       {currentUser && (
         <UserProfile
           currentUser={currentUser}
           requests={requests}
-          onLike={like}
           onRefresh={() => refresh({ force: true })}
           section={section}
         />

@@ -369,9 +369,9 @@ def update_status(
             status_label = {
                 "submitted": "ثبت شده",
                 "under_review": "در حال بررسی",
-                "in_progress": "در حال انجام",
+                "in_progress": "در حال اجرا",
                 "resolved": "حل شده",
-                "archived": "بایگانی شده",
+                "archived": "بایگانی‌شده",
             }.get(req.status, req.status)
             message = f"وضعیت درخواست شما به «{status_label}» تغییر یافت."
         else:

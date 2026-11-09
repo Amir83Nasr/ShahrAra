@@ -11,7 +11,8 @@ import { useApp } from "../providers";
 import ReportsDirectory from "@/components/ReportsDirectory";
 
 function ReportsContent() {
-  const { requests, currentUser, like, refresh, theme } = useApp();
+  const { requests, currentUser, like, refresh, theme, loading, loadError } =
+    useApp();
   const searchParams = useSearchParams();
   const category = searchParams.get("category") ?? "all";
 
@@ -24,6 +25,8 @@ function ReportsContent() {
       onRefresh={() => refresh({ force: true })}
       theme={theme}
       initialCategory={category}
+      loading={loading}
+      loadError={loadError}
     />
   );
 }

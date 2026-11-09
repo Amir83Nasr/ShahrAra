@@ -12,6 +12,8 @@ export interface User {
   isAdmin: boolean;
   // Absent in sessions saved before the OTP auth rework — treat as unknown.
   hasPassword?: boolean;
+  /** Versioned URL of the profile picture; null/absent means no picture. */
+  avatarUrl?: string | null;
   token?: string;
 }
 

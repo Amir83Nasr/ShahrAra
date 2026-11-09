@@ -6,15 +6,9 @@
  */
 
 import React, { useState, useEffect, useRef } from "react";
-import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { RequestItem, User } from "../types";
-
-// maplibre-gl touches `window` at import time; skip prerendering
-const MapComponent = dynamic(() => import("./MapComponent"), {
-  ssr: false,
-  loading: () => <MapSkeleton />,
-});
 import { Heart, MapPin, AlertCircleIcon, Map, Search } from "lucide-react";
 import { toPersianDigits } from "../utils/numberUtils";
 import { REGIONS } from "../utils/regionUtils";
@@ -50,19 +44,9 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import {
-  ResponsiveDialog,
-  ResponsiveDialogContent,
-  ResponsiveDialogHeader,
-  ResponsiveDialogTitle,
-  ResponsiveDialogFooter,
-} from "@/components/ui/responsive-dialog";
-import {
-  LoadErrorState,
-  MapSkeleton,
-  ReportCardsSkeleton,
-} from "@/components/skeletons";
+import { LoadErrorState, ReportCardsSkeleton } from "@/components/skeletons";
 import ReportsFullscreenMap from "@/components/ReportsFullscreenMap";
+import ReportPreviewDialog from "@/components/ReportPreviewDialog";
 
 interface ReportsDirectoryProps {
   items: RequestItem[];
@@ -96,9 +80,7 @@ export default function ReportsDirectory({
     "newest" | "oldest" | "most_liked" | "least_liked"
   >("newest");
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [selectedDetails, setSelectedDetails] = useState<RequestItem | null>(
-    null,
-  );
+  const [previewItem, setPreviewItem] = useState<RequestItem | null>(null);
   const PAGE_SIZE = 12;
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [prevFilters, setPrevFilters] = useState("");
@@ -189,30 +171,8 @@ export default function ReportsDirectory({
       router.push("/login");
       return;
     }
-    setSelectedDetails((prev) =>
-      prev && prev.id === id
-        ? {
-            ...prev,
-            likedByCurrentUser: !prev.likedByCurrentUser,
-            likes: prev.likedByCurrentUser
-              ? Math.max(0, prev.likes - 1)
-              : prev.likes + 1,
-          }
-        : prev,
-    );
-    onLike(id);
+    void onLike(id);
   };
-
-  useEffect(() => {
-    if (selectedDetails) {
-      const updated = items.find((i) => i.id === selectedDetails.id);
-      if (updated) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setSelectedDetails(updated);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items]);
 
   return (
     // ارتفاع صفحه = یک ویوپورت منهای هدر (h-16 در دسکتاپ + ۱px حاشیه)
@@ -346,13 +306,17 @@ export default function ReportsDirectory({
                     <Card
                       key={item.id}
                       className={cn(
-                        "report-card cursor-pointer overflow-hidden transition-all duration-300",
+                        "report-card relative cursor-pointer overflow-hidden transition-all duration-300",
                         "hover:shadow-sm",
                         "border-border bg-card",
                       )}
-                      onClick={() => setSelectedDetails(item)}
                     >
-                      <CardContent className="flex flex-col gap-2.5 px-4 sm:px-5">
+                      <Link
+                        href={`/reports/${encodeURIComponent(item.id)}`}
+                        aria-label={`مشاهده گزارش ${item.title}`}
+                        className="focus-visible:ring-ring absolute inset-0 z-0 rounded-[inherit] focus-visible:ring-2 focus-visible:outline-none"
+                      />
+                      <CardContent className="pointer-events-none relative flex flex-col gap-2.5 px-4 sm:px-5">
                         {/* Badge / Header row */}
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <Badge
@@ -377,7 +341,7 @@ export default function ReportsDirectory({
                         </div>
 
                         {/* Content */}
-                        <CardTitle className="text-foreground line-clamp-1 cursor-pointer text-sm font-extrabold">
+                        <CardTitle className="text-foreground line-clamp-1 text-sm font-extrabold">
                           {item.title}
                         </CardTitle>
                         <CardDescription className="text-muted-foreground line-clamp-2 min-h-[2lh] text-xs leading-relaxed">
@@ -391,32 +355,36 @@ export default function ReportsDirectory({
                             {toPersianDigits(item.region)}
                           </span>
 
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant={
-                                  hasLikedStatus ? "destructive" : "outline"
-                                }
-                                onClick={(e) => handleLikeClick(e, item.id)}
-                              >
-                                <Heart
-                                  className={cn(
-                                    hasLikedStatus && "fill-current",
-                                  )}
-                                />
-                                <span className="font-bold">
-                                  {toPersianDigits(item.likes)} لایک
-                                </span>
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {!currentUser
-                                ? "برای ثبت لایک وارد شوید"
-                                : hasLikedStatus
-                                  ? "لغو لایک"
-                                  : "ثبت لایک"}
-                            </TooltipContent>
-                          </Tooltip>
+                          <div className="pointer-events-auto">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant={
+                                    hasLikedStatus
+                                      ? "destructive-soft"
+                                      : "outline"
+                                  }
+                                  onClick={(e) => handleLikeClick(e, item.id)}
+                                >
+                                  <Heart
+                                    className={cn(
+                                      hasLikedStatus && "fill-current",
+                                    )}
+                                  />
+                                  <span className="font-bold">
+                                    {toPersianDigits(item.likes)} لایک
+                                  </span>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {!currentUser
+                                  ? "برای ثبت لایک وارد شوید"
+                                  : hasLikedStatus
+                                    ? "لغو لایک"
+                                    : "ثبت لایک"}
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -447,119 +415,23 @@ export default function ReportsDirectory({
         </div>
       </div>
 
-      {/* Fullscreen map — click a report marker to see its details */}
+      {/* Fullscreen map — picking a marker opens a short preview first */}
       <ReportsFullscreenMap
         open={mapOpen}
         onClose={() => setMapOpen(false)}
         items={mapItems}
-        onSelectItem={setSelectedDetails}
+        onSelectItem={setPreviewItem}
         theme={theme}
         region={filterRegion}
         onRegionChange={setFilterRegion}
-        escapeDisabled={!!selectedDetails}
+        escapeDisabled={!!previewItem}
       />
 
-      {/* Details Dialog */}
-      <ResponsiveDialog
-        open={!!selectedDetails}
-        onOpenChange={(open) => !open && setSelectedDetails(null)}
-      >
-        <ResponsiveDialogContent className="max-sm:p-4 sm:max-w-xl">
-          <ResponsiveDialogHeader>
-            <ResponsiveDialogTitle className="flex items-center gap-2">
-              {selectedDetails && (
-                <Badge
-                  variant="outline"
-                  className={TYPE_BADGE_CLASS[selectedDetails.type]}
-                >
-                  {TYPE_LABELS[selectedDetails.type]}
-                </Badge>
-              )}
-              <Badge variant="outline" className="font-mono">
-                {selectedDetails?.category}
-              </Badge>
-            </ResponsiveDialogTitle>
-          </ResponsiveDialogHeader>
-
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-foreground text-lg leading-snug font-extrabold">
-                {selectedDetails?.title}
-              </h3>
-              <span className="text-muted-foreground mt-1.5 block font-mono text-xs font-bold">
-                منطقه: {toPersianDigits(selectedDetails?.region ?? "")} |
-                ثبت‌کننده: {selectedDetails?.userName}
-              </span>
-            </div>
-
-            <p className="bg-muted text-foreground/70 rounded-2xl border p-4 text-sm leading-relaxed font-semibold whitespace-pre-wrap">
-              {selectedDetails?.description}
-            </p>
-
-            {selectedDetails?.adminResponse ? (
-              <div className="border-primary/30 from-primary/10 to-primary/5 relative rounded-2xl border bg-gradient-to-br p-4">
-                <div className="border-primary/20 bg-primary/10 text-primary absolute top-3 left-3 rounded border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase">
-                  پاسخ رسمی
-                </div>
-                <span className="text-primary mb-1 block text-xs font-extrabold">
-                  پاسخ رسمی شهرداری منطقه:
-                </span>
-                <p className="text-foreground/70 text-xs leading-relaxed font-medium whitespace-pre-line">
-                  {selectedDetails.adminResponse}
-                </p>
-              </div>
-            ) : (
-              <div className="bg-muted text-muted-foreground/70 rounded-2xl border p-3.5 text-center text-xs font-bold">
-                این گزارش برای اعزام اکیپ آماده‌سازی در صف رسیدگی واحد روابط
-                عمومی شهرداری منطقه است.
-              </div>
-            )}
-
-            <div className="space-y-1.5">
-              <span className="text-foreground/70 flex items-center gap-1 text-xs font-bold">
-                <MapPin className="text-primary h-4 w-4" />
-                موقعیت فیزیکی روی نقشه شهر
-              </span>
-              <div className="h-[200px] overflow-hidden rounded-2xl border">
-                <MapComponent
-                  pickerMode={false}
-                  items={selectedDetails ? [selectedDetails] : []}
-                  theme={theme}
-                />
-              </div>
-            </div>
-          </div>
-
-          <ResponsiveDialogFooter className="flex items-center justify-between sm:justify-between">
-            <span className="text-muted-foreground font-mono text-[10px] font-bold">
-              کد رهگیری: {toPersianDigits(selectedDetails?.id ?? "")}
-            </span>
-
-            <Button
-              variant={
-                currentUser && selectedDetails?.likedByCurrentUser
-                  ? "destructive"
-                  : "outline"
-              }
-              onClick={(e) =>
-                selectedDetails && handleLikeClick(e, selectedDetails.id)
-              }
-            >
-              <Heart
-                className={cn(
-                  currentUser &&
-                    selectedDetails?.likedByCurrentUser &&
-                    "fill-current",
-                )}
-              />
-              <span>
-                {toPersianDigits(selectedDetails?.likes ?? 0)} لایک و تأیید
-                شهروندی
-              </span>
-            </Button>
-          </ResponsiveDialogFooter>
-        </ResponsiveDialogContent>
-      </ResponsiveDialog>
+      {/* Map preview — summary only, with a link to the report's own page */}
+      <ReportPreviewDialog
+        item={previewItem}
+        onClose={() => setPreviewItem(null)}
+      />
     </div>
   );
 }

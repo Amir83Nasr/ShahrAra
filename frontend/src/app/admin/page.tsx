@@ -6,46 +6,59 @@
  */
 
 import Link from "next/link";
-import { Home, ShieldAlert } from "lucide-react";
+import { ClipboardList, Home, ShieldAlert } from "lucide-react";
 import { useApp } from "../providers";
 import AdminPanel from "@/components/AdminPanel";
 import { Button } from "@/components/ui/button";
+import { AdminPageSkeleton } from "@/components/skeletons";
 
 export default function AdminPage() {
-  const { currentUser, authReady, requests, updateStatus, refresh, theme } =
-    useApp();
+  const {
+    currentUser,
+    authReady,
+    requests,
+    updateStatus,
+    refresh,
+    theme,
+    loading,
+    loadError,
+  } = useApp();
 
   // Wait for localStorage session restore before deciding
   if (!authReady) {
-    return (
-      <div className="text-primary flex flex-col items-center justify-center gap-3 py-20">
-        <span className="border-primary h-10 w-10 animate-spin rounded-full border-4 border-t-transparent"></span>
-        <span className="text-sm font-semibold">در حال بررسی دسترسی...</span>
-      </div>
-    );
+    return <AdminPageSkeleton />;
   }
 
   if (!currentUser?.isAdmin) {
     return (
-      <div className="mx-auto flex max-w-md flex-col items-center justify-center gap-6 px-4 py-24 text-center">
-        <div className="border-border bg-card flex h-20 w-20 items-center justify-center rounded-full border">
-          <ShieldAlert className="text-muted-foreground h-10 w-10" />
+      <section className="mx-auto flex min-h-[calc(100dvh-9rem)] w-full max-w-lg flex-col items-center justify-center px-4 py-10 text-center md:min-h-[calc(100dvh-5rem)]">
+        <div className="border-destructive/15 bg-destructive/[0.06] text-destructive ring-destructive/10 mb-5 flex size-16 items-center justify-center rounded-3xl border ring-1 ring-inset">
+          <ShieldAlert className="size-7" strokeWidth={1.8} />
         </div>
-        <div className="space-y-2">
-          <h2 className="text-foreground text-2xl font-extrabold">
-            دسترسی غیرمجاز
-          </h2>
-          <p className="text-muted-foreground text-sm leading-relaxed font-medium">
-            دسترسی به پنل مدیریت نیازمند ورود با حساب کاربری مدیر است.
-          </p>
+
+        <h1 className="text-foreground text-lg font-extrabold sm:text-xl">
+          دسترسی غیرمجاز
+        </h1>
+        <p className="text-muted-foreground mt-2 max-w-sm text-[13px] leading-7 sm:text-sm">
+          دسترسی به پنل مدیریت نیازمند ورود با حساب کاربری مدیر است. اگر مدیر
+          سامانه هستید، دوباره وارد شوید.
+        </p>
+
+        <div className="mt-6 flex w-full flex-col gap-2.5 sm:flex-row">
+          <Button asChild className="h-11 w-full sm:flex-1">
+            <Link href="/">
+              <Home />
+              <span>بازگشت به خانه</span>
+            </Link>
+          </Button>
+          <Button variant="outline" asChild className="h-11 w-full sm:flex-1">
+            <Link href="/reports">
+              <ClipboardList />
+              <span>مشاهده گزارش‌ها</span>
+            </Link>
+          </Button>
         </div>
-        <Button asChild>
-          <Link href="/">
-            <Home />
-            بازگشت به صفحه اصلی
-          </Link>
-        </Button>
-      </div>
+      </section>
     );
   }
 
@@ -55,6 +68,8 @@ export default function AdminPage() {
       onUpdateStatus={updateStatus}
       onRefresh={() => refresh({ force: true })}
       theme={theme}
+      loading={loading}
+      loadError={loadError}
     />
   );
 }

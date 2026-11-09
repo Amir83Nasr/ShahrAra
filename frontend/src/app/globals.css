@@ -136,6 +136,7 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-status-submitted: var(--status-submitted);
   --color-status-under-review: var(--status-under-review);
   --color-status-in-progress: var(--status-in-progress);
@@ -170,6 +171,9 @@
    آبی برند (#0080C6) از خانوادهٔ آبی تلگرام (#2AABEE / #0088CC) گرفته شده؛
    برای خوانایی متن، --primary یک پله عمیق‌تر (#006FB1، کنتراست ~۵.۱) است. */
 :root {
+  /* رنگ‌بندی بومی مرورگر (اسکرول‌بار، کنترل‌های فرم، رابط خود مرورگر) هم‌زمان
+     با تم عوض شود؛ بدون این، بعضی اجزا با تأخیر یا رنگ تم قبلی می‌مانند. */
+  color-scheme: light;
   --background: oklch(0.985 0.004 246);
   --foreground: oklch(0.21 0.02 255);
   --card: oklch(1 0 0);
@@ -185,6 +189,7 @@
   --accent: oklch(0.945 0.03 238);
   --accent-foreground: oklch(0.36 0.1 245);
   --destructive: oklch(0.56 0.21 27);
+  --destructive-foreground: oklch(1 0 0);
   --status-submitted: oklch(0.5 0.02 255);
   --status-under-review: oklch(0.55 0.15 275);
   --status-in-progress: oklch(0.58 0.14 70);
@@ -216,6 +221,7 @@
    پس‌زمینهٔ سرمه‌ای نزدیک به تلگرام (#151F29) با کارت‌های یک پله روشن‌تر و
    آبی روشن (#4EB2F1) برای حفظ کنتراست بالا روی سطوح تیره. */
 .dark {
+  color-scheme: dark;
   --background: oklch(0.235 0.024 250);
   --foreground: oklch(0.965 0.006 250);
   --card: oklch(0.285 0.028 252);
@@ -231,6 +237,7 @@
   --accent: oklch(0.32 0.05 245);
   --accent-foreground: oklch(0.87 0.07 240);
   --destructive: oklch(0.7 0.18 25);
+  --destructive-foreground: oklch(0.2 0.03 25);
   --status-submitted: oklch(0.7 0.02 250);
   --status-under-review: oklch(0.72 0.12 275);
   --status-in-progress: oklch(0.78 0.12 75);
@@ -256,21 +263,15 @@
   --sidebar-ring: oklch(0.72 0.12 240);
 }
 
-/* گذار یکپارچهٔ تم — هنگام سوییچ، همهٔ عناصر با مدت‌زمان و منحنی یکسان
-   رنگ عوض می‌کنند؛ کلاس theme-transition فقط در لحظهٔ تغییر تم روی <html>
-   قرار می‌گیرد و بعد از پایان گذار حذف می‌شود تا transition دائمی تحمیل نشود. */
-@media (prefers-reduced-motion: no-preference) {
-  html.theme-transition,
-  html.theme-transition *,
-  html.theme-transition *::before,
-  html.theme-transition *::after {
-    transition-property:
-      background-color, border-color, color, fill, stroke, outline-color,
-      text-decoration-color, caret-color, box-shadow, opacity;
-    transition-duration: 300ms;
-    transition-timing-function: ease;
-    transition-delay: 0s;
-  }
+/* تغییر تم بدون انیمیشن — هنگام سوییچ، کلاس theme-switching فقط برای یک فریم
+   روی <html> قرار می‌گیرد و همهٔ گذارها را خاموش می‌کند تا تمام عناصر
+   (حتی آن‌هایی که transition محلی دارند) دقیقاً هم‌زمان رنگ عوض کنند و
+   محاسبهٔ گذار روی کل درخت صفحه باعث کندی نشود. */
+html.theme-switching,
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition: none !important;
 }
 
 @layer base {

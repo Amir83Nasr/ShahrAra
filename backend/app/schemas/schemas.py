@@ -241,6 +241,13 @@ class UserResponse(BaseModel):
         alias="hasPassword",
         description="Whether a password has been set for password sign-in.",
     )
+    avatarUrl: str | None = Field(
+        None,
+        alias="avatarUrl",
+        description="Authenticated URL of the profile picture, or null when unset. "
+        "The URL changes whenever the picture is replaced.",
+        examples=["/api/v1/auth/avatar?v=1735689600"],
+    )
 
     model_config = {
         "from_attributes": True,
@@ -254,6 +261,7 @@ class UserResponse(BaseModel):
                 "lastName": "Rezaei",
                 "isAdmin": False,
                 "hasPassword": False,
+                "avatarUrl": None,
             }
         },
     }
@@ -262,6 +270,63 @@ class UserResponse(BaseModel):
     @classmethod
     def _mask_national_id(cls, value: str | None) -> str:
         return mask_national_id(value)
+
+
+class ProfileUpdateRequest(BaseModel):
+    firstName: str | None = Field(
+        None,
+        alias="firstName",
+        min_length=1,
+        max_length=60,
+        description="Given name. Omit to keep the current value.",
+        examples=["Ali"],
+    )
+    lastName: str | None = Field(
+        None,
+        alias="lastName",
+        min_length=1,
+        max_length=60,
+        description="Family name. Omit to keep the current value.",
+        examples=["Rezaei"],
+    )
+
+    model_config = {
+        "populate_by_name": True,
+        "json_schema_extra": {"example": {"firstName": "Ali", "lastName": "Rezaei"}},
+    }
+
+    @field_validator("firstName", "lastName")
+    @classmethod
+    def _clean_name(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("نام نمی‌تواند خالی باشد.")
+        return cleaned
+
+
+class ProfileUpdateResponse(BaseModel):
+    success: bool = Field(True, examples=[True])
+    user: UserResponse
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "success": True,
+                "user": {
+                    "id": "usr_a1b2c3d4",
+                    "phone": "09123456789",
+                    "nationalId": "******7890",
+                    "firstName": "Ali",
+                    "lastName": "Rezaei",
+                    "isAdmin": False,
+                    "hasPassword": False,
+                    "avatarUrl": None,
+                },
+            }
+        }
+    }
 
 
 class TokenResponse(BaseModel):

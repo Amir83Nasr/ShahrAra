@@ -18,6 +18,15 @@ export const STATUS_LABELS: Record<RequestStatus, string> = {
   archived: "بایگانی‌شده",
 };
 
+/** Lifecycle order shared by filters and status pickers. */
+export const STATUS_ORDER: RequestStatus[] = [
+  "submitted",
+  "under_review",
+  "in_progress",
+  "resolved",
+  "archived",
+];
+
 export const STATUS_BADGE_CLASS: Record<RequestStatus, string> = {
   submitted:
     "bg-status-submitted/15 text-status-submitted border-status-submitted/20",

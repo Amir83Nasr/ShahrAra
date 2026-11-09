@@ -5,31 +5,59 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { UserRound } from "lucide-react";
 import { useApp } from "@/app/providers";
 import { Button } from "@/components/ui/button";
+import {
+  ProfileAuthSkeleton,
+  ProfilePageSkeleton,
+} from "@/components/skeletons";
+
+function subscribeToStorage(callback: () => void) {
+  window.addEventListener("storage", callback);
+  return () => window.removeEventListener("storage", callback);
+}
+
+function storedSessionSnapshot(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return Boolean(window.localStorage.getItem("shahr_ara_user"));
+  } catch {
+    return false;
+  }
+}
 
 /**
- * Shared auth gate for profile pages: loading spinner while the session is
- * restored, sign-in prompt when logged out, children when logged in.
+ * Shared auth gate for profile pages: a session-shaped skeleton while the
+ * session is restored, sign-in prompt when logged out, children when logged in.
+ *
+ * The server cannot know whether a visitor is signed in, so it renders the
+ * neutral auth skeleton. Once hydrated we pick the route-shaped profile
+ * skeleton only when a stored session exists — a logged-out citizen never
+ * sees a fake logged-in profile flash before the sign-in card.
  */
 export default function ProfileGate({
   children,
+  variant = "hub",
 }: {
   children: React.ReactNode;
+  variant?: "hub" | "list" | "settings";
 }) {
   const { currentUser, authReady } = useApp();
+  const hasStoredSession = useSyncExternalStore(
+    subscribeToStorage,
+    storedSessionSnapshot,
+    () => false,
+  );
 
   // Wait for localStorage session restore before deciding
   if (!authReady) {
-    return (
-      <div className="text-primary flex flex-col items-center justify-center gap-3 py-20">
-        <span className="border-primary h-10 w-10 animate-spin rounded-full border-4 border-t-transparent"></span>
-        <span className="text-sm font-semibold">
-          در حال بارگذاری اطلاعات شهرآرا...
-        </span>
-      </div>
+    return hasStoredSession ? (
+      <ProfilePageSkeleton variant={variant} />
+    ) : (
+      <ProfileAuthSkeleton />
     );
   }
 

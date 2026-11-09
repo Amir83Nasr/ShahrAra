@@ -18,13 +18,16 @@ import {
   KeyRound,
   Loader2,
   LogOut,
-  MapPin,
+  Moon,
   Search,
+  Settings,
   Shield,
+  Sun,
   Trash2,
   UserRound,
 } from "lucide-react";
 import LogoutModal from "@/components/LogoutModal";
+import ProfileAvatar from "@/components/ProfileAvatar";
 import { User, RequestItem, RequestUpdateData } from "../types";
 import { apiErrorMessage, apiFetch, authHeaders } from "@/lib/api";
 import { toPersianDigits } from "../utils/numberUtils";
@@ -32,6 +35,7 @@ import { REGIONS } from "../utils/regionUtils";
 import { filterRequests } from "../utils/requestFilters";
 import {
   STATUS_LABELS,
+  STATUS_ORDER,
   STATUS_BADGE_CLASS,
   TYPE_LABELS,
   TYPE_BADGE_CLASS,
@@ -69,6 +73,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
   Select,
@@ -81,36 +86,39 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { LoadErrorState, ReportCardsSkeleton } from "@/components/skeletons";
 import { useApp } from "../app/providers";
-import dynamic from "next/dynamic";
-
-// maplibre-gl touches `window` at import time; skip prerendering
-const MapComponent = dynamic(() => import("./MapComponent"), { ssr: false });
 
 const SECTION_TITLES: Record<string, string> = {
   my: "درخواست‌های من",
-  liked: "لایک کرده‌ام",
-  security: "امنیت و رمز عبور",
+  liked: "لایک‌شده‌ها",
+  settings: "تنظیمات",
 };
 
 interface UserProfileProps {
   currentUser: User;
   requests: RequestItem[];
-  onLike: (id: string) => Promise<void>;
   onRefresh: () => void;
   theme?: "light" | "dark";
   /** Active section when rendered on a dedicated /profile/[section] page. */
-  section?: "my" | "liked" | "security";
+  section?: "my" | "liked" | "settings";
 }
 
 export default function UserProfile({
   currentUser,
   requests,
-  onLike,
   onRefresh,
   section,
 }: UserProfileProps) {
-  const { loginSuccess, logout } = useApp();
+  const {
+    loginSuccess,
+    logout,
+    loading: dataLoading,
+    loadError,
+    theme,
+    setTheme,
+    updateUser,
+  } = useApp();
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<string>(section ?? "my");
   const [searchTerm, setSearchTerm] = useState("");
@@ -126,9 +134,6 @@ export default function UserProfile({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [selectedDetails, setSelectedDetails] = useState<RequestItem | null>(
-    null,
-  );
 
   // Edit form state
   const [editTitle, setEditTitle] = useState("");
@@ -143,6 +148,15 @@ export default function UserProfile({
   const [pwError, setPwError] = useState<string | null>(null);
   const [pwSuccess, setPwSuccess] = useState<string | null>(null);
 
+  // Settings — profile details and avatar
+  const [firstNameInput, setFirstNameInput] = useState(currentUser.firstName);
+  const [lastNameInput, setLastNameInput] = useState(currentUser.lastName);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
+  const [avatarRemoving, setAvatarRemoving] = useState(false);
+  const [confirmAvatarRemove, setConfirmAvatarRemove] = useState(false);
+
   const myRequests = useMemo(
     () =>
       requests.filter((r) => r.isOwner ?? r.userPhone === currentUser.phone),
@@ -152,6 +166,62 @@ export default function UserProfile({
     () => requests.filter((r) => r.likedByCurrentUser),
     [requests],
   );
+
+  const handleProfileSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileError(null);
+    setProfileSuccess(null);
+
+    const firstName = firstNameInput.trim();
+    const lastName = lastNameInput.trim();
+    if (!firstName || !lastName) {
+      setProfileError("نام و نام خانوادگی را کامل وارد کنید.");
+      return;
+    }
+
+    setProfileSaving(true);
+    try {
+      const result = await apiFetch<{ success: boolean; user: User }>(
+        "/api/v1/auth/profile",
+        {
+          method: "PUT",
+          headers: authHeaders(currentUser.token, true),
+          body: JSON.stringify({ firstName, lastName }),
+        },
+      );
+      updateUser(result.user);
+      setProfileSuccess("مشخصات حساب ذخیره شد.");
+      setTimeout(() => setProfileSuccess(null), 3000);
+    } catch (err: unknown) {
+      setProfileError(apiErrorMessage(err, "ذخیره مشخصات حساب انجام نشد."));
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  const handleAvatarRemove = async () => {
+    if (!currentUser.avatarUrl || avatarRemoving) return;
+    setProfileError(null);
+    setProfileSuccess(null);
+    setAvatarRemoving(true);
+    try {
+      const result = await apiFetch<{ success: boolean; user: User }>(
+        "/api/v1/auth/avatar",
+        {
+          method: "DELETE",
+          headers: authHeaders(currentUser.token),
+        },
+      );
+      updateUser(result.user);
+      setProfileSuccess("تصویر پروفایل حذف شد.");
+      setTimeout(() => setProfileSuccess(null), 3000);
+    } catch (err: unknown) {
+      setProfileError(apiErrorMessage(err, "حذف تصویر پروفایل انجام نشد."));
+    } finally {
+      setAvatarRemoving(false);
+      setConfirmAvatarRemove(false);
+    }
+  };
 
   const handlePasswordSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,6 +288,9 @@ export default function UserProfile({
     filterRegion,
   ]);
 
+  // Skeleton only before any request data exists; refreshes keep the list.
+  const isInitialLoading = dataLoading && requests.length === 0;
+
   // Open edit dialog
   const openEdit = (req: RequestItem) => {
     setEditingRequest(req);
@@ -265,29 +338,6 @@ export default function UserProfile({
     }
   };
 
-  // Handle like in details dialog
-  const handleLikeClick = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    setSelectedDetails((prev) =>
-      prev && prev.id === id
-        ? {
-            ...prev,
-            likedByCurrentUser: !prev.likedByCurrentUser,
-            likes: prev.likedByCurrentUser
-              ? Math.max(0, prev.likes - 1)
-              : prev.likes + 1,
-          }
-        : prev,
-    );
-    onLike(id);
-  };
-
-  // Sync selectedDetails with fresh data
-  const syncedDetails = useMemo(() => {
-    if (!selectedDetails) return null;
-    return requests.find((r) => r.id === selectedDetails.id) ?? selectedDetails;
-  }, [requests, selectedDetails]);
-
   // Handle delete
   const handleDeleteConfirm = async () => {
     if (!deletingRequest) return;
@@ -323,18 +373,15 @@ export default function UserProfile({
         <div className="flex flex-col gap-3 md:hidden">
           {/* کارت کاربر */}
           <div className="bg-card overflow-hidden rounded-2xl border">
-            <div className="flex items-center gap-3 px-4 py-2.5">
-              <span className="bg-muted flex size-9 shrink-0 items-center justify-center rounded-full">
-                <UserRound
-                  className="text-muted-foreground h-4.5 w-4.5"
-                  strokeWidth={1.75}
-                />
-              </span>
-              <span className="flex flex-1 flex-col items-start gap-0.5">
-                <span className="text-foreground flex items-center gap-2 text-sm font-semibold">
-                  {currentUser.firstName} {currentUser.lastName}
+            <div className="flex items-center gap-3.5 px-4 py-3.5">
+              <ProfileAvatar user={currentUser} size={60} />
+              <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+                <span className="text-foreground flex max-w-full items-center gap-2 text-[15px] font-extrabold">
+                  <span className="truncate">
+                    {currentUser.firstName} {currentUser.lastName}
+                  </span>
                   {currentUser.isAdmin && (
-                    <Badge className="bg-primary/15 text-primary hover:bg-primary/15 rounded-full px-2.5 py-0.5 text-[11px] font-semibold">
+                    <Badge className="bg-primary/15 text-primary hover:bg-primary/15 shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold">
                       ادمین
                     </Badge>
                   )}
@@ -342,7 +389,7 @@ export default function UserProfile({
                 <span className="text-muted-foreground font-mono text-[11px] font-semibold">
                   {toPersianDigits(currentUser.phone)}
                 </span>
-              </span>
+              </div>
             </div>
           </div>
 
@@ -358,22 +405,22 @@ export default function UserProfile({
               },
               {
                 key: "liked",
-                label: "لایک کرده‌ام",
+                label: "لایک‌شده‌ها",
                 Icon: Heart,
                 href: "/profile/liked",
               },
             ]}
           />
 
-          {/* حساب کاربری */}
+          {/* تنظیمات */}
           <ProfileMenuCard
-            title="حساب کاربری"
+            title="تنظیمات"
             items={[
               {
-                key: "security",
-                label: "امنیت و رمز عبور",
-                Icon: KeyRound,
-                href: "/profile/security",
+                key: "settings",
+                label: "تنظیمات حساب",
+                Icon: Settings,
+                href: "/profile/settings",
               },
               ...(currentUser.isAdmin
                 ? [
@@ -394,7 +441,7 @@ export default function UserProfile({
               e.currentTarget.blur();
               setConfirmLogout(true);
             }}
-            className="border-destructive/15 bg-card flex w-full cursor-pointer items-center gap-3 rounded-2xl border px-4 py-2.5 shadow-sm transition duration-150 ease-out active:translate-y-px active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:translate-y-0 motion-reduce:active:scale-100"
+            className="border-destructive/15 bg-card flex w-full cursor-pointer items-center gap-3 rounded-2xl border px-4 py-2.5 transition duration-150 ease-out active:translate-y-px active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:translate-y-0 motion-reduce:active:scale-100"
           >
             <span className="bg-destructive/10 flex size-9 shrink-0 items-center justify-center rounded-full">
               <LogOut
@@ -405,7 +452,7 @@ export default function UserProfile({
             <span className="text-destructive flex-1 text-start text-sm font-semibold">
               خروج از حساب
             </span>
-            <ChevronLeft className="text-muted-foreground/40 h-4 w-4 shrink-0" />
+            <ChevronLeft className="text-destructive/60 h-4 w-4 shrink-0" />
           </button>
         </div>
       )}
@@ -460,16 +507,16 @@ export default function UserProfile({
           </TabsTrigger>
           <TabsTrigger value="liked" className="flex-1 px-4 font-bold">
             <Heart className="ml-1.5 h-4 w-4" />
-            لایک کرده‌ام
+            لایک‌شده‌ها
           </TabsTrigger>
-          <TabsTrigger value="security" className="flex-1 px-4 font-bold">
-            <KeyRound className="ml-1.5 h-4 w-4" />
-            امنیت
+          <TabsTrigger value="settings" className="flex-1 px-4 font-bold">
+            <Settings className="ml-1.5 h-4 w-4" />
+            تنظیمات
           </TabsTrigger>
         </TabsList>
 
         {/* Search & Filter bar — visible only on my/liked tabs */}
-        {activeSubTab !== "security" && (
+        {activeSubTab !== "settings" && (
           <div
             className={cn(
               "bg-card mt-3 mb-6 flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center",
@@ -516,11 +563,11 @@ export default function UserProfile({
                   <SelectGroup>
                     <SelectLabel>وضعیت</SelectLabel>
                     <SelectItem value="all">همه وضعیت‌ها</SelectItem>
-                    <SelectItem value="submitted">ثبت شده</SelectItem>
-                    <SelectItem value="under_review">در حال بررسی</SelectItem>
-                    <SelectItem value="in_progress">در حال انجام</SelectItem>
-                    <SelectItem value="resolved">حل شده</SelectItem>
-                    <SelectItem value="archived">بایگانی شده</SelectItem>
+                    {STATUS_ORDER.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {STATUS_LABELS[status]}
+                      </SelectItem>
+                    ))}
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -556,12 +603,13 @@ export default function UserProfile({
             requests={filteredRequests}
             emptyMessage="هنوز درخواستی ثبت نکرده‌اید."
             activeSubTab={activeSubTab}
-            selectedDetailsId={selectedDetails?.id ?? null}
-            setSelectedDetails={setSelectedDetails}
             saving={saving}
             setDeletingRequest={setDeletingRequest}
             openEdit={openEdit}
             handleDeleteConfirm={handleDeleteConfirm}
+            loading={isInitialLoading}
+            loadError={requests.length === 0 ? loadError : null}
+            onRetry={onRefresh}
           />
         </TabsContent>
 
@@ -573,110 +621,316 @@ export default function UserProfile({
             requests={filteredRequests}
             emptyMessage="هنوز درخواستی را لایک نکرده‌اید."
             activeSubTab={activeSubTab}
-            selectedDetailsId={selectedDetails?.id ?? null}
-            setSelectedDetails={setSelectedDetails}
             saving={saving}
             setDeletingRequest={setDeletingRequest}
             openEdit={openEdit}
             handleDeleteConfirm={handleDeleteConfirm}
+            loading={isInitialLoading}
+            loadError={requests.length === 0 ? loadError : null}
+            onRetry={onRefresh}
           />
         </TabsContent>
 
         <TabsContent
-          value="security"
+          value="settings"
           className={cn("mt-0", !isSectionPage && "hidden md:block")}
         >
-          <Card className="mx-auto max-w-md">
-            <CardContent className="flex flex-col gap-4">
-              <div>
-                <CardTitle className="flex items-center gap-2 text-sm font-bold">
-                  <KeyRound className="text-primary h-4 w-4" />
-                  رمز عبور حساب
-                </CardTitle>
-                <CardDescription className="mt-1 text-xs leading-relaxed">
-                  {currentUser.hasPassword
-                    ? "برای تغییر رمز، رمز فعلی را وارد کنید."
-                    : "برای حساب خود رمز عبور تنظیم کنید تا علاوه بر کد پیامکی، با رمز هم وارد شوید."}
-                </CardDescription>
-              </div>
+          <div className="mx-auto flex max-w-2xl flex-col gap-4">
+            {/* پروفایل */}
+            <Card>
+              <CardContent className="flex flex-col gap-4">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-sm font-bold">
+                    <UserRound className="text-primary h-4 w-4" />
+                    پروفایل
+                  </CardTitle>
+                  <CardDescription className="mt-1 text-xs leading-relaxed">
+                    تصویر و نام نمایشی حساب کاربری خود را مدیریت کنید.
+                  </CardDescription>
+                </div>
 
-              {pwError && (
-                <Alert variant="destructive" className="text-xs">
-                  <AlertCircle />
-                  <AlertTitle>خطا</AlertTitle>
-                  <AlertDescription>{pwError}</AlertDescription>
-                </Alert>
-              )}
+                <div className="flex items-center gap-3.5">
+                  <ProfileAvatar
+                    user={currentUser}
+                    size={72}
+                    editable
+                    onError={setProfileError}
+                    onUploaded={() => {
+                      setProfileSuccess("تصویر پروفایل به‌روزرسانی شد.");
+                      setTimeout(() => setProfileSuccess(null), 3000);
+                    }}
+                  />
+                  <div className="flex min-w-0 flex-1 flex-col gap-1">
+                    <span className="text-foreground truncate text-sm font-extrabold">
+                      {currentUser.firstName} {currentUser.lastName}
+                    </span>
+                    <span className="text-muted-foreground font-mono text-[11px] font-semibold">
+                      {toPersianDigits(currentUser.phone)}
+                    </span>
+                    <span className="text-muted-foreground/80 text-[10.5px] leading-relaxed">
+                      برای تغییر تصویر روی آن بزنید؛ JPEG، PNG یا WebP تا ۲
+                      مگابایت.
+                    </span>
+                  </div>
+                  {currentUser.avatarUrl && (
+                    <AlertDialog
+                      open={confirmAvatarRemove}
+                      onOpenChange={(open) => {
+                        if (!avatarRemoving) setConfirmAvatarRemove(open);
+                      }}
+                    >
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="destructive-soft"
+                          size="sm"
+                          aria-label="حذف تصویر پروفایل"
+                          className="shrink-0"
+                        >
+                          <Trash2 />
+                          <span className="hidden sm:inline">حذف تصویر</span>
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>حذف تصویر پروفایل</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            آیا از حذف تصویر پروفایل اطمینان دارید؟ تصویر فعلی
+                            پاک می‌شود و به‌جای آن حرف اول نام شما نمایش داده
+                            خواهد شد.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel disabled={avatarRemoving}>
+                            انصراف
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            variant="destructive"
+                            disabled={avatarRemoving}
+                            onClick={(event) => {
+                              // Keep the dialog open until the request settles
+                              // so the spinner stays visible.
+                              event.preventDefault();
+                              void handleAvatarRemove();
+                            }}
+                          >
+                            {avatarRemoving ? (
+                              <>
+                                <Loader2 className="animate-spin" />
+                                در حال حذف...
+                              </>
+                            ) : (
+                              "حذف شود"
+                            )}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                </div>
 
-              {pwSuccess && (
-                <Alert className="border-status-resolved/20 bg-status-resolved/10 text-status-resolved text-xs">
-                  <CheckCircle />
-                  <AlertTitle>موفق</AlertTitle>
-                  <AlertDescription className="text-status-resolved/90">
-                    {pwSuccess}
-                  </AlertDescription>
-                </Alert>
-              )}
+                {profileError && (
+                  <Alert variant="destructive" className="text-xs">
+                    <AlertCircle />
+                    <AlertTitle>خطا</AlertTitle>
+                    <AlertDescription>{profileError}</AlertDescription>
+                  </Alert>
+                )}
 
-              <form
-                onSubmit={handlePasswordSave}
-                className="flex flex-col gap-3"
-              >
-                {currentUser.hasPassword && (
+                {profileSuccess && (
+                  <Alert className="border-status-resolved/20 bg-status-resolved/10 text-status-resolved text-xs">
+                    <CheckCircle />
+                    <AlertTitle>موفق</AlertTitle>
+                    <AlertDescription className="text-status-resolved/90">
+                      {profileSuccess}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <form
+                  onSubmit={handleProfileSave}
+                  className="flex flex-col gap-3"
+                >
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="flex flex-col gap-1.5">
+                      <label
+                        htmlFor="profile-first-name"
+                        className="text-foreground text-xs font-bold"
+                      >
+                        نام
+                      </label>
+                      <Input
+                        id="profile-first-name"
+                        value={firstNameInput}
+                        onChange={(e) => setFirstNameInput(e.target.value)}
+                        maxLength={60}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label
+                        htmlFor="profile-last-name"
+                        className="text-foreground text-xs font-bold"
+                      >
+                        نام خانوادگی
+                      </label>
+                      <Input
+                        id="profile-last-name"
+                        value={lastNameInput}
+                        onChange={(e) => setLastNameInput(e.target.value)}
+                        maxLength={60}
+                      />
+                    </div>
+                  </div>
+                  <Button type="submit" disabled={profileSaving}>
+                    {profileSaving ? "در حال ذخیره..." : "ذخیره مشخصات"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* حالت نمایش */}
+            <Card>
+              <CardContent className="flex flex-col gap-4">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-sm font-bold">
+                    <Sun className="text-primary h-4 w-4" />
+                    حالت نمایش
+                  </CardTitle>
+                  <CardDescription className="mt-1 text-xs leading-relaxed">
+                    تم برنامه در همین مرورگر ذخیره می‌شود و بلافاصله اعمال
+                    می‌شود.
+                  </CardDescription>
+                </div>
+
+                <div
+                  role="radiogroup"
+                  aria-label="حالت نمایش"
+                  className="grid grid-cols-2 gap-2.5"
+                >
+                  {(
+                    [
+                      { value: "light", label: "روشن", Icon: Sun },
+                      { value: "dark", label: "تاریک", Icon: Moon },
+                    ] as const
+                  ).map(({ value, label, Icon }) => {
+                    const active = theme === value;
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        role="radio"
+                        aria-checked={active}
+                        onClick={() => setTheme(value)}
+                        className={cn(
+                          "focus-visible:ring-ring/40 flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 py-3 text-sm font-bold transition-colors duration-150 focus-visible:ring-2 focus-visible:outline-none",
+                          active
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground",
+                        )}
+                      >
+                        <Icon className="size-4" />
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* رمز عبور */}
+            <Card>
+              <CardContent className="flex flex-col gap-4">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-sm font-bold">
+                    <KeyRound className="text-primary h-4 w-4" />
+                    رمز عبور حساب
+                  </CardTitle>
+                  <CardDescription className="mt-1 text-xs leading-relaxed">
+                    {currentUser.hasPassword
+                      ? "برای تغییر رمز، رمز فعلی را وارد کنید."
+                      : "برای حساب خود رمز عبور تنظیم کنید تا علاوه بر کد پیامکی، با رمز هم وارد شوید."}
+                  </CardDescription>
+                </div>
+
+                {pwError && (
+                  <Alert variant="destructive" className="text-xs">
+                    <AlertCircle />
+                    <AlertTitle>خطا</AlertTitle>
+                    <AlertDescription>{pwError}</AlertDescription>
+                  </Alert>
+                )}
+
+                {pwSuccess && (
+                  <Alert className="border-status-resolved/20 bg-status-resolved/10 text-status-resolved text-xs">
+                    <CheckCircle />
+                    <AlertTitle>موفق</AlertTitle>
+                    <AlertDescription className="text-status-resolved/90">
+                      {pwSuccess}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <form
+                  onSubmit={handlePasswordSave}
+                  className="flex flex-col gap-3"
+                >
+                  {currentUser.hasPassword && (
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-foreground text-xs font-bold">
+                        رمز عبور فعلی{" "}
+                        <span className="text-destructive">*</span>
+                      </label>
+                      <Input
+                        type="password"
+                        required
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        dir="ltr"
+                        autoComplete="current-password"
+                      />
+                    </div>
+                  )}
+
                   <div className="flex flex-col gap-1.5">
                     <label className="text-foreground text-xs font-bold">
-                      رمز عبور فعلی <span className="text-destructive">*</span>
+                      رمز عبور جدید <span className="text-destructive">*</span>
                     </label>
                     <Input
                       type="password"
                       required
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      minLength={8}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
                       dir="ltr"
-                      autoComplete="current-password"
+                      autoComplete="new-password"
+                    />
+                    <span className="text-muted-foreground text-[10.5px] font-semibold">
+                      حداقل ۸ کاراکتر
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-foreground text-xs font-bold">
+                      تکرار رمز عبور جدید{" "}
+                      <span className="text-destructive">*</span>
+                    </label>
+                    <Input
+                      type="password"
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      dir="ltr"
+                      autoComplete="new-password"
                     />
                   </div>
-                )}
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-foreground text-xs font-bold">
-                    رمز عبور جدید <span className="text-destructive">*</span>
-                  </label>
-                  <Input
-                    type="password"
-                    required
-                    minLength={8}
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    dir="ltr"
-                    autoComplete="new-password"
-                  />
-                  <span className="text-muted-foreground text-[10.5px] font-semibold">
-                    حداقل ۸ کاراکتر
-                  </span>
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-foreground text-xs font-bold">
-                    تکرار رمز عبور جدید{" "}
-                    <span className="text-destructive">*</span>
-                  </label>
-                  <Input
-                    type="password"
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    dir="ltr"
-                    autoComplete="new-password"
-                  />
-                </div>
-
-                <Button type="submit" disabled={pwSaving}>
-                  {pwSaving ? "در حال ذخیره..." : "ذخیره رمز عبور"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+                  <Button type="submit" disabled={pwSaving}>
+                    {pwSaving ? "در حال ذخیره..." : "ذخیره رمز عبور"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
 
@@ -736,111 +990,6 @@ export default function UserProfile({
             </Button>
             <Button onClick={handleEditSave} disabled={saving}>
               {saving ? <Loader2 className="animate-spin" /> : "ذخیره تغییرات"}
-            </Button>
-          </ResponsiveDialogFooter>
-        </ResponsiveDialogContent>
-      </ResponsiveDialog>
-
-      {/* Details Dialog */}
-      <ResponsiveDialog
-        open={!!selectedDetails}
-        onOpenChange={(open) => !open && setSelectedDetails(null)}
-      >
-        <ResponsiveDialogContent className="max-sm:p-4 sm:max-w-xl">
-          <ResponsiveDialogHeader>
-            <ResponsiveDialogTitle className="flex items-center gap-2">
-              <Badge
-                variant="outline"
-                className={
-                  syncedDetails ? TYPE_BADGE_CLASS[syncedDetails.type] : ""
-                }
-              >
-                {syncedDetails ? TYPE_LABELS[syncedDetails.type] : ""}
-              </Badge>
-              <Badge variant="outline" className="font-mono">
-                {syncedDetails?.category}
-              </Badge>
-            </ResponsiveDialogTitle>
-          </ResponsiveDialogHeader>
-
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-foreground text-lg leading-snug font-bold">
-                {syncedDetails?.title}
-              </h3>
-              <span className="text-muted-foreground mt-1.5 block font-mono text-xs font-semibold">
-                منطقه: {toPersianDigits(syncedDetails?.region ?? "")} | وضعیت:{" "}
-                {syncedDetails
-                  ? (STATUS_LABELS[syncedDetails.status] ??
-                    syncedDetails.status)
-                  : ""}
-              </span>
-            </div>
-
-            <p className="bg-muted text-foreground/70 rounded-2xl border p-4 text-sm leading-relaxed font-semibold whitespace-pre-wrap">
-              {syncedDetails?.description}
-            </p>
-
-            {syncedDetails?.adminResponse ? (
-              <div className="border-primary/30 from-primary/10 to-primary/5 relative rounded-2xl border bg-linear-to-br p-4">
-                <div className="border-primary/20 bg-primary/10 text-primary absolute top-3 left-3 rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase">
-                  پاسخ رسمی
-                </div>
-                <span className="text-primary mb-1 block text-xs font-bold">
-                  پاسخ رسمی شهرداری منطقه:
-                </span>
-                <p className="text-foreground/70 text-xs leading-relaxed font-medium whitespace-pre-line">
-                  {syncedDetails.adminResponse}
-                </p>
-              </div>
-            ) : (
-              <div className="bg-muted text-muted-foreground/70 rounded-2xl border p-3.5 text-center text-xs font-semibold">
-                این گزارش برای اعزام اکیپ آماده‌سازی در صف رسیدگی واحد روابط
-                عمومی شهرداری منطقه است.
-              </div>
-            )}
-
-            <div className="space-y-1.5">
-              <span className="text-foreground/70 flex items-center gap-1 text-xs font-semibold">
-                <MapPin className="text-primary h-4 w-4" />
-                موقعیت فیزیکی روی نقشه شهر
-              </span>
-              <div className="h-[200px] overflow-hidden rounded-2xl border sm:h-[220px]">
-                <MapComponent
-                  pickerMode={false}
-                  items={syncedDetails ? [syncedDetails] : []}
-                />
-              </div>
-            </div>
-          </div>
-
-          <ResponsiveDialogFooter className="flex flex-col-reverse items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <span className="text-muted-foreground order-last text-center font-mono text-[10px] font-semibold sm:order-first">
-              کد رهگیری: {toPersianDigits(syncedDetails?.id ?? "")}
-            </span>
-
-            <Button
-              variant={
-                currentUser && syncedDetails?.likedByCurrentUser
-                  ? "destructive"
-                  : "outline"
-              }
-              className="w-full sm:w-auto"
-              onClick={(e) =>
-                syncedDetails && handleLikeClick(e, syncedDetails.id)
-              }
-            >
-              <Heart
-                className={cn(
-                  currentUser &&
-                    syncedDetails?.likedByCurrentUser &&
-                    "fill-current",
-                )}
-              />
-              <span>
-                {toPersianDigits(syncedDetails?.likes ?? 0)} لایک و تأیید
-                شهروندی
-              </span>
             </Button>
           </ResponsiveDialogFooter>
         </ResponsiveDialogContent>
@@ -925,154 +1074,168 @@ interface RequestGridProps {
   requests: RequestItem[];
   emptyMessage: string;
   activeSubTab: string;
-  selectedDetailsId: string | null;
-  setSelectedDetails: (r: RequestItem | null) => void;
   saving: boolean;
   setDeletingRequest: (r: RequestItem | null) => void;
   openEdit: (r: RequestItem) => void;
   handleDeleteConfirm: () => Promise<void>;
+  loading?: boolean;
+  loadError?: string | null;
+  onRetry?: () => void;
 }
 
 function RequestGrid({
   requests,
   emptyMessage,
   activeSubTab,
-  selectedDetailsId,
-  setSelectedDetails,
   saving,
   setDeletingRequest,
   openEdit,
   handleDeleteConfirm,
+  loading = false,
+  loadError = null,
+  onRetry,
 }: RequestGridProps) {
   return (
     <div className="grid gap-3.5 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
-      {requests.length === 0 && (
-        <div className="text-muted-foreground col-span-full py-16 text-center text-sm font-semibold">
-          {emptyMessage}
-        </div>
-      )}
-
-      {requests.map((req) => (
-        <Card
-          key={req.id}
-          className={cn(
-            "report-card cursor-pointer overflow-hidden transition-all duration-300",
-            "hover:shadow-sm",
-            "border-border bg-card",
-            selectedDetailsId === req.id &&
-              "border-primary ring-primary/40 ring-2",
-          )}
-          onClick={() => setSelectedDetails(req)}
-        >
-          <CardContent className="flex flex-col gap-2.5 px-4 sm:px-5">
-            {/* Badge / Header row */}
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <Badge
-                variant="outline"
-                className={cn(
-                  "border text-[10px] font-semibold",
-                  TYPE_BADGE_CLASS[req.type],
-                )}
-              >
-                {TYPE_LABELS[req.type]}
-              </Badge>
-              <Badge
-                variant="outline"
-                className={cn(
-                  "border text-[10px] font-semibold",
-                  STATUS_BADGE_CLASS[req.status],
-                )}
-              >
-                {STATUS_LABELS[req.status] ?? req.status}
-              </Badge>
+      {loading ? (
+        <ReportCardsSkeleton count={6} />
+      ) : loadError ? (
+        <LoadErrorState message={loadError} onRetry={onRetry} />
+      ) : (
+        <>
+          {requests.length === 0 && (
+            <div className="text-muted-foreground col-span-full py-16 text-center text-sm font-semibold">
+              {emptyMessage}
             </div>
+          )}
 
-            {/* Title */}
-            <CardTitle className="text-foreground line-clamp-1 cursor-pointer text-sm font-bold">
-              {req.title}
-            </CardTitle>
+          {requests.map((req) => (
+            <Card
+              key={req.id}
+              className={cn(
+                "report-card relative cursor-pointer overflow-hidden transition-all duration-300",
+                "hover:shadow-sm",
+                "border-border bg-card",
+              )}
+            >
+              <Link
+                href={`/reports/${encodeURIComponent(req.id)}`}
+                aria-label={`مشاهده گزارش ${req.title}`}
+                className="focus-visible:ring-ring absolute inset-0 z-0 rounded-[inherit] focus-visible:ring-2 focus-visible:outline-none"
+              />
+              <CardContent className="pointer-events-none relative flex flex-col gap-2.5 px-4 sm:px-5">
+                {/* Badge / Header row */}
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "border text-[10px] font-semibold",
+                      TYPE_BADGE_CLASS[req.type],
+                    )}
+                  >
+                    {TYPE_LABELS[req.type]}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "border text-[10px] font-semibold",
+                      STATUS_BADGE_CLASS[req.status],
+                    )}
+                  >
+                    {STATUS_LABELS[req.status] ?? req.status}
+                  </Badge>
+                </div>
 
-            {/* Description */}
-            <CardDescription className="text-muted-foreground line-clamp-2 min-h-[2lh] text-xs leading-relaxed">
-              {req.description}
-            </CardDescription>
+                {/* Title */}
+                <CardTitle className="text-foreground line-clamp-1 text-sm font-bold">
+                  {req.title}
+                </CardTitle>
 
-            {/* Footer */}
-            <div className="text-muted-foreground flex items-center justify-between text-[10px]">
-              <span className="font-semibold">
-                {toPersianDigits(
-                  new Date(req.createdAt).toLocaleDateString("fa-IR"),
-                )}
-              </span>
-              <div className="flex items-center gap-1">
-                {activeSubTab === "my" &&
-                  (req.status === "submitted" ||
-                    req.status === "under_review") && (
-                    <>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon-xs"
-                            onClick={() => openEdit(req)}
-                            aria-label="ویرایش"
-                          >
-                            <Edit />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>ویرایش</TooltipContent>
-                      </Tooltip>
-                      {req.status === "submitted" && (
-                        <AlertDialog>
+                {/* Description */}
+                <CardDescription className="text-muted-foreground line-clamp-2 min-h-[2lh] text-xs leading-relaxed">
+                  {req.description}
+                </CardDescription>
+
+                {/* Footer */}
+                <div className="text-muted-foreground flex items-center justify-between text-[10px]">
+                  <span className="font-semibold">
+                    {toPersianDigits(
+                      new Date(req.createdAt).toLocaleDateString("fa-IR"),
+                    )}
+                  </span>
+                  <div className="pointer-events-auto flex items-center gap-1">
+                    {activeSubTab === "my" &&
+                      (req.status === "submitted" ||
+                        req.status === "under_review") && (
+                        <>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="icon-xs"
-                                className="text-destructive"
-                                onClick={() => setDeletingRequest(req)}
-                                aria-label="حذف"
+                                onClick={() => openEdit(req)}
+                                aria-label="ویرایش"
                               >
-                                <Trash2 />
+                                <Edit />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>حذف</TooltipContent>
+                            <TooltipContent>ویرایش</TooltipContent>
                           </Tooltip>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>حذف درخواست</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                آیا از حذف این درخواست اطمینان دارید؟ این اقدام
-                                قابل بازگشت نیست.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel
-                                onClick={() => setDeletingRequest(null)}
-                              >
-                                انصراف
-                              </AlertDialogCancel>
-                              <AlertDialogAction
-                                variant="destructive"
-                                onClick={handleDeleteConfirm}
-                              >
-                                {saving ? (
-                                  <Loader2 className="animate-spin" />
-                                ) : (
-                                  "حذف شود"
-                                )}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                          {req.status === "submitted" && (
+                            <AlertDialog>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon-xs"
+                                    className="text-destructive"
+                                    onClick={() => setDeletingRequest(req)}
+                                    aria-label="حذف"
+                                  >
+                                    <Trash2 />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>حذف</TooltipContent>
+                              </Tooltip>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    حذف درخواست
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    آیا از حذف این درخواست اطمینان دارید؟ این
+                                    اقدام قابل بازگشت نیست.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel
+                                    onClick={() => setDeletingRequest(null)}
+                                  >
+                                    انصراف
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    variant="destructive"
+                                    onClick={handleDeleteConfirm}
+                                  >
+                                    {saving ? (
+                                      <Loader2 className="animate-spin" />
+                                    ) : (
+                                      "حذف شود"
+                                    )}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </>
                       )}
-                    </>
-                  )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </>
+      )}
     </div>
   );
 }

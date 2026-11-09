@@ -367,3 +367,67 @@ class TestAdminAuth:
         data = r.json()["user"]
         assert data["firstName"] == "سیما"
         assert data["lastName"] == "رستمی"
+
+
+class TestProfile:
+    def test_update_name(self, client, user_token):
+        r = client.put(
+            "/api/v1/auth/profile",
+            json={"firstName": "مریم", "lastName": "احمدی"},
+            headers={"Authorization": f"Bearer {user_token}"},
+        )
+        assert r.status_code == 200
+        user = r.json()["user"]
+        assert user["firstName"] == "مریم"
+        assert user["lastName"] == "احمدی"
+
+        r = client.put(
+            "/api/v1/auth/profile",
+            json={"firstName": "   ", "lastName": "احمدی"},
+            headers={"Authorization": f"Bearer {user_token}"},
+        )
+        assert r.status_code == 422
+
+    def test_update_name_requires_auth(self, client):
+        r = client.put("/api/v1/auth/profile", json={"firstName": "Ali"})
+        assert r.status_code == 401
+
+    def test_avatar_upload_get_and_delete(self, client, user_token):
+        headers = {"Authorization": f"Bearer {user_token}"}
+        png = b"\x89PNG\r\n\x1a\n" + b"avatar-bytes"
+
+        r = client.post(
+            "/api/v1/auth/avatar",
+            files={"file": ("avatar.png", png, "image/png")},
+            headers=headers,
+        )
+        assert r.status_code == 200, r.text
+        avatar_url = r.json()["user"]["avatarUrl"]
+        assert avatar_url and avatar_url.startswith("/api/v1/auth/avatar?v=")
+
+        r = client.get(avatar_url, headers=headers)
+        assert r.status_code == 200
+        assert r.content == png
+        assert r.headers["content-type"].startswith("image/png")
+
+        r = client.delete("/api/v1/auth/avatar", headers=headers)
+        assert r.status_code == 200
+        assert r.json()["user"]["avatarUrl"] is None
+
+        r = client.get(avatar_url, headers=headers)
+        assert r.status_code == 404
+
+    def test_avatar_rejects_other_content_types(self, client, user_token):
+        r = client.post(
+            "/api/v1/auth/avatar",
+            files={"file": ("avatar.svg", b"<svg/>", "image/svg+xml")},
+            headers={"Authorization": f"Bearer {user_token}"},
+        )
+        assert r.status_code == 400
+
+    def test_avatar_requires_auth(self, client):
+        r = client.post(
+            "/api/v1/auth/avatar",
+            files={"file": ("avatar.png", b"bytes", "image/png")},
+        )
+        assert r.status_code == 401

@@ -13,6 +13,7 @@ _DESCRIPTIONS = {
     401: "Authentication is required or the credentials were rejected.",
     403: "The signed-in user is not allowed to perform this action.",
     404: "The requested resource does not exist.",
+    413: "The uploaded file is larger than the limit.",
     422: "One or more inputs failed validation.",
     500: "Unexpected server error.",
 }
@@ -44,6 +45,13 @@ _EXAMPLES = {
         "error": {
             "code": 404,
             "message": "مورد درخواستی یافت نشد.",
+        },
+    },
+    413: {
+        "success": False,
+        "error": {
+            "code": 413,
+            "message": "حجم فایل ارسال‌شده بیش از حد مجاز است.",
         },
     },
     422: {

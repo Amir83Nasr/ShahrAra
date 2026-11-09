@@ -33,7 +33,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <TooltipProvider delayDuration={800}>
       <div
-        className="bg-background text-foreground relative z-0 flex min-h-dvh flex-col justify-between pt-[env(safe-area-inset-top)] transition-colors duration-300"
+        className="bg-background text-foreground relative z-0 flex min-h-dvh flex-col justify-between pt-[env(safe-area-inset-top)]"
         id="shahr_ara_app_root"
         // جلوگیری از درگ تصاویر و لوگوها (Firefox از -webkit-user-drag پیروی نمی‌کند)
         onDragStart={(e) => e.preventDefault()}

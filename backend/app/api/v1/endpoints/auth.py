@@ -2,7 +2,7 @@ import logging
 import secrets
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.api.responses import error_responses
@@ -34,6 +34,8 @@ from app.schemas.schemas import (
     PasswordChangeRequest,
     PasswordChangeResponse,
     PasswordLoginRequest,
+    ProfileUpdateRequest,
+    ProfileUpdateResponse,
     TokenResponse,
     UserResponse,
 )
@@ -264,6 +266,135 @@ def verify_otp(body: OtpVerifyRequest, db: Session = Depends(get_db)):
 )
 def me(user: User = Depends(require_user)):
     return UserResponse.model_validate(user)
+
+
+# ── Profile ──────────────────────────────────────────────
+
+MAX_AVATAR_BYTES = 2 * 1024 * 1024
+ALLOWED_AVATAR_TYPES = {"image/jpeg", "image/png", "image/webp"}
+
+
+@router.put(
+    "/profile",
+    response_model=ProfileUpdateResponse,
+    tags=["Profile"],
+    summary="Update the signed-in profile",
+    description="Updates the citizen's display name. "
+    "The phone number and national ID are immutable.",
+    operation_id="profile_update",
+    response_description="The updated user profile.",
+    responses=error_responses(401, 422),
+)
+def update_profile(
+    body: ProfileUpdateRequest,
+    user: User = Depends(require_user),
+    db: Session = Depends(get_db),
+):
+    changes = body.model_dump(exclude_unset=True, by_alias=False)
+    if not changes:
+        return ProfileUpdateResponse(success=True, user=UserResponse.model_validate(user))
+
+    if "firstName" in changes:
+        user.first_name = changes["firstName"]
+    if "lastName" in changes:
+        user.last_name = changes["lastName"]
+
+    db.commit()
+    db.refresh(user)
+    return ProfileUpdateResponse(success=True, user=UserResponse.model_validate(user))
+
+
+@router.get(
+    "/avatar",
+    tags=["Profile"],
+    summary="Get the signed-in user's profile picture",
+    description="Returns the stored image bytes. The URL is versioned, so it can "
+    "be cached until the picture is replaced.",
+    operation_id="profile_avatar_get",
+    response_description="The profile picture bytes.",
+    responses={
+        200: {"content": {"image/jpeg": {}, "image/png": {}, "image/webp": {}}},
+        401: {"description": "Missing or invalid token."},
+        404: {"description": "No profile picture has been uploaded."},
+    },
+)
+def get_avatar(user: User = Depends(require_user)):
+    if not user.avatar:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="تصویر پروفایل ثبت نشده است.",
+        )
+    return Response(
+        content=user.avatar,
+        media_type=user.avatar_mime or "image/jpeg",
+        # Private: only the owner sees this image, and the URL changes on replace.
+        headers={"Cache-Control": "private, max-age=86400"},
+    )
+
+
+@router.post(
+    "/avatar",
+    response_model=ProfileUpdateResponse,
+    tags=["Profile"],
+    summary="Upload a profile picture",
+    description="Accepts a JPEG, PNG, or WebP image up to 2 MB and replaces "
+    "the current profile picture.",
+    operation_id="profile_avatar_upload",
+    response_description="The updated user profile.",
+    responses=error_responses(401, 422),
+)
+async def upload_avatar(
+    file: UploadFile = File(...),
+    user: User = Depends(require_user),
+    db: Session = Depends(get_db),
+):
+    content_type = (file.content_type or "").lower()
+    if content_type not in ALLOWED_AVATAR_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="فقط تصویر JPEG، PNG یا WebP قابل بارگذاری است.",
+        )
+
+    data = await file.read(MAX_AVATAR_BYTES + 1)
+    if not data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="فایل تصویر خالی است.",
+        )
+    if len(data) > MAX_AVATAR_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="حجم تصویر باید کمتر از ۲ مگابایت باشد.",
+        )
+
+    user.avatar = data
+    user.avatar_mime = content_type
+    user.avatar_updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(user)
+    return ProfileUpdateResponse(success=True, user=UserResponse.model_validate(user))
+
+
+@router.delete(
+    "/avatar",
+    response_model=ProfileUpdateResponse,
+    tags=["Profile"],
+    summary="Remove the profile picture",
+    description="Clears the stored image and restores the initials placeholder.",
+    operation_id="profile_avatar_delete",
+    response_description="The updated user profile.",
+    responses=error_responses(401),
+)
+def delete_avatar(
+    user: User = Depends(require_user),
+    db: Session = Depends(get_db),
+):
+    user.avatar = None
+    user.avatar_mime = None
+    user.avatar_updated_at = None
+    db.commit()
+    db.refresh(user)
+    return ProfileUpdateResponse(success=True, user=UserResponse.model_validate(user))
 
 
 @router.post(

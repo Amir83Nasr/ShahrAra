@@ -10,7 +10,6 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { useApp } from "../providers";
-import { ModeToggle } from "@/components/mode-toggle";
 import { User } from "../../types";
 import { toPersianDigits, toEnglishDigits } from "@/utils/numberUtils";
 import { cn } from "@/lib/utils";
@@ -85,7 +84,7 @@ function ValidationHint({
 
 export default function LoginPage() {
   const router = useRouter();
-  const { currentUser, authReady, loginSuccess, theme, setTheme } = useApp();
+  const { currentUser, authReady, loginSuccess } = useApp();
 
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
@@ -425,10 +424,6 @@ export default function LoginPage() {
           compact && "pt-4 pb-5",
         )}
       >
-        <div className="absolute end-4 top-4 z-10">
-          <ModeToggle theme={theme} onThemeChange={setTheme} />
-        </div>
-
         <div className="flex min-h-0 flex-1 overflow-y-auto">
           <div
             className={cn(

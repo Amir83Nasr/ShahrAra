@@ -10,6 +10,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    LargeBinary,
     String,
     Text,
     UniqueConstraint,
@@ -42,6 +43,11 @@ class User(Base):
     last_name: str = Column(String, nullable=False)
     is_admin: bool = Column(Boolean, default=False)
     password_hash: str | None = Column(String, nullable=True)
+    # Profile picture kept in the row: the app has no object storage, and an
+    # avatar is small enough (the client downscales before uploading).
+    avatar: bytes | None = Column(LargeBinary, nullable=True)
+    avatar_mime: str | None = Column(String, nullable=True)
+    avatar_updated_at: datetime | None = Column(DateTime(timezone=True), nullable=True)
 
     @property
     def nationalId(self) -> str:
@@ -62,6 +68,14 @@ class User(Base):
     @property
     def hasPassword(self) -> bool:
         return self.password_hash is not None
+
+    @property
+    def avatarUrl(self) -> str | None:
+        """Versioned, authenticated URL for the user's profile picture."""
+        if not self.avatar:
+            return None
+        version = int(self.avatar_updated_at.timestamp()) if self.avatar_updated_at else 0
+        return f"/api/v1/auth/avatar?v={version}"
 
     def __repr__(self) -> str:
         return f"<User {self.id} phone={self.phone}>"

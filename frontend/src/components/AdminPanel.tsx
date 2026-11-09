@@ -5,24 +5,32 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { RequestItem, RequestStatus, RequestType } from "../types";
 
 // maplibre-gl touches `window` at import time; skip prerendering
-const MapComponent = dynamic(() => import("./MapComponent"), { ssr: false });
+const MapComponent = dynamic(() => import("./MapComponent"), {
+  ssr: false,
+  loading: () => <MapSkeleton />,
+});
 import {
   Shield,
   Search,
   Filter,
   MessageSquare,
-  Calendar,
+  CalendarDays,
   MapPin,
   User,
   CheckCircle,
+  AlertCircle,
   X,
   RefreshCcw,
   Layers,
+  ExternalLink,
+  Heart,
+  Hash,
 } from "lucide-react";
 import { toPersianDigits } from "../utils/numberUtils";
 import { REGIONS } from "../utils/regionUtils";
@@ -30,10 +38,12 @@ import { CATEGORIES } from "../utils/categoryUtils";
 import { filterRequests } from "../utils/requestFilters";
 import {
   STATUS_LABELS,
+  STATUS_ORDER,
   STATUS_BADGE_CLASS,
   TYPE_LABELS,
   TYPE_BADGE_CLASS,
 } from "../utils/requestBadges";
+import { formatPersian } from "../utils/persianDate";
 import { cn } from "@/lib/utils";
 import StatsStrip from "@/components/StatsStrip";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -59,11 +69,17 @@ import {
 import {
   Pagination,
   PaginationContent,
+  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  AdminRowsSkeleton,
+  LoadErrorState,
+  MapSkeleton,
+} from "@/components/skeletons";
 
 // compact page list with ellipsis: 1 … c-1 c c+1 … last
 function buildPageRange(
@@ -96,6 +112,8 @@ interface AdminPanelProps {
   ) => Promise<void>;
   onRefresh: () => void;
   theme?: "light" | "dark";
+  loading?: boolean;
+  loadError?: string | null;
 }
 
 export default function AdminPanel({
@@ -103,6 +121,8 @@ export default function AdminPanel({
   onUpdateStatus,
   onRefresh,
   theme = "light",
+  loading = false,
+  loadError = null,
 }: AdminPanelProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState<RequestType | "all">("all");
@@ -112,7 +132,7 @@ export default function AdminPanel({
     "all",
   );
 
-  const [selectedItem, setSelectedItem] = useState<RequestItem | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [adminResponse, setAdminResponse] = useState("");
   const [statusVal, setStatusVal] = useState<RequestStatus>("submitted");
 
@@ -123,15 +143,63 @@ export default function AdminPanel({
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;
 
-  // Sync selected item inputs when selected item changes
-  useEffect(() => {
-    if (selectedItem) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setAdminResponse(selectedItem.adminResponse || "");
+  const detailRef = useRef<HTMLDivElement | null>(null);
+  const listTopRef = useRef<HTMLDivElement | null>(null);
+  const successTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-      setStatusVal(selectedItem.status);
+  // Always render the freshest copy from the shared list: after an admin
+  // update the provider re-fetches, and keeping a snapshot here used to leave
+  // the detail panel showing the old status/response.
+  const selectedItem = requests.find((item) => item.id === selectedId) ?? null;
+
+  const clearSuccessTimer = () => {
+    if (successTimer.current) {
+      clearTimeout(successTimer.current);
+      successTimer.current = null;
     }
-  }, [selectedItem]);
+  };
+
+  const openItem = (item: RequestItem) => {
+    setSelectedId(item.id);
+    setAdminResponse(item.adminResponse ?? "");
+    setStatusVal(item.status);
+    setSaveSuccess(false);
+    setSaveError(null);
+    clearSuccessTimer();
+  };
+
+  const closeItem = () => {
+    setSelectedId(null);
+    setSaveSuccess(false);
+    setSaveError(null);
+    clearSuccessTimer();
+  };
+
+  // The detail panel sits below the list on mobile. Scroll it into view so
+  // tapping a request visibly opens the answer form instead of doing nothing.
+  useEffect(() => {
+    if (!selectedId) return;
+    if (
+      typeof window !== "undefined" &&
+      !window.matchMedia("(max-width: 1023.98px)").matches
+    ) {
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      detailRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [selectedId]);
+
+  useEffect(
+    () => () => {
+      if (successTimer.current) clearTimeout(successTimer.current);
+    },
+    [],
+  );
 
   // Filter list
   const filteredItems = filterRequests(requests, {
@@ -165,8 +233,20 @@ export default function AdminPanel({
     safeAdminPage * PAGE_SIZE,
   );
 
-  const goToAdminPage = (page: number) =>
-    setCurrentPage(Math.min(Math.max(1, page), totalAdminPages));
+  const isInitialLoading = loading && requests.length === 0;
+  const isRefreshing = loading && requests.length > 0;
+
+  const goToAdminPage = (page: number) => {
+    const next = Math.min(Math.max(1, page), totalAdminPages);
+    if (next === safeAdminPage) return;
+    setCurrentPage(next);
+    requestAnimationFrame(() => {
+      listTopRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  };
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,17 +259,8 @@ export default function AdminPanel({
     try {
       await onUpdateStatus(selectedItem.id, statusVal, adminResponse.trim());
       setSaveSuccess(true);
-
-      // Update local item
-      setSelectedItem({
-        ...selectedItem,
-        status: statusVal,
-        adminResponse: adminResponse.trim(),
-      });
-
-      setTimeout(() => {
-        setSaveSuccess(false);
-      }, 2000);
+      clearSuccessTimer();
+      successTimer.current = setTimeout(() => setSaveSuccess(false), 2500);
     } catch (err) {
       console.error(err);
       setSaveError(
@@ -201,55 +272,72 @@ export default function AdminPanel({
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8" id="shahr_ara_admin_panel">
-      <div className="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-        <div className="flex items-center gap-4">
-          <div className="border-primary/30 bg-primary/10 text-primary flex size-12 items-center justify-center rounded-full border">
-            <Shield className="h-6 w-6" />
-          </div>
-          <div>
-            <span className="text-primary font-mono text-[10px] font-bold tracking-wider">
-              پنل مدیریت شهری
-            </span>
-            <h2 className="text-foreground mt-0.5 text-sm font-extrabold sm:text-2xl">
-              پنل پاسخگویی و مدیریت شهرداری شهرآرا
-            </h2>
-            <p className="text-muted-foreground mt-1 hidden text-xs sm:block">
-              شما وارد حساب کاربری مدیر سامانه شده‌اید. پاسخ به شهروندان و
-              تغییرات زیر نظر سیستم یکپارچه مستند می‌شود.
-            </p>
-          </div>
+    <div
+      className="mx-auto max-w-7xl px-4 py-6 sm:py-8"
+      id="shahr_ara_admin_panel"
+    >
+      <div className="mb-6 flex items-center gap-3 sm:mb-8 sm:gap-4">
+        <div className="border-primary/25 bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-2xl border sm:size-12 sm:rounded-full">
+          <Shield className="h-5 w-5 sm:h-6 sm:w-6" />
         </div>
-
-        <Button variant="outline" onClick={onRefresh}>
-          <RefreshCcw />
-          بروزرسانی لیست کارهای مردمی
-        </Button>
+        <div className="min-w-0">
+          <span className="text-primary block font-mono text-[10px] font-bold tracking-wider">
+            پنل مدیریت شهری
+          </span>
+          <h1 className="text-foreground mt-0.5 text-base leading-snug font-extrabold sm:text-2xl">
+            پنل پاسخگویی و مدیریت شهرداری شهرآرا
+          </h1>
+          <p className="text-muted-foreground mt-1 hidden text-xs leading-relaxed sm:block">
+            شما وارد حساب کاربری مدیر سامانه شده‌اید. پاسخ به شهروندان و تغییرات
+            زیر نظر سیستم یکپارچه مستند می‌شود.
+          </p>
+        </div>
       </div>
 
       <StatsStrip variant="admin" className="mb-5" />
 
       <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
         {/* Left Column: List with Filters (7 columns on large desktop) */}
-        <div className="flex flex-col gap-6 lg:col-span-7">
+        <div className="flex min-w-0 flex-col gap-6 lg:col-span-7">
           {/* Active Filters / Search */}
-          <div className="border-border bg-card flex flex-col gap-4 rounded-2xl border p-4 sm:p-5">
-            {/* Search row */}
-            <div className="relative">
-              <Search className="text-muted-foreground absolute top-1/2 right-3.5 size-4 -translate-y-1/2" />
-              <Input
-                type="text"
-                placeholder="جستجوی درخواست‌ها (عنوان، توضیحات، نام شهروند ارائه‌دهنده...)"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-11 rounded-full pr-10"
-              />
+          <div
+            ref={listTopRef}
+            className="border-border/70 bg-card flex scroll-mt-4 flex-col gap-3.5 rounded-2xl border p-4 sm:gap-4 sm:p-5"
+          >
+            {/* Search + refresh */}
+            <div className="flex w-full items-center gap-2.5">
+              <div className="relative flex-1">
+                <Search className="text-muted-foreground absolute top-1/2 right-3.5 size-4 -translate-y-1/2" />
+                <Input
+                  type="text"
+                  placeholder="جستجوی عنوان، توضیحات یا نام شهروند..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="h-11 rounded-full pr-10"
+                />
+              </div>
+              <Button
+                variant="outline"
+                onClick={onRefresh}
+                disabled={loading}
+                aria-label="بروزرسانی فهرست درخواست‌ها"
+                className="h-11 w-11 shrink-0 px-0 sm:w-auto sm:px-4"
+              >
+                <RefreshCcw
+                  className={cn(
+                    loading && "animate-spin motion-reduce:animate-none",
+                  )}
+                />
+                <span className="hidden sm:inline">
+                  {isRefreshing ? "در حال بروزرسانی…" : "بروزرسانی"}
+                </span>
+              </Button>
             </div>
 
             {/* Quick Filters Group */}
-            <div className="grid grid-cols-2 gap-4 md:flex md:justify-between">
+            <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
               {/* Type selector */}
-              <div className="flex flex-col gap-1.5 text-right">
+              <div className="flex min-w-0 flex-col gap-1.5 text-right">
                 <span className="text-muted-foreground flex items-center gap-1 text-[10px] font-bold">
                   <Filter className="text-primary h-3 w-3" />
                   نوع مشارکت
@@ -261,7 +349,7 @@ export default function AdminPanel({
                     setSelectedType(v as "all" | "problem" | "idea")
                   }
                 >
-                  <SelectTrigger className="w-full md:w-40">
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent position="popper">
@@ -282,7 +370,7 @@ export default function AdminPanel({
               </div>
 
               {/* Category selector */}
-              <div className="flex flex-col gap-1.5 text-right">
+              <div className="flex min-w-0 flex-col gap-1.5 text-right">
                 <span className="text-muted-foreground flex items-center gap-1 text-[10px] font-bold">
                   <Layers className="text-primary h-3 w-3" />
                   موضوع خدمت
@@ -292,15 +380,15 @@ export default function AdminPanel({
                   value={selectedCategory}
                   onValueChange={setSelectedCategory}
                 >
-                  <SelectTrigger className="w-full md:w-40">
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent position="popper" align="end">
                     <SelectGroup>
                       <SelectLabel>موضوع خدمت</SelectLabel>
                       <SelectItem value="all">همه موضوعات خدمتی</SelectItem>
-                      {CATEGORIES.map((c, i) => (
-                        <SelectItem key={i} value={c}>
+                      {CATEGORIES.map((c) => (
+                        <SelectItem key={c} value={c}>
                           {c}
                         </SelectItem>
                       ))}
@@ -310,7 +398,7 @@ export default function AdminPanel({
               </div>
 
               {/* Status selector */}
-              <div className="flex flex-col gap-1.5 text-right">
+              <div className="flex min-w-0 flex-col gap-1.5 text-right">
                 <span className="text-muted-foreground flex items-center gap-1 text-[10px] font-bold">
                   <CheckCircle className="text-primary h-3 w-3" />
                   وضعیت فرآیند
@@ -320,33 +408,25 @@ export default function AdminPanel({
                   value={selectedStatus}
                   onValueChange={(v) => setSelectedStatus(v as RequestStatus)}
                 >
-                  <SelectTrigger className="w-full md:w-40">
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent position="popper" align="end">
                     <SelectGroup>
                       <SelectLabel>وضعیت فرآیند</SelectLabel>
                       <SelectItem value="all">همه وضعیت‌ها</SelectItem>
-                      <SelectItem value="submitted">
-                        مورد ارسالی جدید
-                      </SelectItem>
-                      <SelectItem value="under_review">
-                        در حال بررسی تخصصی
-                      </SelectItem>
-                      <SelectItem value="in_progress">
-                        اکیپ‌های مشغول به کار
-                      </SelectItem>
-                      <SelectItem value="resolved">
-                        برطرف شده و نهایی
-                      </SelectItem>
-                      <SelectItem value="archived">بایگانی شده</SelectItem>
+                      {STATUS_ORDER.map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {STATUS_LABELS[status]}
+                        </SelectItem>
+                      ))}
                     </SelectGroup>
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Region selector */}
-              <div className="flex flex-col gap-1.5 text-right">
+              <div className="flex min-w-0 flex-col gap-1.5 text-right">
                 <span className="text-muted-foreground flex items-center gap-1 text-[10px] font-bold">
                   <MapPin className="text-primary h-3 w-3" />
                   منطقه شهری
@@ -356,7 +436,7 @@ export default function AdminPanel({
                   value={selectedRegion}
                   onValueChange={setSelectedRegion}
                 >
-                  <SelectTrigger className="w-full md:w-40">
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent position="popper" align="end">
@@ -377,26 +457,37 @@ export default function AdminPanel({
 
           {/* Submissions List */}
           <div className="space-y-3 p-0.5">
-            {filteredItems.length > 0 ? (
+            {isInitialLoading ? (
+              <AdminRowsSkeleton count={5} />
+            ) : loadError && requests.length === 0 ? (
+              <LoadErrorState message={loadError} onRetry={onRefresh} />
+            ) : filteredItems.length > 0 ? (
               pageItems.map((item) => {
-                const isSelected = selectedItem?.id === item.id;
-                const dateString = new Date(item.createdAt).toLocaleDateString(
-                  "fa-IR",
-                );
+                const isSelected = selectedId === item.id;
+                const dateString = formatPersian(item.createdAt);
 
                 return (
                   <Card
                     key={item.id}
-                    size="sm"
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isSelected}
+                    aria-label={`انتخاب درخواست ${item.title}`}
                     className={cn(
-                      "admin-card cursor-pointer transition-all",
+                      "focus-visible:ring-ring cursor-pointer transition-all duration-200 focus-visible:ring-2 focus-visible:outline-none",
                       isSelected
-                        ? "border-primary ring-primary/40 ring-2"
-                        : "border-border bg-card hover:shadow-sm",
+                        ? "border-primary ring-primary/30 ring-2"
+                        : "border-border/70 bg-card hover:border-primary/25 hover:shadow-sm",
                     )}
-                    onClick={() => setSelectedItem(item)}
+                    onClick={() => openItem(item)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        openItem(item);
+                      }
+                    }}
                   >
-                    <CardContent className="flex flex-col gap-2.5 px-4">
+                    <CardContent className="flex flex-col gap-2.5 px-4 sm:px-5">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <Badge
@@ -428,8 +519,8 @@ export default function AdminPanel({
                           {item.userName} - {toPersianDigits(item.region)}
                         </span>
                         <span className="flex items-center gap-1">
-                          <Calendar className="text-muted-foreground h-3 w-3" />
-                          {dateString}
+                          <CalendarDays className="text-muted-foreground h-3 w-3" />
+                          {toPersianDigits(dateString)}
                         </span>
                       </div>
                     </CardContent>
@@ -437,62 +528,69 @@ export default function AdminPanel({
                 );
               })
             ) : (
-              <div className="border-border bg-card text-muted-foreground rounded-2xl border p-10 text-center">
+              <div className="border-border/70 bg-card text-muted-foreground rounded-2xl border border-dashed p-10 text-center">
                 <Filter className="text-muted-foreground mx-auto mb-3 h-8 w-8" />
                 <p className="text-xs font-semibold">
-                  هیچ موردی منطبق با فیلترهای بالا یافت نشد.
+                  {requests.length === 0
+                    ? "هنوز درخواستی از سوی شهروندان ثبت نشده است."
+                    : "هیچ موردی منطبق با فیلترهای بالا یافت نشد."}
                 </p>
               </div>
             )}
 
             {totalAdminPages > 1 && (
-              <Pagination className="pt-2">
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={() => goToAdminPage(safeAdminPage - 1)}
-                      disabled={safeAdminPage <= 1}
-                    />
-                  </PaginationItem>
+              <div className="no-scrollbar -mx-1 overflow-x-auto px-1 pt-2">
+                <Pagination aria-label="صفحه‌بندی درخواست‌ها">
+                  <PaginationContent className="gap-0.5 sm:gap-1">
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => goToAdminPage(safeAdminPage - 1)}
+                        disabled={safeAdminPage <= 1}
+                      />
+                    </PaginationItem>
 
-                  {buildPageRange(safeAdminPage, totalAdminPages).map((p, i) =>
-                    p === "ellipsis" ? (
-                      <PaginationItem key={`e${i}`}>
-                        <span className="text-muted-foreground flex size-9 items-center justify-center">
-                          …
-                        </span>
-                      </PaginationItem>
-                    ) : (
-                      <PaginationItem key={p}>
-                        <PaginationLink
-                          isActive={p === safeAdminPage}
-                          onClick={() => goToAdminPage(p)}
-                        >
-                          {toPersianDigits(p)}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ),
-                  )}
+                    {buildPageRange(safeAdminPage, totalAdminPages).map(
+                      (p, i) =>
+                        p === "ellipsis" ? (
+                          <PaginationItem key={`e${i}`}>
+                            <PaginationEllipsis className="text-muted-foreground" />
+                          </PaginationItem>
+                        ) : (
+                          <PaginationItem key={p}>
+                            <PaginationLink
+                              isActive={p === safeAdminPage}
+                              onClick={() => goToAdminPage(p)}
+                              className="size-9 sm:size-10"
+                            >
+                              {toPersianDigits(p)}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ),
+                    )}
 
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={() => goToAdminPage(safeAdminPage + 1)}
-                      disabled={safeAdminPage >= totalAdminPages}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => goToAdminPage(safeAdminPage + 1)}
+                        disabled={safeAdminPage >= totalAdminPages}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
             )}
           </div>
         </div>
 
         {/* Right Column: Detailed Response Dashboard (5 columns on desktop) */}
-        <div className="h-full lg:col-span-5">
+        <div
+          ref={detailRef}
+          className="min-w-0 scroll-mt-4 lg:sticky lg:top-20 lg:col-span-5 lg:max-h-[calc(100dvh-6rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain"
+        >
           {selectedItem ? (
-            <Card className="border-border bg-card rounded-2xl border">
+            <Card className="border-border/70 bg-card rounded-2xl border">
               {/* Header */}
-              <div className="flex items-start justify-between gap-4 px-(--card-spacing)">
-                <div className="space-y-1">
+              <div className="flex items-start justify-between gap-3 px-(--card-spacing)">
+                <div className="min-w-0 space-y-1">
                   <span className="text-primary block font-mono text-[10px] font-bold tracking-wider">
                     جزئیات درخواست
                   </span>
@@ -500,18 +598,33 @@ export default function AdminPanel({
                     بررسی درخواست برگزیده
                   </h3>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => setSelectedItem(null)}
-                  aria-label="بستن"
-                >
-                  <X />
-                </Button>
+                <div className="flex shrink-0 items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    asChild
+                    aria-label="مشاهده صفحه گزارش"
+                    title="مشاهده صفحه گزارش"
+                  >
+                    <Link
+                      href={`/reports/${encodeURIComponent(selectedItem.id)}`}
+                    >
+                      <ExternalLink />
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={closeItem}
+                    aria-label="بستن"
+                  >
+                    <X />
+                  </Button>
+                </div>
               </div>
 
               {/* Category & Region */}
-              <div className="text-muted-foreground flex items-center gap-2 px-(--card-spacing) text-xs font-bold">
+              <div className="text-muted-foreground flex flex-wrap items-center gap-2 px-(--card-spacing) text-xs font-bold">
                 <Badge
                   variant="outline"
                   className={TYPE_BADGE_CLASS[selectedItem.type]}
@@ -519,8 +632,25 @@ export default function AdminPanel({
                   {TYPE_LABELS[selectedItem.type]}
                 </Badge>
                 <Badge variant="outline">{selectedItem.category}</Badge>
-                <span className="mr-auto text-[10px]">
+              </div>
+
+              {/* Metadata */}
+              <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1.5 px-(--card-spacing) text-[10px] font-bold">
+                <span className="flex items-center gap-1">
+                  <MapPin className="h-3 w-3 shrink-0" />
                   {toPersianDigits(selectedItem.region)}
+                </span>
+                <span className="flex items-center gap-1">
+                  <CalendarDays className="h-3 w-3 shrink-0" />
+                  {toPersianDigits(formatPersian(selectedItem.createdAt))}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Heart className="h-3 w-3 shrink-0" />
+                  {toPersianDigits(selectedItem.likes)} حمایت
+                </span>
+                <span className="flex items-center gap-1 font-mono">
+                  <Hash className="h-3 w-3 shrink-0" />
+                  {toPersianDigits(selectedItem.id)}
                 </span>
               </div>
 
@@ -529,7 +659,7 @@ export default function AdminPanel({
                 <CardTitle className="text-foreground text-base font-extrabold">
                   {selectedItem.title}
                 </CardTitle>
-                <div className="border-border bg-muted/30 text-foreground/80 rounded-xl border p-3.5 text-xs leading-relaxed whitespace-pre-line">
+                <div className="border-border/70 bg-muted/30 text-foreground/80 rounded-2xl border p-3.5 text-xs leading-relaxed whitespace-pre-line">
                   {selectedItem.description}
                 </div>
               </div>
@@ -548,7 +678,7 @@ export default function AdminPanel({
               </div>
 
               {/* Citizen Info */}
-              <div className="border-border bg-muted/20 mx-(--card-spacing) rounded-xl border p-3.5">
+              <div className="border-border/70 bg-muted/20 mx-(--card-spacing) rounded-2xl border p-3.5">
                 <div className="flex items-center gap-2 pb-2">
                   <User className="text-primary h-4 w-4" />
                   <span className="text-foreground text-xs font-bold">
@@ -584,7 +714,7 @@ export default function AdminPanel({
                   <MapPin className="text-primary h-3.5 w-3.5" />
                   موقعیت جغرافیایی
                 </span>
-                <div className="border-border bg-background h-[180px] overflow-hidden rounded-2xl border">
+                <div className="border-border/70 bg-background h-44 overflow-hidden rounded-2xl border sm:h-52">
                   <MapComponent
                     pickerMode={false}
                     items={[selectedItem]}
@@ -600,21 +730,28 @@ export default function AdminPanel({
               >
                 {saveError && (
                   <Alert variant="destructive" className="text-xs">
-                    <X />
+                    <AlertCircle />
                     <AlertTitle>خطا در بروزرسانی</AlertTitle>
                     <AlertDescription>{saveError}</AlertDescription>
                   </Alert>
                 )}
 
                 {saveSuccess && (
-                  <div className="border-type-idea/20 bg-type-idea/10 text-type-idea flex items-center gap-2 rounded-xl border p-2.5 text-xs">
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    className="border-status-resolved/20 bg-status-resolved/10 text-status-resolved flex items-center gap-2 rounded-xl border p-2.5 text-xs"
+                  >
                     <CheckCircle className="h-4 w-4 shrink-0" />
                     <span>بروزرسانی با موفقیت اعمال شد!</span>
                   </div>
                 )}
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-muted-foreground text-xs font-bold">
+                  <label
+                    htmlFor="admin-status"
+                    className="text-muted-foreground text-xs font-bold"
+                  >
                     تغییر وضعیت درخواست
                   </label>
                   <Select
@@ -622,33 +759,31 @@ export default function AdminPanel({
                     value={statusVal}
                     onValueChange={(v) => setStatusVal(v as RequestStatus)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="admin-status" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent position="popper" align="end">
                       <SelectGroup>
                         <SelectLabel>تغییر وضعیت</SelectLabel>
-                        <SelectItem value="submitted">
-                          جدید (صف انتظار)
-                        </SelectItem>
-                        <SelectItem value="under_review">
-                          تحت بررسی فنی
-                        </SelectItem>
-                        <SelectItem value="in_progress">
-                          در دست اقدام
-                        </SelectItem>
-                        <SelectItem value="resolved">برطرف شده</SelectItem>
-                        <SelectItem value="archived">بایگانی</SelectItem>
+                        {STATUS_ORDER.map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {STATUS_LABELS[status]}
+                          </SelectItem>
+                        ))}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-muted-foreground text-xs font-bold">
+                  <label
+                    htmlFor="admin-response"
+                    className="text-muted-foreground text-xs font-bold"
+                  >
                     پاسخ رسمی شهرداری
                   </label>
                   <Textarea
+                    id="admin-response"
                     rows={3}
                     required
                     placeholder="پاسخ رسمی که به اطلاع شهروند و عموم خواهد رسید..."
@@ -658,12 +793,12 @@ export default function AdminPanel({
                 </div>
 
                 <Button type="submit" className="w-full" disabled={submitting}>
-                  {submitting ? "در حال انتشار..." : "ثبت و انتشار پاسخ"}
+                  {submitting ? "در حال انتشار…" : "ثبت و انتشار پاسخ"}
                 </Button>
               </form>
             </Card>
           ) : (
-            <Card className="border-border bg-card flex h-full min-h-[400px] flex-col items-center justify-center rounded-2xl border text-center">
+            <Card className="border-border/70 bg-card hidden h-full min-h-[400px] flex-col items-center justify-center rounded-2xl border text-center lg:flex">
               <CardContent className="p-6">
                 <MessageSquare className="text-muted-foreground/50 mx-auto mb-4 h-10 w-10" />
                 <h3 className="text-foreground mb-1 text-sm font-bold">

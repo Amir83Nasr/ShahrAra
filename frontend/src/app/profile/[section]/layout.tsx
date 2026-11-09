@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 
 const SECTION_TITLES: Record<string, string> = {
   my: "درخواست‌های من",
-  liked: "لایک کرده‌ام",
-  security: "امنیت و رمز عبور",
+  liked: "لایک‌شده‌ها",
+  settings: "تنظیمات",
 };
 
 export async function generateMetadata({

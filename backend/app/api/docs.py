@@ -33,6 +33,10 @@ TAGS_METADATA = [
         "description": "Status-change notifications for the signed-in citizen.",
     },
     {
+        "name": "Profile",
+        "description": "The signed-in citizen's display name and profile picture.",
+    },
+    {
         "name": "Statistics",
         "description": "Aggregate counters for dashboards and public metrics.",
     },

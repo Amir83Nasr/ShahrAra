@@ -7,7 +7,10 @@ import { RequestItem, RequestType, User } from "../types";
 import { apiErrorMessage, apiFetch, authHeaders } from "@/lib/api";
 
 // maplibre-gl touches `window` at import time; skip prerendering
-const MapComponent = dynamic(() => import("./MapComponent"), { ssr: false });
+const MapComponent = dynamic(() => import("./MapComponent"), {
+  ssr: false,
+  loading: () => <MapSkeleton />,
+});
 import { determineRegion, REGIONS } from "../utils/regionUtils";
 import { CATEGORIES } from "../utils/categoryUtils";
 import {
@@ -36,6 +39,7 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { MapSkeleton } from "@/components/skeletons";
 
 interface RequestFormProps {
   currentUser: User | null;
