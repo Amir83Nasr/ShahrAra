@@ -13,6 +13,41 @@ export const THEME_COLORS = {
 
 export type ThemeColorName = keyof typeof THEME_COLORS;
 
+const THEME_COLOR_META_SELECTOR = 'meta[name="theme-color"]';
+
+/**
+ * رنگ نوار مرورگر/PWA را روی تنها متای theme-color می‌گذارد.
+ *
+ * مرورگر این متا را بلافاصله پس از تغییر اعمال می‌کند (نوار مرورگر بیرون از
+ * صفحه است و منتظر رنگ‌آمیزی محتوا نمی‌ماند)، پس فراخوانی آن باید بعد از
+ * فریمی باشد که محتوای تم جدید رنگ گرفته است؛ وگرنه نوار مرورگر یک فریم
+ * (یا بیشتر) زودتر عوض می‌شود و هم‌زمانیِ تغییر از دست می‌رود.
+ */
+export function syncThemeColorMeta(theme: ThemeColorName) {
+  const color = THEME_COLORS[theme];
+  const metas = document.querySelectorAll<HTMLMetaElement>(
+    THEME_COLOR_META_SELECTOR,
+  );
+
+  if (metas.length === 0) {
+    const meta = document.createElement("meta");
+    meta.setAttribute("name", "theme-color");
+    meta.setAttribute("content", color);
+    document.head.appendChild(meta);
+    return;
+  }
+
+  metas.forEach((meta, index) => {
+    if (index === 0) {
+      meta.setAttribute("content", color);
+    } else {
+      // هر متای تکراری (مثلاً بازماندهٔ رندر قبلی) حذف می‌شود تا مرورگر
+      // رنگ درست را از دست ندهد.
+      meta.remove();
+    }
+  });
+}
+
 /**
  * اسکریپت همگام که قبل از اولین رندر اجرا می‌شود: کلاس تم و متای theme-color
  * را از localStorage ست می‌کند تا نوار مرورگر از همان ابتدا هم‌رنگ تم باشد.

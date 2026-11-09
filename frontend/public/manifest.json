@@ -10,7 +10,7 @@
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f8fafd",
-  "theme_color": "#0080c6",
+  "theme_color": "#f8fafd",
   "categories": ["government", "social", "utilities"],
   "icons": [
     {

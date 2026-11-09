@@ -274,6 +274,14 @@ html.theme-switching *::after {
   transition: none !important;
 }
 
+/* همگام‌سازی تغییر تم از طریق View Transitions (در صورت پشتیبانی مرورگر)
+   فقط برای اعمالِ یک‌جای رنگ محتوا و نوار مرورگر استفاده می‌شود؛ انیمیشنِ
+   محو/نمایش پیش‌فرض آن را خاموش می‌کنیم تا تعویض تم همچنان فوری بماند. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

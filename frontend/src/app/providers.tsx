@@ -32,17 +32,16 @@ import {
   setCachedData,
   invalidateCache,
 } from "@/utils/apiCache";
-import { THEME_COLORS } from "@/lib/theme-color";
+import { syncThemeColorMeta } from "@/lib/theme-color";
 
 const REQ_CACHE_KEY = "requests";
 const STATS_CACHE_KEY = "stats";
 
 /**
- * اعمال فوری تم روی DOM: کلاس‌های تم، رنگ نوار مرورگر/PWA و color-scheme.
- * عمداً هیچ گذاری در کار نیست تا کل صفحه و رابط مرورگر در یک فریم و هم‌زمان
- * رنگ عوض کنند (گذار ۳۰۰ میلی‌ثری روی همهٔ عناصر باعث کندی می‌شد).
+ * اعمال فوری کلاس‌های تم روی DOM (رنگ محتوا و color-scheme).
+ * عمداً هیچ گذاری در کار نیست تا کل صفحه در یک فریم رنگ عوض کند.
  */
-function applyThemeToDom(theme: "light" | "dark") {
+function applyThemeClasses(theme: "light" | "dark") {
   const root = document.documentElement;
   const isDark = theme === "dark";
 
@@ -50,30 +49,17 @@ function applyThemeToDom(theme: "light" | "dark") {
   if (document.body) {
     document.body.classList.toggle("dark", isDark);
   }
+}
 
-  // نوار مرورگر/PWA هم‌رنگ تم انتخاب‌شده (نه ترجیح سیستم‌عامل). این متا
-  // عمداً از viewport در layout حذف شده تا جابه‌جایی بین صفحات آن را بازنویسی
-  // نکند و رنگ نوار مرورگر نپرد.
-  const themeColor = isDark ? THEME_COLORS.dark : THEME_COLORS.light;
-  const themeColorMetas = document.querySelectorAll<HTMLMetaElement>(
-    'meta[name="theme-color"]',
-  );
-  if (themeColorMetas.length === 0) {
-    const meta = document.createElement("meta");
-    meta.setAttribute("name", "theme-color");
-    meta.setAttribute("content", themeColor);
-    document.head.appendChild(meta);
-  } else {
-    themeColorMetas.forEach((meta, index) => {
-      if (index === 0) {
-        meta.setAttribute("content", themeColor);
-      } else {
-        // هر متای تکراری (مثلاً بازماندهٔ رندر قبلی) حذف می‌شود تا مرورگر
-        // رنگ درست را از دست ندهد.
-        meta.remove();
-      }
-    });
-  }
+/**
+ * اعمال کل تم: رنگ محتوا + رنگ نوار مرورگر/PWA.
+ * نوار مرورگر هم‌رنگ تم انتخاب‌شده (نه ترجیح سیستم‌عامل) می‌شود؛ این متا
+ * عمداً از viewport در layout حذف شده تا جابه‌جایی بین صفحات آن را بازنویسی
+ * نکند و رنگ نوار مرورگر نپرد.
+ */
+function applyThemeToDom(theme: "light" | "dark") {
+  applyThemeClasses(theme);
+  syncThemeColorMeta(theme);
 }
 
 const INITIAL_STATS: Stats = {
@@ -136,6 +122,25 @@ export function Providers({ children }: { children: React.ReactNode }) {
   // render): the first render must match the server HTML, so defaults here
   // and saved values applied in the effect below.
   const [theme, setThemeState] = useState<"light" | "dark">("light");
+  // آخرین تمی که واقعاً روی DOM اعمال شده؛ تا افکت همگام‌سازی، تغییرِ
+  // اعمال‌شده در setTheme را دوباره و قبل از رنگ‌آمیزی محتوا تکرار نکند.
+  const appliedTheme = useRef<"light" | "dark" | null>(null);
+  // شناسهٔ فریمِ در انتظار برای به‌روزرسانی رنگ نوار مرورگر.
+  const themeColorFrame = useRef<number | null>(null);
+  // شناسهٔ آخرین درخواست تغییر تم؛ برای نادیده‌گرفتنِ پایانِ یک تغییرِ قدیمی
+  // وقتی کاربر پشت‌سرهم تم را عوض کرده است (به‌ویژه در مسیر View Transition).
+  const themeRequestId = useRef(0);
+
+  // اگر پنل/provider زودتر از موعد unmount شد، فریم معلق و کلاس کمکی نماند.
+  useEffect(() => {
+    return () => {
+      if (themeColorFrame.current !== null) {
+        cancelAnimationFrame(themeColorFrame.current);
+        themeColorFrame.current = null;
+      }
+      document.documentElement.classList.remove("theme-switching");
+    };
+  }, []);
 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   // Avoid rendering auth-gated UI until localStorage session restored
@@ -190,7 +195,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
     // saved one and the toolbar/background would flash.
     if (!authReady) return;
 
-    applyThemeToDom(theme);
+    // setTheme تم را همان لحظه روی DOM اعمال می‌کند و رنگ نوار مرورگر را
+    // عمداً به فریم بعد از رنگ‌آمیزی محتوا می‌سپارد. اجرای دوبارهٔ کامل در
+    // این افکت (که برای رویدادهای کلیک می‌تواند قبل از رنگ‌آمیزی اجرا شود)
+    // دقیقاً همان ناهم‌زمانی قبلی را برمی‌گرداند.
+    if (appliedTheme.current !== theme) {
+      appliedTheme.current = theme;
+      applyThemeToDom(theme);
+    }
+
     localStorage.setItem("shahr_ara_theme", theme);
   }, [theme, authReady]);
 
@@ -257,17 +270,71 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   const setTheme = useCallback((next: "light" | "dark") => {
     const root = document.documentElement;
+    const requestId = ++themeRequestId.current;
 
-    // برای یک فریم همهٔ گذارها را خاموش می‌کنیم تا عناصری که transition محلی
-    // دارند (دکمه‌ها، بج‌ها، ...) هم هم‌زمان با بقیهٔ صفحه رنگ عوض کنند.
+    // هر تغییر تم معلقِ قبلی (مثلاً کلیک‌های سریع پشت‌سرهم) لغو شود تا رنگ
+    // قدیمی نوار مرورگر دیرتر از تم جدید اعمال نشود.
+    if (themeColorFrame.current !== null) {
+      cancelAnimationFrame(themeColorFrame.current);
+      themeColorFrame.current = null;
+    }
+
+    // گذارهای محلی (دکمه‌ها، بج‌ها و ...) فقط برای یک فریم خاموش می‌شوند تا
+    // همهٔ عناصر دقیقاً هم‌زمان با پس‌زمینه رنگ عوض کنند.
     root.classList.add("theme-switching");
-    applyThemeToDom(next);
-    setThemeState(next);
 
-    // بعد از رنگ‌آمیزی فریم جدید کلاس کمکی را برمی‌داریم.
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        root.classList.remove("theme-switching");
+    const isStale = () => themeRequestId.current !== requestId;
+
+    const apply = () => {
+      if (isStale()) return;
+      // رنگ محتوا (کلاس تم) همین‌جا عوض می‌شود.
+      applyThemeClasses(next);
+      appliedTheme.current = next;
+      // متای theme-color (رنگ نوار مرورگر/PWA) هم همین‌جا و هم‌زمان با محتوا
+      // ست می‌شود: یا داخل یک View Transition که بروزرسانی را یک‌جا اعمال
+      // می‌کند، یا در مسیر جایگزین با تأخیرِ دو فریم تا بعد از رنگ‌آمیزی محتوا.
+      syncThemeColorMeta(next);
+    };
+
+    const finish = () => {
+      if (isStale()) return;
+      root.classList.remove("theme-switching");
+      setThemeState(next);
+      localStorage.setItem("shahr_ara_theme", next);
+    };
+
+    // View Transitions (در صورت پشتیبانی) تغییر DOM را در یک به‌روزرسانی
+    // اتمیک اعمال می‌کند؛ انیمیشنِ پیش‌فرضِ آن در CSS غیرفعال شده تا فقط
+    // هم‌زمانیِ رنگ محتوا و نوار مرورگر حاصل شود، نه محو/نمایش.
+    const startViewTransition = (
+      document as Document & {
+        startViewTransition?: (update: () => void) => {
+          finished: Promise<void>;
+        };
+      }
+    ).startViewTransition;
+
+    if (typeof startViewTransition === "function") {
+      startViewTransition
+        .call(document, apply)
+        .finished.catch(() => {
+          // اگر View Transition رد شد، تم همین حالا اعمال شده؛ فقط ادامه بده.
+        })
+        .finally(finish);
+      return;
+    }
+
+    // جایگزین بدون View Transitions: کلاس تم را فوراً می‌گذاریم تا محتوا در
+    // فریم بعد رنگ بگیرد، اما رنگ نوار مرورگر را (که مستقل از paint صفحه فوراً
+    // اعمال می‌شود) دو فریم به تأخیر می‌اندازیم تا هر دو هم‌زمان عوض شوند.
+    applyThemeClasses(next);
+    appliedTheme.current = next;
+    themeColorFrame.current = requestAnimationFrame(() => {
+      themeColorFrame.current = requestAnimationFrame(() => {
+        themeColorFrame.current = null;
+        if (isStale()) return;
+        syncThemeColorMeta(next);
+        finish();
       });
     });
   }, []);
