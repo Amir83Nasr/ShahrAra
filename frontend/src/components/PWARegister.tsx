@@ -32,9 +32,7 @@ export default function PWARegister() {
         Promise.all([
           caches
             .keys()
-            .then((keys) =>
-              keys.forEach((key) => caches.delete(key)),
-            ),
+            .then((keys) => keys.forEach((key) => caches.delete(key))),
           Promise.all(registrations.map((r) => r.unregister())),
         ]),
       )
