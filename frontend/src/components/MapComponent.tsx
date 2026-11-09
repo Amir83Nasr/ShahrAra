@@ -24,6 +24,8 @@ interface MapComponentProps {
     coords: { lat: number; lng: number },
     region: string,
   ) => void;
+  /** Fired when the user confirms a point inside the picker. */
+  onConfirm?: (coords: { lat: number; lng: number }, region: string) => void;
   items?: RequestItem[];
   onSelectItem?: (item: RequestItem) => void;
   theme?: "light" | "dark";
@@ -48,6 +50,7 @@ export default function MapComponent({
   pickerMode = false,
   selectedCoordinates,
   onCoordinatesChange,
+  onConfirm,
   items = [],
   onSelectItem,
   theme,
@@ -92,6 +95,18 @@ export default function MapComponent({
     );
   };
 
+  const handleConfirm = (location: PickerLocation) => {
+    const coords = { lat: location.lat, lng: location.lng };
+    const region = determineRegion(location.lat, location.lng);
+
+    if (onConfirm) {
+      onConfirm(coords, region);
+      return;
+    }
+
+    onCoordinatesChange?.(coords, region);
+  };
+
   const venues = useMemo(
     () => items.filter(hasCoordinates).map(toVenue),
     [items],
@@ -127,7 +142,7 @@ export default function MapComponent({
         search={{ enabled: true }}
         onLocationChange={handleCoordinatesChange}
         onPick={handleCoordinatesChange}
-        onConfirm={handleCoordinatesChange}
+        onConfirm={handleConfirm}
         style={{ height: "100%", width: "100%" }}
       />
     );

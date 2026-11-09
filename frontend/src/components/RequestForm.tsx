@@ -18,16 +18,27 @@ import {
   AlertTriangle,
   AlignRight,
   CheckCircle,
+  ChevronDown,
+  ChevronLeft,
+  CircleHelp,
   Lightbulb,
   MapPin,
-  MessageSquare,
+  MapPinned,
   Send,
   Tag,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -55,7 +66,6 @@ export default function RequestForm({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState<RequestType>("problem");
-  const [category, setCategory] = useState<string>(CATEGORIES[0]);
 
   const defaultCoords = { lat: 34.641, lng: 50.88 };
   const [region, setRegion] = useState(
@@ -66,17 +76,34 @@ export default function RequestForm({
     defaultCoords,
   );
 
+  // Location picker: the map lives in a fullscreen dialog and only commits the
+  // chosen point when the user confirms it there.
+  const [mapOpen, setMapOpen] = useState(false);
+  const [draftCoords, setDraftCoords] = useState<{ lat: number; lng: number }>(
+    defaultCoords,
+  );
+  const [locationPicked, setLocationPicked] = useState(false);
+
+  const [helperOpen, setHelperOpen] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [trackingCode, setTrackingCode] = useState<string | null>(null);
 
-  const handleCoordsChange = (
+  const openLocationPicker = () => {
+    setDraftCoords(coords);
+    setMapOpen(true);
+  };
+
+  const handleLocationConfirm = (
     newCoords: { lat: number; lng: number },
     computedRegion: string,
   ) => {
     setCoords(newCoords);
     setRegion(computedRegion);
+    setLocationPicked(true);
+    setMapOpen(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -104,7 +131,7 @@ export default function RequestForm({
             title: title.trim(),
             description: description.trim(),
             type,
-            category,
+            category: CATEGORIES[0],
             coordinates: coords,
             region: region || "منطقه ۲ (مرکز قم)",
           }),
@@ -153,52 +180,78 @@ export default function RequestForm({
     <div className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
         {/* Helper Instructions Column */}
-        <div className="form-helper form-section order-last flex flex-col gap-6 lg:order-first lg:col-span-4">
-          <div className="border-border bg-card rounded-2xl border p-5 transition-colors">
-            <h3 className="text-primary border-border mb-3.5 flex items-center gap-2 pb-2.5 text-sm font-extrabold">
-              <Lightbulb className="text-primary h-4 w-4" />
-              تفاوت گزارش مشکل و ایده چیست؟
-            </h3>
+        <div className="form-helper form-section order-last lg:order-first lg:col-span-4">
+          <div className="border-border bg-card overflow-hidden rounded-2xl border transition-colors">
+            <button
+              type="button"
+              onClick={() => setHelperOpen((open) => !open)}
+              aria-expanded={helperOpen}
+              aria-controls="request-form-help"
+              className="hover:bg-muted/40 flex w-full items-center justify-between gap-3 p-5 text-start transition-colors"
+            >
+              <span className="text-primary flex items-center gap-2 text-sm font-extrabold">
+                <CircleHelp className="text-primary h-4 w-4" />
+                راهنمایی و سوالات متداول
+              </span>
+              <ChevronDown
+                className={cn(
+                  "text-muted-foreground h-4 w-4 shrink-0 transition-transform duration-200",
+                  helperOpen && "rotate-180",
+                )}
+              />
+            </button>
 
-            <div className="space-y-4">
-              <div className="hover:border-destructive/20 border-destructive/10 bg-destructive/5 rounded-xl border p-3.5 transition-all">
-                <span className="text-destructive flex items-center gap-1.5 text-xs font-medium">
-                  <AlertTriangle className="h-3.5 w-3.5" />
-                  گزارش مشکلات شهری
-                </span>
-                <p className="lines-relaxed text-muted-foreground mt-1 text-[11.5px] leading-relaxed font-normal">
-                  مسائلی که نیاز به تعمیر فوری شهرداری دارند؛ مانند نارسایی
-                  آسفالت، خاموشی چراغ خیابان‌ها، تجمیع زباله، خرابی سطل‌ها و سد
-                  معبر.
-                </p>
+            {helperOpen && (
+              <div
+                id="request-form-help"
+                className="border-border space-y-4 border-t p-5"
+              >
+                <div>
+                  <h3 className="text-primary mb-2.5 flex items-center gap-2 text-xs font-extrabold">
+                    <Lightbulb className="text-primary h-4 w-4" />
+                    تفاوت گزارش مشکل و ایده چیست؟
+                  </h3>
+
+                  <div className="space-y-3">
+                    <div className="border-destructive/10 bg-destructive/5 rounded-xl border p-3.5">
+                      <span className="text-destructive flex items-center gap-1.5 text-xs font-medium">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        گزارش مشکلات شهری
+                      </span>
+                      <p className="text-muted-foreground mt-1 text-[11.5px] leading-relaxed font-normal">
+                        مسائلی که نیاز به تعمیر فوری شهرداری دارند؛ مانند
+                        نارسایی آسفالت، خاموشی چراغ خیابان‌ها، تجمیع زباله،
+                        خرابی سطل‌ها و سد معبر.
+                      </p>
+                    </div>
+
+                    <div className="border-type-idea/10 bg-type-idea/5 rounded-xl border p-3.5">
+                      <span className="text-type-idea flex items-center gap-1.5 text-xs font-medium">
+                        <Lightbulb className="h-3.5 w-3.5" />
+                        ارسال ایده‌های نوآورانه
+                      </span>
+                      <p className="text-muted-foreground mt-1 text-[11.5px] leading-relaxed font-normal">
+                        پیشنهادها و طرح‌های خلاقانه‌ای که هوشمندسازی و زیبایی
+                        بصری شهرآرا را ارتقا می‌دهد؛ مانند دیوار سبز، سطل‌های
+                        پلاستیکی هوشمند، بهبود مبلمان شهری و مناسب‌سازی عبور
+                        توان‌یابان.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-border bg-muted/30 rounded-xl border p-3.5">
+                  <h4 className="text-foreground text-xs font-semibold">
+                    چگونه لوکیشن دقیق را انتخاب کنیم؟
+                  </h4>
+                  <p className="text-muted-foreground mt-1.5 text-[11px] leading-relaxed font-normal">
+                    روی دکمه «ثبت موقعیت روی نقشه» بزنید تا نقشه تمام‌صفحه باز
+                    شود. سپس پین را روی محل دقیق عارضه یا اجرای ایده قرار دهید و
+                    تایید کنید؛ منطقه شهرداری به صورت خودکار مشخص می‌شود.
+                  </p>
+                </div>
               </div>
-
-              <div className="hover:border-type-idea/20 border-type-idea/10 bg-type-idea/5 rounded-xl border p-3.5 transition-all">
-                <span className="text-type-idea flex items-center gap-1.5 text-xs font-medium">
-                  <Lightbulb className="h-3.5 w-3.5" />
-                  ارسال ایده‌های نوآورانه
-                </span>
-                <p className="lines-relaxed text-muted-foreground mt-1 text-[11.5px] leading-relaxed font-normal">
-                  پیشنهادها و طرح‌های خلاقانه‌ای که هوشمندسازی و زیبایی بصری
-                  شهرآرا را ارتقا می‌دهد؛ مانند دیوار سبز، سطل‌های پلاستیکی
-                  هوشمند، بهبود مبلمان شهری و مناسب‌سازی عبور توان‌یابان.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-border bg-card rounded-2xl border p-5 transition-all">
-            <span className="text-muted-foreground mb-2 block font-mono text-xs tracking-wider uppercase">
-              مرحله ۲: انتخاب موقعیت
-            </span>
-            <h4 className="text-foreground text-xs font-semibold">
-              چگونه لوکیشن دقیق را انتخاب کنیم؟
-            </h4>
-            <p className="text-muted-foreground mt-2.5 text-[11px] leading-relaxed font-normal">
-              با استفاده از نقشه روبرو، دکمه نشانگر را به سمت محل دقیق عارضه یا
-              اجرای ایده جابجا کنید. پس از رها کردن پین، منطقه شهرداری مربوطه به
-              صورت کاملاً خودکار مشخص خواهد شد.
-            </p>
+            )}
           </div>
         </div>
 
@@ -252,75 +305,51 @@ export default function RequestForm({
               >
                 <label
                   className={cn(
-                    "flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-semibold transition-all duration-200 sm:gap-2.5 sm:px-4 sm:py-3 sm:text-sm",
+                    "relative flex cursor-pointer items-center justify-center rounded-xl border px-9 py-2.5 text-xs font-semibold transition-all duration-200 sm:py-3 sm:text-sm",
                     type === "problem"
                       ? "border-destructive/50 bg-destructive/10 text-destructive ring-destructive/10 ring-1"
                       : "border-border text-muted-foreground hover:border-muted-foreground",
                   )}
                 >
                   <RadioGroupItem value="problem" className="sr-only" />
-                  <AlertTriangle className="h-4 w-4 shrink-0" />
-                  <span>گزارش مشکل</span>
+                  <AlertTriangle className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+                  <span className="text-center">گزارش مشکل</span>
                 </label>
                 <label
                   className={cn(
-                    "flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-semibold transition-all duration-200 sm:gap-2.5 sm:px-4 sm:py-3 sm:text-sm",
+                    "relative flex cursor-pointer items-center justify-center rounded-xl border px-9 py-2.5 text-xs font-semibold transition-all duration-200 sm:py-3 sm:text-sm",
                     type === "idea"
                       ? "border-type-idea/50 bg-type-idea/10 text-type-idea ring-type-idea/10 ring-1"
                       : "border-border text-muted-foreground hover:border-muted-foreground",
                   )}
                 >
                   <RadioGroupItem value="idea" className="sr-only" />
-                  <Lightbulb className="h-4 w-4 shrink-0" />
-                  <span>ارائه ایده شهری</span>
+                  <Lightbulb className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+                  <span className="text-center">ارائه ایده شهری</span>
                 </label>
               </RadioGroup>
             </div>
 
-            {/* Category and title Row */}
-            <div className="form-main-section grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-muted-foreground flex items-center gap-1 text-xs font-medium">
-                  <Tag className="text-primary h-3.5 w-3.5" />
-                  موضوع درخواست <span className="text-destructive">*</span>
-                </label>
-                <Input
-                  type="text"
-                  required
-                  placeholder="مثال: روکش نامناسب آسفالت کوچه پنجم"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-muted-foreground flex items-center gap-1 text-xs font-medium">
-                  <MessageSquare className="text-primary h-3.5 w-3.5" />
-                  دسته‌بندی مربوطه <span className="text-destructive">*</span>
-                </label>
-                <Select dir="rtl" value={category} onValueChange={setCategory}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent position="popper" align="end">
-                    <SelectGroup>
-                      <SelectLabel>دسته‌بندی</SelectLabel>
-                      {CATEGORIES.map((c, i) => (
-                        <SelectItem key={i} value={c}>
-                          {c}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Title */}
+            <div className="form-main-section flex flex-col gap-1.5">
+              <label className="text-muted-foreground flex items-center gap-1 text-xs font-medium">
+                <Tag className="text-primary h-3.5 w-3.5" />
+                موضوع درخواست
+              </label>
+              <Input
+                type="text"
+                required
+                placeholder="مثال: روکش نامناسب آسفالت کوچه پنجم"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
             </div>
 
             {/* Description Area */}
             <div className="form-main-section flex flex-col gap-1.5">
               <label className="text-muted-foreground flex items-center gap-1 text-xs font-medium">
                 <AlignRight className="text-primary h-3.5 w-3.5" />
-                توضیحات تکمیلی <span className="text-destructive">*</span>
+                توضیحات تکمیلی
               </label>
               <Textarea
                 required
@@ -331,29 +360,50 @@ export default function RequestForm({
               />
             </div>
 
-            {/* Interactive Picker Map */}
+            {/* Location Picker Trigger */}
             <div className="form-main-section flex flex-col gap-2">
               <label className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
                 <MapPin className="text-primary h-4 w-4" />
-                موقعیت جغرافیایی روی نقشه{" "}
-                <span className="text-destructive">*</span>
+                موقعیت جغرافیایی روی نقشه
               </label>
 
-              <div className="border-border bg-card relative h-[360px] w-full overflow-hidden rounded-2xl border sm:h-[400px]">
-                <MapComponent
-                  pickerMode={true}
-                  selectedCoordinates={coords}
-                  onCoordinatesChange={handleCoordsChange}
-                  theme={theme}
-                />
-              </div>
+              <button
+                type="button"
+                onClick={openLocationPicker}
+                className="group border-border bg-muted/30 hover:border-primary/40 hover:bg-primary/5 flex w-full items-center gap-3 rounded-xl border border-dashed p-3.5 text-start transition-colors"
+              >
+                <span className="bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+                  <MapPinned className="h-5 w-5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="text-foreground block text-sm font-semibold">
+                    {locationPicked
+                      ? "موقعیت انتخاب شد"
+                      : "ثبت موقعیت روی نقشه"}
+                  </span>
+                  <span className="text-muted-foreground mt-0.5 block truncate text-[11px]">
+                    {locationPicked ? (
+                      <>
+                        {region}
+                        <span dir="ltr" className="font-mono">
+                          {" "}
+                          · {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
+                        </span>
+                      </>
+                    ) : (
+                      "برای انتخاب دقیق محل، نقشه تمام‌صفحه را باز کنید"
+                    )}
+                  </span>
+                </span>
+                <ChevronLeft className="text-muted-foreground h-4 w-4 shrink-0 transition-transform group-hover:-translate-x-0.5" />
+              </button>
             </div>
 
             {/* Detected Region — auto-filled from map, user can override */}
             <div className="form-main-section flex flex-col gap-1.5">
               <label className="text-muted-foreground flex items-center gap-1 text-xs font-medium">
                 <MapPin className="text-primary h-3.5 w-3.5" />
-                منطقه شهری <span className="text-destructive">*</span>
+                منطقه شهری
               </label>
               <Select dir="rtl" value={region} onValueChange={setRegion}>
                 <SelectTrigger>
@@ -393,6 +443,51 @@ export default function RequestForm({
           </form>
         </div>
       </div>
+
+      {/* Fullscreen Location Picker */}
+      <Dialog open={mapOpen} onOpenChange={setMapOpen}>
+        <DialogContent
+          showCloseButton={false}
+          className={cn(
+            "bg-background text-foreground inset-0 h-dvh max-h-dvh w-screen max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-none border-0 p-0",
+            "max-sm:inset-0 max-sm:right-0 max-sm:bottom-0 max-sm:left-0 max-sm:h-dvh max-sm:max-w-none max-sm:rounded-none max-sm:border-0 max-sm:pb-0",
+            "sm:inset-0 sm:start-0 sm:top-0 sm:max-w-none sm:translate-x-0 sm:translate-y-0 sm:gap-0 sm:rounded-none sm:border-0 sm:p-0 sm:rtl:translate-x-0",
+            "md:max-w-none lg:max-w-none",
+          )}
+        >
+          <DialogTitle className="sr-only">انتخاب موقعیت روی نقشه</DialogTitle>
+          <DialogDescription className="sr-only">
+            پین را روی محل دقیق مورد نظر قرار دهید و سپس تایید کنید.
+          </DialogDescription>
+
+          <div className="relative h-dvh w-full">
+            <MapComponent
+              pickerMode
+              selectedCoordinates={draftCoords}
+              onCoordinatesChange={(newCoords) => setDraftCoords(newCoords)}
+              onConfirm={handleLocationConfirm}
+              theme={theme}
+            />
+
+            <div className="absolute top-3 left-3 z-[1000] flex items-center gap-2">
+              <DialogClose asChild>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="icon"
+                  className="rounded-full shadow-md"
+                >
+                  <X />
+                  <span className="sr-only">بستن نقشه</span>
+                </Button>
+              </DialogClose>
+              <span className="bg-background/90 text-foreground rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm backdrop-blur">
+                ثبت موقعیت روی نقشه
+              </span>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
